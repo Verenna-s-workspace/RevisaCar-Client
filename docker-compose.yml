@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  # ── Customer API (Django) ────────────────────────────────────────────────────
+  customer-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: revisacar-customer-api
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+    volumes:
+      - ./backend:/app
+    command: python -m uvicorn config.wsgi:application --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # ── Customer Frontend (React PWA) ─────────────────────────────────────────
+  customer-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: revisacar-customer-app
+    ports:
+      - "5174:80"
+    depends_on:
+      - customer-api
+    restart: unless-stopped
+
+networks:
+  default:
+    name: revisacar-network
+    external: false
