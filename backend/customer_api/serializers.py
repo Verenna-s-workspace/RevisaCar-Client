@@ -244,6 +244,18 @@ class MaintenanceReminderSerializer(serializers.Serializer):
     progress_pct = serializers.FloatField(read_only=True)
 
 
+# ── Document ──────────────────────────────────────────────────────────────────
+
+class DocumentCreateSerializer(serializers.Serializer):
+    vehicle_id = serializers.CharField()
+    vehicle_label = serializers.CharField(required=False, allow_blank=True)
+    type = serializers.ChoiceField(choices=["crlv", "seguro", "garantia", "nota_fiscal", "laudo", "outro"])
+    title = serializers.CharField(max_length=150)
+    file_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    expiry_date = serializers.DateField(required=False, allow_null=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def pw_hash(password: str) -> str:

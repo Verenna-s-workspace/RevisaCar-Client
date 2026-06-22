@@ -3,290 +3,183 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 import {
-  User, Mail, Phone, MapPin, Lock, LogOut,
-  ChevronRight, Bell, Shield, HelpCircle, Star,
-  FileText, Car, Clock,
+  Settings, User, CreditCard, Bell, Shield, Lock,
+  HelpCircle, FileText, LogOut, Star, ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { AnimatePresence } from 'framer-motion';
 import { profileApi } from '../../services/api';
 import { useAuthStore } from '../../store/auth';
-import { Button, Input, Avatar, Skeleton } from '../ui';
 import { MainLayout, Topbar, BottomSheet } from '../layout';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { clsx } from 'clsx';
+import { Skeleton } from '../ui';
+import { C, FONT_HEAD, SectionLabel, CardGroup, MenuRow, PrimaryBtn, OutlineBtn } from '../ui/pro';
 
-/* ─── Schemas ───────────────────────────────────────────── */
 const profileSchema = z.object({
-  name:    z.string().min(2, 'Nome muito curto'),
-  phone:   z.string().optional(),
-  cpf:     z.string().optional(),
-  address: z.string().optional(),
+  name:  z.string().min(2, 'Nome muito curto'),
+  phone: z.string().optional(),
 });
-const passwordSchema = z.object({
-  old_password:         z.string().min(1, 'Obrigatório'),
-  new_password:         z.string().min(8, 'Mínimo 8 caracteres'),
-  new_password_confirm: z.string(),
-}).refine(d => d.new_password === d.new_password_confirm, {
-  path: ['new_password_confirm'], message: 'As senhas não coincidem',
-});
+type ProfileForm = z.infer<typeof profileSchema>;
 
-type ProfileForm  = z.infer<typeof profileSchema>;
-type PasswordForm = z.infer<typeof passwordSchema>;
-
-/* ─── Edit Profile Sheet ────────────────────────────────── */
-function EditProfileSheet({ onClose }: { onClose: () => void }) {
+/* ─── Edit Sheet ────────────────────────────────── */
+function EditSheet({ name, phone, onClose }: { name: string; phone?: string; onClose: () => void }) {
   const qc = useQueryClient();
-  const { data: profile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: () => profileApi.get().then(r => r.data),
-  });
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ProfileForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: profile?.name, phone: profile?.phone,
-      cpf: profile?.cpf, address: profile?.address,
-    },
+    defaultValues: { name, phone },
   });
-  const onSubmit = async (data: ProfileForm) => {
-    try {
-      await profileApi.update(data);
-      toast.success('Perfil atualizado!');
-      qc.invalidateQueries({ queryKey: ['profile'] });
-      onClose();
-    } catch { toast.error('Erro ao atualizar perfil'); }
-  };
+  const { mutate, isPending } = useMutation({
+    mutationFn: profileApi.update,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['profile'] }); toast.success('Perfil atualizado!'); onClose(); },
+    onError: () => toast.error('Erro ao atualizar'),
+  });
 
   return (
-    <BottomSheet onClose={onClose} title="Editar Perfil">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 pt-2">
-        <Input label="Nome completo" error={errors.name?.message} {...register('name')} />
-        <Input label="Telefone" type="tel" placeholder="(11) 99999-9999" {...register('phone')} />
-        <Input label="CPF" placeholder="000.000.000-00" {...register('cpf')} />
-        <Input label="Endereço" placeholder="Rua, nº, bairro, cidade" {...register('address')} />
-        <Button type="submit" fullWidth size="lg" loading={isSubmitting}>Salvar alterações</Button>
-        <Button type="button" variant="ghost" fullWidth onClick={onClose}>Cancelar</Button>
+    <BottomSheet onClose={onClose} title="Meus dados">
+      <form onSubmit={handleSubmit(d => mutate(d))} className="flex flex-col gap-4 pt-2">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11.5px] font-semibold" style={{ color: C.muted }}>Nome completo</label>
+          <input {...register('name')}
+            className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
+            style={{ border: `1px solid ${errors.name ? C.brand : C.borderSoft}`, color: C.text, background: C.card }} />
+          {errors.name && <p className="text-[11px]" style={{ color: C.brand }}>{errors.name.message}</p>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11.5px] font-semibold" style={{ color: C.muted }}>Telefone</label>
+          <input {...register('phone')} placeholder="(11) 99999-9999"
+            className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
+            style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
+        </div>
+        <PrimaryBtn disabled={isPending}>{isPending ? 'Salvando...' : 'Salvar alterações'}</PrimaryBtn>
       </form>
     </BottomSheet>
   );
 }
 
-/* ─── Change Password Sheet ─────────────────────────────── */
-function ChangePasswordSheet({ onClose }: { onClose: () => void }) {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PasswordForm>({
-    resolver: zodResolver(passwordSchema),
-  });
-  const onSubmit = async (data: PasswordForm) => {
-    try {
-      await profileApi.changePassword(data);
-      toast.success('Senha alterada com sucesso!');
-      onClose();
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Senha atual incorreta');
-    }
-  };
-
+/* ─── Logout confirm ────────────────────────────── */
+function LogoutSheet({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
   return (
-    <BottomSheet onClose={onClose} title="Alterar Senha">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 pt-2">
-        <Input label="Senha atual" type="password" error={errors.old_password?.message} {...register('old_password')} />
-        <Input label="Nova senha" type="password" placeholder="Mínimo 8 caracteres"
-          error={errors.new_password?.message} {...register('new_password')} />
-        <Input label="Confirmar nova senha" type="password"
-          error={errors.new_password_confirm?.message} {...register('new_password_confirm')} />
-        <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-          <Lock size={16} /> Alterar senha
-        </Button>
-        <Button type="button" variant="ghost" fullWidth onClick={onClose}>Cancelar</Button>
-      </form>
+    <BottomSheet onClose={onClose} title="Sair da conta?">
+      <p className="text-[13.5px] leading-relaxed pt-1 pb-5" style={{ color: C.muted }}>
+        Você precisará entrar novamente para acessar a saúde do seu veículo, agendamentos e documentos.
+      </p>
+      <div className="flex flex-col gap-2.5">
+        <button onClick={onConfirm}
+          className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white active:scale-[0.98] transition-all"
+          style={{ background: C.brand, fontFamily: FONT_HEAD }}>
+          Sair da conta
+        </button>
+        <OutlineBtn onClick={onClose}>Cancelar</OutlineBtn>
+      </div>
     </BottomSheet>
   );
 }
 
-/* ─── Menu Item ─────────────────────────────────────────── */
-function MenuItem({ icon: Icon, label, sublabel, badge, onClick, danger, iconBg, iconColor }: {
-  icon: typeof User;
-  label: string;
-  sublabel?: string;
-  badge?: string | number;
-  onClick?: () => void;
-  danger?: boolean;
-  iconBg?: string;
-  iconColor?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3.5 px-4 py-3.5 border-b border-border
-                 last:border-0 hover:bg-surface-2 active:bg-surface-3 transition-colors text-left"
-    >
-      <div className={clsx(
-        'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
-        danger ? 'bg-crit-bg' : iconBg || 'bg-surface-3'
-      )}>
-        <Icon size={17} className={danger ? 'text-crit' : iconColor || 'text-text-muted'} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={clsx('text-sm font-semibold', danger ? 'text-crit' : 'text-text')}>{label}</p>
-        {sublabel && <p className="text-xs text-text-subtle mt-0.5">{sublabel}</p>}
-      </div>
-      {badge !== undefined && (
-        <span className="text-xs font-bold bg-brand text-white rounded-full px-2 py-0.5 mr-1">
-          {badge}
-        </span>
-      )}
-      {!danger && <ChevronRight size={15} className="text-text-ghost flex-shrink-0" />}
-    </button>
-  );
-}
-
-/* ─── Profile Screen ────────────────────────────────────── */
+/* ─── Profile Screen ────────────────────────────── */
 export function ProfileScreen() {
   const navigate = useNavigate();
-  const { session, clearSession } = useAuthStore();
-  const qc = useQueryClient();
+  const { clearSession, session } = useAuthStore();
   const [showEdit, setShowEdit] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: () => profileApi.get().then(r => r.data),
+    staleTime: 120_000,
   });
 
-  const handleLogout = () => {
+  const name  = profile?.name ?? session?.name ?? 'João Silva';
+  const email = profile?.email ?? session?.email ?? 'joao.silva@email.com';
+  const initial = name.charAt(0).toUpperCase();
+
+  const doLogout = () => {
     clearSession();
-    qc.clear();
+    toast.success('Você saiu da conta');
+    setShowLogout(false);
     navigate('/login');
-    toast.success('Até logo! 👋');
   };
 
   return (
     <>
-      <MainLayout topbar={<Topbar title="Meu Perfil" showBack />}>
-
-        {/* Hero */}
-        <div className="relative bg-gradient-to-br from-brand via-brand-dark to-brand-deep
-                        px-5 pt-10 pb-12 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,255,255,0.08)_0%,_transparent_60%)]" />
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/[0.04]" />
-
-          <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-            {isLoading ? (
-              <Skeleton className="w-20 h-20 rounded-full" />
-            ) : (
-              <Avatar name={session?.name || 'U'} size={76} />
-            )}
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-2">
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-3.5 w-52" />
-              </div>
-            ) : (
-              <>
-                <div>
-                  <p className="font-bold text-xl text-white">{profile?.name}</p>
-                  <p className="text-sm text-white/70 mt-0.5">{profile?.email}</p>
-                  {profile?.phone && (
-                    <p className="text-xs text-white/55 mt-0.5">{profile.phone}</p>
-                  )}
-                </div>
-                {profile?.created_at && (
-                  <p className="text-xs text-white/45">
-                    Cliente desde {format(new Date(profile.created_at), "MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                )}
-              </>
-            )}
-            <button
-              onClick={() => setShowEdit(true)}
-              className="mt-1 inline-flex items-center gap-1.5 px-4 py-2 bg-white/14 backdrop-blur-sm
-                         border border-white/22 rounded-xl text-xs font-semibold text-white
-                         hover:bg-white/22 transition-all active:scale-95"
-            >
-              Editar perfil
-            </button>
-          </div>
-        </div>
-
-        {/* Stats bar */}
-        <div className="mx-4 -mt-4 bg-white rounded-2xl border border-border shadow-md z-10 relative">
-          <div className="grid grid-cols-3 divide-x divide-border">
-            {[
-              { label: 'Veículos', value: '2', icon: Car },
-              { label: 'Serviços', value: '12', icon: Clock },
-              { label: 'Orçamentos', value: '3', icon: FileText },
-            ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="flex flex-col items-center gap-1 py-4">
-                <Icon size={16} className="text-text-muted" />
-                <p className="text-xl font-bold text-text tabular">{value}</p>
-                <p className="text-2xs text-text-subtle font-medium">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="px-4 mt-5">
-          <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-0.5">
-            Informações pessoais
-          </p>
-          <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-xs mb-5">
-            {[
-              { icon: Mail,   label: 'E-mail',   value: profile?.email },
-              { icon: Phone,  label: 'Telefone', value: profile?.phone || 'Não informado' },
-              { icon: User,   label: 'CPF',      value: profile?.cpf ? `•••.•••.•••-${profile.cpf.slice(-2)}` : 'Não informado' },
-              { icon: MapPin, label: 'Endereço', value: profile?.address || 'Não informado' },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-0">
-                <div className="w-8 h-8 bg-surface-3 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon size={15} className="text-text-muted" />
+      <MainLayout topbar={
+        <Topbar title="Perfil" right={
+          <button aria-label="Ajustes" onClick={() => navigate('/ajustes')}
+                  className="w-10 h-10 flex items-center justify-center">
+            <Settings size={20} color={C.text} strokeWidth={1.8} />
+          </button>
+        } />
+      }>
+        <div className="px-4 pt-3 pb-8 flex flex-col gap-5">
+          {isLoading ? (
+            <>
+              <Skeleton className="h-[80px] rounded-[16px]" />
+              <Skeleton className="h-[200px] rounded-[16px]" />
+            </>
+          ) : (
+            <>
+              {/* Identity */}
+              <div className="flex items-center gap-4">
+                <div className="w-[58px] h-[58px] rounded-full flex items-center justify-center flex-none"
+                     style={{ background: C.brand }}>
+                  <span className="text-[24px] font-extrabold text-white" style={{ fontFamily: FONT_HEAD }}>{initial}</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xs text-text-subtle font-semibold uppercase tracking-wide">{label}</p>
-                  <p className="text-sm font-semibold text-text mt-0.5 truncate">
-                    {isLoading ? '—' : value}
-                  </p>
+                  <p className="font-bold text-[18px] truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>{name}</p>
+                  <p className="text-[13px] mt-0.5 truncate" style={{ color: C.muted }}>{email}</p>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* Settings */}
-          <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-0.5">Conta</p>
-          <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-xs mb-5">
-            <MenuItem icon={Lock} label="Alterar senha" sublabel="Atualizar credenciais de acesso"
-              iconBg="bg-info-bg" iconColor="text-info" onClick={() => setShowPassword(true)} />
-            <MenuItem icon={Bell} label="Notificações" sublabel="Configurar alertas e lembretes"
-              iconBg="bg-warn-bg" iconColor="text-warn" onClick={() => navigate('/notificacoes')} />
-            <MenuItem icon={Shield} label="Privacidade" sublabel="Dados pessoais e permissões"
-              iconBg="bg-ok-bg" iconColor="text-ok" onClick={() => toast('Em breve')} />
-          </div>
+              {/* Clube badge */}
+              <button onClick={() => navigate('/clube')}
+                className="flex items-center gap-3 p-4 rounded-[16px]"
+                style={{ background: 'linear-gradient(135deg,#1a0a00,#3a1200)' }}>
+                <Star size={22} color={C.gold} fill={C.gold} />
+                <div className="flex-1 text-left">
+                  <p className="text-[14px] font-bold text-white">Clube Ouro</p>
+                  <p className="text-[12px]" style={{ color: 'rgba(255,255,255,.6)' }}>1.250 pontos · ver recompensas</p>
+                </div>
+                <ChevronRight size={18} color="rgba(255,255,255,.5)" />
+              </button>
 
-          <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-0.5">Suporte</p>
-          <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-xs mb-5">
-            <MenuItem icon={HelpCircle} label="Central de ajuda" sublabel="Dúvidas e suporte técnico"
-              onClick={() => toast('Em breve')} />
-            <MenuItem icon={Star} label="Avaliar o app" sublabel="Nos ajude a melhorar"
-              onClick={() => toast('Obrigado pelo feedback! ⭐')} />
-          </div>
+              {/* Conta */}
+              <div>
+                <SectionLabel>Conta</SectionLabel>
+                <CardGroup>
+                  <MenuRow icon={<User size={18} />} label="Meus dados" onClick={() => setShowEdit(true)} />
+                  <MenuRow icon={<CreditCard size={18} />} label="Formas de pagamento" onClick={() => navigate('/pagamento')} />
+                  <MenuRow icon={<Bell size={18} />} label="Notificações" onClick={() => navigate('/preferencias')} />
+                  <MenuRow icon={<Shield size={18} />} label="Segurança" onClick={() => navigate('/seguranca')} />
+                  <MenuRow icon={<Lock size={18} />} label="Privacidade" last onClick={() => navigate('/privacidade')} />
+                </CardGroup>
+              </div>
 
-          <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-xs mb-6">
-            <MenuItem icon={LogOut} label="Sair da conta" danger onClick={handleLogout} />
-          </div>
+              {/* Suporte */}
+              <div>
+                <SectionLabel>Suporte</SectionLabel>
+                <CardGroup>
+                  <MenuRow icon={<HelpCircle size={18} />} label="Ajuda e suporte" onClick={() => navigate('/ajuda')} />
+                  <MenuRow icon={<FileText size={18} />} label="Termos e políticas" last onClick={() => navigate('/termos')} />
+                </CardGroup>
+              </div>
 
-          <p className="text-center text-xs text-text-ghost pb-2">
-            RevisaCar v1.0.0 · Todos os direitos reservados
-          </p>
+              {/* Logout */}
+              <CardGroup>
+                <MenuRow icon={<LogOut size={18} color={C.brand} />} iconBg={C.redBg}
+                         label="Sair da conta" danger last onClick={() => setShowLogout(true)} />
+              </CardGroup>
+
+              <p className="text-center text-[11px]" style={{ color: C.subtle }}>RevisaCar · versão 1.0.0</p>
+            </>
+          )}
         </div>
       </MainLayout>
 
-      <AnimatePresence>
-        {showEdit     && <EditProfileSheet onClose={() => setShowEdit(false)} />}
-        {showPassword && <ChangePasswordSheet onClose={() => setShowPassword(false)} />}
-      </AnimatePresence>
+      {showEdit && (
+        <EditSheet name={name} phone={profile?.phone} onClose={() => setShowEdit(false)} />
+      )}
+      {showLogout && (
+        <LogoutSheet onClose={() => setShowLogout(false)} onConfirm={doLogout} />
+      )}
     </>
   );
 }

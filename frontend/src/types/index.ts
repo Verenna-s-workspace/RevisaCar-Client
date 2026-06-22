@@ -131,6 +131,35 @@ export interface ServiceHistory {
   mechanic_notes?: string;
   estimate_id?: string;
   created_at: string;
+  workshop_name?: string;
+  scheduled_date?: string;
+  inspection_id?: string;
+  warranty_until?: string;
+  status?: string;
+  mileage?: number;
+}
+
+// ── Inspection / DVI ──────────────────────────────────────────────────────────
+
+export type InspectionStatus = 'ok' | 'atencao' | 'critico';
+
+export interface InspectionItem {
+  name: string;
+  status: InspectionStatus;
+  note?: string;
+}
+
+export interface InspectionReport {
+  id: string;
+  service_id: string;
+  vehicle_label: string;
+  date: string;
+  mileage: number;
+  inspector: string;
+  overall_score: number;
+  items: InspectionItem[];
+  photos: string[];
+  recommendations: string[];
 }
 
 // ── Notification ──────────────────────────────────────────────────────────────
@@ -180,6 +209,9 @@ export interface DashboardSummary {
   recent_notifications: Notification[];
   urgent_reminders: MaintenanceReminder[];
   all_reminders: MaintenanceReminder[];
+  recent_services?: ServiceHistory[];
+  health_score?: number;
+  upcoming_maintenance?: { service_name: string; km_remaining?: number; next_service_date?: string };
 }
 
 // ── Schedule Wizard ───────────────────────────────────────────────────────────
@@ -192,6 +224,55 @@ export interface ScheduleWizardState {
   date: string;
   timeSlot: string;
   notes: string;
+}
+
+// ── Vehicle Health Score ──────────────────────────────────────────────────────
+
+export interface HealthCategory {
+  name: string;
+  score: number;
+  icon: string;
+}
+
+export interface VehicleHealth {
+  vehicle_id: string;
+  overall_score: number;
+  categories: HealthCategory[];
+  last_updated: string;
+}
+
+// ── QR Code ───────────────────────────────────────────────────────────────────
+
+export interface VehicleQRLink {
+  uuid: string;
+  vehicle_id: string;
+  created_at: string;
+  expires_at?: string;
+  is_active: boolean;
+}
+
+// ── Document ──────────────────────────────────────────────────────────────────
+
+export type DocumentType =
+  | 'crlv'
+  | 'seguro'
+  | 'garantia'
+  | 'nota_fiscal'
+  | 'laudo'
+  | 'outro';
+
+export interface VehicleDocument {
+  id: string;
+  vehicle_id: string;
+  vehicle_label: string;
+  type: DocumentType;
+  title: string;
+  file_url: string;
+  file_name: string;
+  file_size_kb?: number;
+  expiry_date?: string;
+  notes?: string;
+  created_at: string;
 }
 
 // ── API Response ──────────────────────────────────────────────────────────────

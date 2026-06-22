@@ -4,19 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand:   { DEFAULT:'#CC1400', dark:'#A81100', deep:'#6B0900', light:'#FF3320' },
-        bg:      { DEFAULT:'#F5F4F1', alt:'#FAFAF8' },
-        surface: { DEFAULT:'#FFFFFF', 2:'#F8F7F4', 3:'#F0EEE9' },
-        border:  { DEFAULT:'#E8E5DE', md:'#D8D4CB', hi:'#C8C3B8' },
-        text:    { DEFAULT:'#18171A', 2:'#38363A', 3:'#5E5B60', muted:'#817E84', subtle:'#A09DA4', ghost:'#C8C5CC' },
-        ok:      { DEFAULT:'#166534', mid:'#16A34A', bg:'rgba(22,101,52,0.07)', border:'rgba(22,101,52,0.18)' },
-        warn:    { DEFAULT:'#92400E', mid:'#D97706', bg:'rgba(146,64,14,0.07)',  border:'rgba(146,64,14,0.18)' },
-        crit:    { DEFAULT:'#CC1400', bg:'rgba(204,20,0,0.055)',                 border:'rgba(204,20,0,0.18)' },
-        info:    { DEFAULT:'#1D4ED8', bg:'rgba(29,78,216,0.06)',                 border:'rgba(29,78,216,0.18)' },
+        brand:   { DEFAULT:'#E8190A', dark:'#C71508', deep:'#8B0E05', light:'#FF2D1A' },
+        bg:      { DEFAULT:'#FFFFFF', alt:'#F7F7F7' },
+        surface: { DEFAULT:'#FFFFFF', 2:'#F7F7F7', 3:'#EFEFEF' },
+        border:  { DEFAULT:'#EBEBEB', md:'#D9D9D9', hi:'#C4C4C4' },
+        text:    { DEFAULT:'#1A1A1A', 2:'#333333', 3:'#555555', muted:'#888888', subtle:'#AAAAAA', ghost:'#CCCCCC' },
+        ok:      { DEFAULT:'#16803C', mid:'#22C55E', bg:'rgba(22,128,60,0.07)', border:'rgba(22,128,60,0.2)' },
+        warn:    { DEFAULT:'#92400E', mid:'#F59E0B', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.22)' },
+        crit:    { DEFAULT:'#E8190A', bg:'rgba(232,25,10,0.06)',                  border:'rgba(232,25,10,0.2)' },
+        info:    { DEFAULT:'#1D4ED8', bg:'rgba(29,78,216,0.06)',                  border:'rgba(29,78,216,0.18)' },
+        dark:    { DEFAULT:'#111111', 2:'#1A1A1A', 3:'#222222' },
       },
       fontFamily: {
-        sans: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        logo: ['"Fredoka"', 'cursive'],
+        sans: ['"Inter"', '"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        logo: ['"Inter"', 'sans-serif'],
       },
       borderRadius: { xs:'4px', sm:'8px', md:'12px', lg:'16px', xl:'22px', '2xl':'28px' },
       boxShadow: {

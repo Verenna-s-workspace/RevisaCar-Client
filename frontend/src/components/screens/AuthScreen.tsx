@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, LogIn, UserPlus, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/auth';
-import { Button, Input, Divider } from '../ui';
-import { AuthLayout } from '../layout';
 
 /* ─── Schemas ───────────────────────────────────────────── */
 const loginSchema = z.object({
@@ -26,77 +24,146 @@ const registerSchema = z.object({
   path: ['password_confirm'],
   message: 'As senhas não coincidem',
 });
+const forgotSchema = z.object({
+  email: z.string().email('E-mail inválido'),
+});
 
 type LoginForm    = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
+type ForgotForm   = z.infer<typeof forgotSchema>;
+type Screen = 'home' | 'login' | 'register' | 'forgot';
 
-/* ─── Hero ──────────────────────────────────────────────── */
-function Hero() {
+/* ─── Verenna Logo SVG ──────────────────────────────────── */
+function VereennaLogo({ size = 56 }: { size?: number }) {
   return (
-    <div className="relative bg-gradient-to-br from-brand via-[#A81000] to-brand-deep
-                    px-6 pt-16 pb-14 flex flex-col items-center gap-3 overflow-hidden">
-      {/* Decorative shapes */}
-      <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full bg-white/[0.04]" />
-      <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/[0.03]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,_rgba(255,255,255,0.07)_0%,_transparent_60%)]" />
+    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="28" r="26" stroke="white" strokeWidth="2.5"/>
+      <path d="M14 30 Q19 20 24 23 Q29 26 34 19"
+            stroke="white" strokeWidth="2.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="17" cy="38" r="4" fill="white"/>
+      <circle cx="39" cy="38" r="4" fill="white"/>
+      <path d="M21 38 L35 38" stroke="white" strokeWidth="2.5"/>
+    </svg>
+  );
+}
 
-      {/* Logo mark */}
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 w-[72px] h-[72px] bg-white/12 backdrop-blur-sm rounded-[22px]
-                   flex items-center justify-center border border-white/20 shadow-xl"
-      >
-        <svg viewBox="0 0 40 40" width="40" height="40" fill="none">
-          <circle cx="20" cy="20" r="17" stroke="white" strokeWidth="2" />
-          <path d="M11 21.5 Q15.5 13.5 20 16 Q24.5 18.5 29 13.5"
-                stroke="white" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-          <circle cx="13" cy="28" r="3" fill="white" />
-          <circle cx="27" cy="28" r="3" fill="white" />
-        </svg>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.35 }}
-        className="relative z-10 text-center"
-      >
-        <div className="font-logo text-[2.2rem] font-semibold text-white leading-none tracking-tight">
-          Revisa<span className="text-white/70">car</span>
-        </div>
-        <div className="text-[0.72rem] font-semibold text-white/60 uppercase tracking-[0.2em] mt-2">
-          Área do Cliente
-        </div>
-      </motion.div>
+/* ─── Field ─────────────────────────────────────────────── */
+function Field({
+  label, error, children,
+}: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-text-2 tracking-wide">{label}</label>
+      {children}
+      {error && (
+        <p className="text-xs text-crit font-medium">{error}</p>
+      )}
     </div>
   );
 }
 
-/* ─── Google Button ─────────────────────────────────────── */
-function GoogleButton() {
+function TextInput({
+  error, suffix, ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { error?: string; suffix?: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      onClick={() => toast('Login com Google em breve')}
-      className="w-full flex items-center justify-center gap-3 py-3 px-4
-                 border-[1.5px] border-border rounded-xl text-sm font-semibold text-text-2
-                 bg-white hover:bg-surface-2 hover:border-border-md transition-all active:scale-[0.98]"
+    <div className="relative flex items-center">
+      <input
+        className={`w-full px-4 py-3.5 rounded-xl border-[1.5px] text-sm font-medium text-text bg-white
+                    outline-none transition-all placeholder:text-text-ghost font-sans
+                    ${error
+                      ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(232,25,10,0.1)]'
+                      : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(232,25,10,0.1)]'
+                    }`}
+        {...props}
+      />
+      {suffix && (
+        <div className="absolute right-3.5 flex items-center">{suffix}</div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Home Screen ───────────────────────────────────────── */
+function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; onRegister: () => void; onForgot: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex flex-col items-center justify-between h-full px-6 pt-20 pb-12"
     >
-      <svg viewBox="0 0 24 24" width="18" height="18">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      Continuar com Google
-    </button>
+      {/* Logo + brand */}
+      <div className="flex flex-col items-center gap-5">
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <VereennaLogo size={72} />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+          className="text-center"
+        >
+          <div className="text-[2.6rem] font-bold text-white tracking-tight leading-none mb-2">
+            verenna
+          </div>
+          <p className="text-sm text-white/60 font-medium leading-relaxed max-w-[240px]">
+            Bem-vindo! Faça login para acessar as informações do seu veículo.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35, duration: 0.4 }}
+        className="w-full flex flex-col gap-3"
+      >
+        <button
+          onClick={onLogin}
+          className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold
+                     active:scale-[0.97] transition-all shadow-lg shadow-brand/30
+                     hover:bg-brand-dark"
+        >
+          Entrar
+        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-white/15" />
+          <span className="text-xs text-white/40 font-medium">ou</span>
+          <div className="flex-1 h-px bg-white/15" />
+        </div>
+
+        <button
+          onClick={onRegister}
+          className="w-full py-4 bg-transparent border-2 border-white/25 rounded-2xl
+                     text-white text-base font-bold active:scale-[0.97] transition-all
+                     hover:border-white/40 hover:bg-white/5"
+        >
+          Criar conta
+        </button>
+
+        <button
+          onClick={onForgot}
+          className="text-center text-sm text-white/50 font-medium hover:text-white/70
+                     transition-colors mt-2"
+        >
+          Esqueci minha senha
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
 
 /* ─── Login Form ────────────────────────────────────────── */
-function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+function LoginScreen({ onBack, onSuccess, onForgot }: {
+  onBack: () => void; onSuccess: () => void; onForgot: () => void;
+}) {
   const [showPw, setShowPw] = useState(false);
   const { setSession } = useAuthStore();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
@@ -121,50 +188,74 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <Input
-        label="E-mail"
-        type="email"
-        placeholder="seu@email.com"
-        autoComplete="email"
-        error={errors.email?.message}
-        {...register('email')}
-      />
-      <Input
-        label="Senha"
-        type={showPw ? 'text' : 'password'}
-        placeholder="••••••••"
-        autoComplete="current-password"
-        error={errors.password?.message}
-        suffix={
-          <button type="button" onClick={() => setShowPw(!showPw)}
-            className="text-text-subtle hover:text-text transition-colors p-1">
-            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        }
-        {...register('password')}
-      />
-
-      <div className="flex justify-end -mt-1">
-        <Link to="/esqueci-senha"
-          className="text-xs font-semibold text-brand hover:underline underline-offset-2">
-          Esqueci minha senha
-        </Link>
+    <motion.div
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col h-full"
+    >
+      {/* Sheet handle area */}
+      <div className="flex items-center px-4 pt-4 pb-2">
+        <button onClick={onBack}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white
+                     hover:bg-white/20 transition-colors">
+          <ChevronLeft size={20} />
+        </button>
       </div>
 
-      <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-1">
-        <LogIn size={17} />
-        Entrar na conta
-      </Button>
+      <div className="flex-1 bg-white rounded-t-[32px] px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
+        <div>
+          <h2 className="text-2xl font-bold text-text tracking-tight">Entrar</h2>
+          <p className="text-sm text-text-muted mt-1">Acesse sua conta verenna</p>
+        </div>
 
-      <Divider label="ou" className="my-1" />
-      <GoogleButton />
-    </form>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <Field label="E-mail" error={errors.email?.message}>
+            <TextInput type="email" placeholder="seu@email.com" autoComplete="email"
+              error={errors.email?.message} {...register('email')} />
+          </Field>
+
+          <Field label="Senha" error={errors.password?.message}>
+            <TextInput
+              type={showPw ? 'text' : 'password'}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              error={errors.password?.message}
+              suffix={
+                <button type="button" onClick={() => setShowPw(!showPw)}
+                  className="text-text-subtle hover:text-text transition-colors p-1">
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+              {...register('password')}
+            />
+          </Field>
+
+          <div className="flex justify-end -mt-1">
+            <button type="button" onClick={onForgot}
+              className="text-xs font-semibold text-brand hover:underline underline-offset-2">
+              Esqueci minha senha
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+                       disabled:opacity-50 active:scale-[0.97] transition-all
+                       hover:bg-brand-dark shadow-md shadow-brand/20"
+          >
+            {isSubmitting ? 'Entrando...' : 'Entrar na conta'}
+          </button>
+        </form>
+      </div>
+    </motion.div>
   );
 }
 
 /* ─── Register Form ─────────────────────────────────────── */
-function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
+function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => void }) {
   const [showPw, setShowPw] = useState(false);
   const { setSession } = useAuthStore();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
@@ -189,92 +280,203 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <Input label="Nome completo" type="text" placeholder="João Silva"
-        error={errors.name?.message} {...register('name')} />
-      <Input label="E-mail" type="email" placeholder="seu@email.com"
-        error={errors.email?.message} {...register('email')} />
-      <Input label="Telefone" type="tel" placeholder="(11) 99999-9999"
-        error={errors.phone?.message} {...register('phone')} />
-      <Input
-        label="Senha"
-        type={showPw ? 'text' : 'password'}
-        placeholder="Mínimo 8 caracteres"
-        error={errors.password?.message}
-        suffix={
-          <button type="button" onClick={() => setShowPw(!showPw)}
-            className="text-text-subtle hover:text-text transition-colors p-1">
-            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+    <motion.div
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col h-full"
+    >
+      <div className="flex items-center px-4 pt-4 pb-2">
+        <button onClick={onBack}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white
+                     hover:bg-white/20 transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+      </div>
+
+      <div className="flex-1 bg-white rounded-t-[32px] px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
+        <div>
+          <h2 className="text-2xl font-bold text-text tracking-tight">Criar conta</h2>
+          <p className="text-sm text-text-muted mt-1">Crie sua conta gratuita</p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <Field label="Nome completo" error={errors.name?.message}>
+            <TextInput type="text" placeholder="João Silva"
+              error={errors.name?.message} {...register('name')} />
+          </Field>
+          <Field label="E-mail" error={errors.email?.message}>
+            <TextInput type="email" placeholder="seu@email.com"
+              error={errors.email?.message} {...register('email')} />
+          </Field>
+          <Field label="Telefone" error={errors.phone?.message}>
+            <TextInput type="tel" placeholder="(11) 99999-9999"
+              error={errors.phone?.message} {...register('phone')} />
+          </Field>
+          <Field label="Senha" error={errors.password?.message}>
+            <TextInput
+              type={showPw ? 'text' : 'password'}
+              placeholder="Mínimo 8 caracteres"
+              error={errors.password?.message}
+              suffix={
+                <button type="button" onClick={() => setShowPw(!showPw)}
+                  className="text-text-subtle hover:text-text transition-colors p-1">
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+              {...register('password')}
+            />
+          </Field>
+          <Field label="Confirmar senha" error={errors.password_confirm?.message}>
+            <TextInput type="password" placeholder="Repita a senha"
+              error={errors.password_confirm?.message} {...register('password_confirm')} />
+          </Field>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+                       disabled:opacity-50 active:scale-[0.97] transition-all
+                       hover:bg-brand-dark shadow-md shadow-brand/20"
+          >
+            {isSubmitting ? 'Criando conta...' : 'Criar minha conta'}
           </button>
-        }
-        {...register('password')}
-      />
-      <Input label="Confirmar senha" type="password" placeholder="Repita a senha"
-        error={errors.password_confirm?.message} {...register('password_confirm')} />
 
-      <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-1">
-        <UserPlus size={17} />
-        Criar minha conta
-      </Button>
+          <p className="text-xs text-center text-text-subtle leading-relaxed">
+            Ao criar uma conta você concorda com nossos{' '}
+            <span className="text-brand font-semibold">Termos de Uso</span>
+            {' '}e{' '}
+            <span className="text-brand font-semibold">Política de Privacidade</span>.
+          </p>
+        </form>
+      </div>
+    </motion.div>
+  );
+}
 
-      <p className="text-xs text-center text-text-subtle leading-relaxed">
-        Ao criar uma conta você concorda com nossos{' '}
-        <span className="text-brand font-semibold cursor-pointer">Termos de Uso</span>
-        {' '}e{' '}
-        <span className="text-brand font-semibold cursor-pointer">Política de Privacidade</span>.
-      </p>
-    </form>
+/* ─── Forgot Password ───────────────────────────────────── */
+function ForgotScreen({ onBack }: { onBack: () => void }) {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotForm>({
+    resolver: zodResolver(forgotSchema),
+  });
+
+  const onSubmit = async (data: ForgotForm) => {
+    try {
+      await authApi.forgotPassword(data.email);
+      toast.success('Instruções enviadas para o e-mail!');
+      onBack();
+    } catch {
+      toast.error('Erro ao enviar. Tente novamente.');
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col h-full"
+    >
+      <div className="flex items-center px-4 pt-4 pb-2">
+        <button onClick={onBack}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white
+                     hover:bg-white/20 transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+      </div>
+
+      <div className="flex-1 bg-white rounded-t-[32px] px-6 pt-8 pb-10 flex flex-col gap-6">
+        <div>
+          <h2 className="text-2xl font-bold text-text tracking-tight">Recuperar senha</h2>
+          <p className="text-sm text-text-muted mt-1 leading-relaxed">
+            Digite seu e-mail e enviaremos as instruções para redefinir sua senha.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <Field label="E-mail" error={errors.email?.message}>
+            <TextInput type="email" placeholder="seu@email.com"
+              error={errors.email?.message} {...register('email')} />
+          </Field>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+                       disabled:opacity-50 active:scale-[0.97] transition-all hover:bg-brand-dark"
+          >
+            {isSubmitting ? 'Enviando...' : 'Enviar instruções'}
+          </button>
+        </form>
+      </div>
+    </motion.div>
   );
 }
 
 /* ─── Auth Screen ───────────────────────────────────────── */
 export function AuthScreen() {
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [screen, setScreen] = useState<Screen>('home');
   const navigate = useNavigate();
 
   return (
-    <AuthLayout>
-      <Hero />
+    <div className="min-h-screen max-w-[430px] mx-auto flex flex-col relative overflow-hidden"
+         style={{ background: 'linear-gradient(160deg, #1A1A1A 0%, #111111 50%, #0D0D0D 100%)' }}>
 
-      <div className="flex-1 bg-bg px-5 py-6">
-        {/* Segmented control */}
-        <div className="flex bg-surface-3 rounded-2xl p-1 mb-6 gap-1">
-          {(['login', 'register'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="relative flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors duration-150"
-            >
-              {tab === t && (
-                <motion.div
-                  layoutId="auth-tab"
-                  className="absolute inset-0 bg-white rounded-xl shadow-sm"
-                  transition={{ type: 'spring', stiffness: 500, damping: 38 }}
-                />
-              )}
-              <span className={`relative z-10 ${tab === t ? 'text-text' : 'text-text-muted'}`}>
-                {t === 'login' ? 'Entrar' : 'Cadastrar'}
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* Background car silhouette — decorative */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute bottom-[30%] left-0 right-0 h-64
+                        bg-[radial-gradient(ellipse_at_center,_rgba(232,25,10,0.08)_0%,_transparent_70%)]" />
+        <div className="absolute top-1/4 -right-20 w-80 h-80 rounded-full
+                        bg-white/[0.015] blur-3xl" />
+        <div className="absolute top-10 -left-10 w-52 h-52 rounded-full
+                        bg-brand/[0.06] blur-2xl" />
+        {/* Car outline decoration */}
+        <svg className="absolute bottom-[28%] left-1/2 -translate-x-1/2 opacity-[0.04]"
+             width="360" height="140" viewBox="0 0 360 140" fill="white">
+          <path d="M60 80 L80 40 Q100 20 140 18 L220 18 Q260 18 280 40 L300 80 L320 85 L320 110
+                   L280 110 L280 100 Q280 88 268 88 Q256 88 256 100 L256 110 L104 110 L104 100
+                   Q104 88 92 88 Q80 88 80 100 L80 110 L40 110 L40 85 Z"/>
+        </svg>
+      </div>
 
-        {/* Forms */}
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-screen">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, x: tab === 'login' ? -12 : 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: tab === 'login' ? 12 : -12 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            {tab === 'login'
-              ? <LoginForm onSuccess={() => navigate('/')} />
-              : <RegisterForm onSuccess={() => navigate('/')} />
-            }
-          </motion.div>
+          {screen === 'home' && (
+            <motion.div key="home" className="flex-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <HomeScreen
+                onLogin={() => setScreen('login')}
+                onRegister={() => setScreen('register')}
+                onForgot={() => setScreen('forgot')}
+              />
+            </motion.div>
+          )}
+          {screen === 'login' && (
+            <motion.div key="login" className="flex flex-col h-full">
+              <LoginScreen
+                onBack={() => setScreen('home')}
+                onSuccess={() => navigate('/')}
+                onForgot={() => setScreen('forgot')}
+              />
+            </motion.div>
+          )}
+          {screen === 'register' && (
+            <motion.div key="register" className="flex flex-col h-full">
+              <RegisterScreen
+                onBack={() => setScreen('home')}
+                onSuccess={() => navigate('/')}
+              />
+            </motion.div>
+          )}
+          {screen === 'forgot' && (
+            <motion.div key="forgot" className="flex flex-col h-full">
+              <ForgotScreen onBack={() => setScreen('login')} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
-    </AuthLayout>
+    </div>
   );
 }

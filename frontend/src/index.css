@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,48 +7,48 @@
    DESIGN TOKENS — RevisaCar Customer App
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* Brand */
-  --brand:       #CC1400;
-  --brand-dark:  #A81100;
-  --brand-deep:  #6B0900;
-  --brand-light: #FF3320;
-  --brand-glow:  rgba(204, 20, 0, 0.18);
-  --brand-tint:  rgba(204, 20, 0, 0.055);
+  /* Brand — RevisaCar Pro Red */
+  --brand:       #E5071A;
+  --brand-dark:  #C20617;
+  --brand-deep:  #8B0410;
+  --brand-light: #FF1A2E;
+  --brand-glow:  rgba(229, 7, 26, 0.18);
+  --brand-tint:  rgba(229, 7, 26, 0.06);
 
   /* Backgrounds */
-  --bg:          #F5F4F1;
-  --bg-alt:      #FAFAF8;
+  --bg:          #F7F6F3;
+  --bg-alt:      #EFEDE8;
   --surface:     #FFFFFF;
-  --surface-2:   #F8F7F4;
-  --surface-3:   #F0EEE9;
+  --surface-2:   #F7F6F3;
+  --surface-3:   #EFEDE8;
 
   /* Borders */
-  --border:      #E8E5DE;
-  --border-md:   #D8D4CB;
-  --border-hi:   #C8C3B8;
+  --border:      #E2DFD8;
+  --border-md:   #C7C3BA;
+  --border-hi:   #A8AEB6;
 
   /* Text */
-  --text:        #18171A;
-  --text-2:      #38363A;
-  --text-3:      #5E5B60;
-  --muted:       #817E84;
-  --subtle:      #A09DA4;
-  --ghost:       #C8C5CC;
+  --text:        #14161A;
+  --text-2:      #23272F;
+  --text-3:      #3a3d44;
+  --muted:       #6B7078;
+  --subtle:      #9AA0A8;
+  --ghost:       #B6BAC0;
 
   /* Semantic */
-  --ok:          #166534;
-  --ok-mid:      #16A34A;
-  --ok-bg:       rgba(22, 101, 52, 0.07);
-  --ok-border:   rgba(22, 101, 52, 0.18);
+  --ok:          #16803C;
+  --ok-mid:      #22C55E;
+  --ok-bg:       rgba(22, 128, 60, 0.07);
+  --ok-border:   rgba(22, 128, 60, 0.20);
 
   --warn:        #92400E;
-  --warn-mid:    #D97706;
-  --warn-bg:     rgba(146, 64, 14, 0.07);
-  --warn-border: rgba(146, 64, 14, 0.18);
+  --warn-mid:    #F59E0B;
+  --warn-bg:     rgba(245, 158, 11, 0.08);
+  --warn-border: rgba(245, 158, 11, 0.22);
 
-  --crit:        #CC1400;
-  --crit-bg:     rgba(204, 20, 0, 0.055);
-  --crit-border: rgba(204, 20, 0, 0.18);
+  --crit:        #E8190A;
+  --crit-bg:     rgba(232, 25, 10, 0.06);
+  --crit-border: rgba(232, 25, 10, 0.20);
 
   --info:        #1D4ED8;
   --info-bg:     rgba(29, 78, 216, 0.06);
@@ -72,8 +72,8 @@
   --sh-brand: 0 4px 20px rgba(204,20,0,0.30), 0 2px 6px rgba(204,20,0,0.15);
 
   /* Typography */
-  --font:      'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-logo: 'Fredoka', cursive;
+  --font:      'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Sora', 'Plus Jakarta Sans', sans-serif;
 
   /* Layout */
   --nav-h:     72px;

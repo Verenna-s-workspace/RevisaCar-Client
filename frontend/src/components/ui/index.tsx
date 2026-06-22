@@ -119,7 +119,7 @@ Button.displayName = 'Button';
 /* ═══════════════════════════════════════════════
    INPUT
    ═══════════════════════════════════════════════ */
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
   label?: string; error?: string; hint?: string;
   prefix?: ReactNode; suffix?: ReactNode;
 }
@@ -394,7 +394,7 @@ export function StatRow({ label, value, className }: { label: string; value: Rea
 export function FilterChips<T extends string>({
   options, value, onChange,
 }: {
-  options: { label: string; value: T }[];
+  options: readonly { label: string; value: T }[];
   value: T;
   onChange: (v: T) => void;
 }) {

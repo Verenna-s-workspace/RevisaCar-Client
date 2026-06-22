@@ -1,408 +1,203 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Check, X, ChevronRight, MessageSquare, Info, Clock } from 'lucide-react';
-import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { Shield, Check, FileText } from 'lucide-react';
+import { format, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { estimatesApi } from '../../services/api';
-import { EstimateBadge, Button, SkeletonList, EmptyState, FilterChips, Textarea } from '../ui';
 import { MainLayout, Topbar, BottomSheet } from '../layout';
-import type { Estimate, EstimateStatus } from '../../types';
-import { clsx } from 'clsx';
+import { Skeleton } from '../ui';
+import { C, FONT_HEAD, FullState } from '../ui/pro';
+import type { Estimate } from '../../types';
 
-const FILTER_OPTIONS = [
-  { label: 'Todos',     value: 'all'       },
-  { label: 'Pendentes', value: 'pendente'  },
-  { label: 'Aprovados', value: 'aprovado'  },
-  { label: 'Recusados', value: 'rejeitado' },
-  { label: 'Expirados', value: 'expirado'  },
-] as const;
-type FilterValue = typeof FILTER_OPTIONS[number]['value'];
+type Tab = 'pendente' | 'aprovado' | 'rejeitado';
 
-/* ─── Action Sheet ──────────────────────────────────────── */
-function ActionSheet({ estimate, action, onClose, onConfirm, loading }: {
-  estimate: Estimate;
-  action: 'aprovar' | 'rejeitar';
-  onClose: () => void;
-  onConfirm: (comment: string) => void;
-  loading: boolean;
-}) {
-  const [comment, setComment] = useState('');
-  const isApprove = action === 'aprovar';
-
-  return (
-    <BottomSheet onClose={onClose}>
-      <div className="flex flex-col gap-5 pt-2">
-        {/* Icon */}
-        <div className="flex flex-col items-center gap-3 py-2">
-          <div className={clsx(
-            'w-16 h-16 rounded-2xl flex items-center justify-center',
-            isApprove ? 'bg-ok-bg' : 'bg-crit-bg'
-          )}>
-            {isApprove
-              ? <Check size={30} className="text-ok" strokeWidth={2.5} />
-              : <X size={30} className="text-crit" strokeWidth={2.5} />
-            }
-          </div>
-          <div className="text-center">
-            <p className="font-bold text-base text-text">
-              {isApprove ? 'Aprovar orçamento?' : 'Recusar orçamento?'}
-            </p>
-            <p className="text-sm text-text-muted mt-0.5">
-              {estimate.number} ·{' '}
-              <span className="font-semibold text-text tabular">
-                {estimate.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        {/* Comment */}
-        <Textarea
-          label={isApprove ? 'Mensagem para o mecânico (opcional)' : 'Motivo da recusa (opcional)'}
-          placeholder={isApprove
-            ? 'Ex: Pode iniciar na próxima semana...'
-            : 'Ex: Vou buscar outro orçamento...'
-          }
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-        />
-
-        {/* Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="ghost" fullWidth onClick={onClose}>Voltar</Button>
-          <Button
-            fullWidth
-            variant={isApprove ? 'success' : 'danger'}
-            loading={loading}
-            onClick={() => onConfirm(comment)}
-          >
-            {isApprove ? <><Check size={16} /> Aprovar</> : <><X size={16} /> Recusar</>}
-          </Button>
-        </div>
-      </div>
-    </BottomSheet>
-  );
+function expiryLabel(valid?: string) {
+  if (!valid) return null;
+  const h = differenceInHours(new Date(valid), new Date());
+  if (h < 0) return { text: 'Expirado', urgent: true };
+  if (h < 24) return { text: `Expira em ${h}h`, urgent: true };
+  return { text: `Expira em ${Math.ceil(h / 24)} dias`, urgent: false };
 }
 
-/* ─── Detail Sheet ──────────────────────────────────────── */
-function DetailSheet({ estimate, onClose, onAction }: {
-  estimate: Estimate;
-  onClose: () => void;
-  onAction: (a: 'aprovar' | 'rejeitar') => void;
+function EstimateCard({ estimate, onApprove, onReject }: {
+  estimate: Estimate; onApprove: () => void; onReject: () => void;
 }) {
-  const isPending = estimate.status === 'pendente';
-  const isExpired = estimate.status === 'expirado';
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const exp = expiryLabel(estimate.valid_until);
+  const desc = estimate.items?.[0]?.description ?? estimate.vehicle_label ?? '—';
 
   return (
-    <BottomSheet onClose={onClose} title={estimate.number}>
-      <div className="flex flex-col gap-5 pt-2">
-        {/* Meta */}
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm font-semibold text-text">{estimate.vehicle_label}</p>
-            <p className="text-xs text-text-subtle mt-0.5">
-              Emitido em {format(new Date(estimate.created_at), "d MMM yyyy", { locale: ptBR })}
-            </p>
-            {estimate.valid_until && (
-              <div className="flex items-center gap-1.5 mt-1">
-                <Clock size={12} className={isExpired ? 'text-crit' : 'text-text-subtle'} />
-                <p className={clsx('text-xs', isExpired ? 'text-crit font-semibold' : 'text-text-subtle')}>
-                  {isExpired
-                    ? 'Expirado'
-                    : `Válido até ${format(new Date(estimate.valid_until + 'T00:00:00'), "d MMM", { locale: ptBR })}`
-                  }
-                </p>
-              </div>
-            )}
-          </div>
-          <EstimateBadge status={estimate.status} />
+    <div className="rounded-[16px] p-4" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          <p className="text-[12px] font-semibold" style={{ color: C.subtle }}>{estimate.number}</p>
+          <p className="text-[14.5px] font-bold mt-0.5" style={{ color: C.text, fontFamily: FONT_HEAD }}>{desc}</p>
         </div>
+        {estimate.status === 'pendente' && (
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-none"
+                style={{ background: '#FFF3D6', color: '#C98A00' }}>Pendente</span>
+        )}
+        {estimate.status === 'aprovado' && (
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-none"
+                style={{ background: C.greenBg, color: C.greenDk }}>Aprovado</span>
+        )}
+        {estimate.status === 'rejeitado' && (
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-none"
+                style={{ background: C.redBg, color: C.brand }}>Recusado</span>
+        )}
+      </div>
 
-        {/* Items */}
+      {/* Total + expiry */}
+      <div className="flex items-end justify-between mt-3 pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
         <div>
-          <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">Itens</p>
-          <div className="bg-white border border-border rounded-xl overflow-hidden">
-            {estimate.items.map((item, i) => (
-              <div key={item.id}
-                className="flex justify-between items-start px-4 py-3 border-b border-border last:border-0">
-                <div className="flex-1 pr-4">
-                  <p className="text-sm font-semibold text-text leading-snug">{item.description}</p>
-                  <p className="text-xs text-text-subtle mt-0.5">
-                    {item.item_type === 'peca' ? 'Peça' : item.item_type === 'mao_de_obra' ? 'Mão de obra' : 'Outro'}
-                    {item.quantity !== 1 && ` · ${item.quantity}×`}
-                    {' · '}{item.unit_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} un.
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-text flex-shrink-0 tabular">
-                  {item.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </p>
-              </div>
-            ))}
-          </div>
+          <p className="text-[11px]" style={{ color: C.muted }}>Total</p>
+          <p className="text-[20px] font-extrabold tabular" style={{ color: C.text, fontFamily: FONT_HEAD }}>
+            R$ {estimate.total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </p>
         </div>
+        {exp && (
+          <span className="text-[11.5px] font-bold mb-1" style={{ color: exp.urgent ? C.brand : C.muted }}>
+            {exp.text}
+          </span>
+        )}
+      </div>
 
-        {/* Totals */}
-        <div className="bg-surface-2 rounded-xl p-4 flex flex-col gap-2">
-          <div className="flex justify-between text-sm text-text-muted">
-            <span>Subtotal</span>
-            <span className="tabular">{estimate.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-          </div>
+      {/* Details (expandable) */}
+      {open && estimate.items && (
+        <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+          {estimate.items.map(it => (
+            <div key={it.id} className="flex justify-between py-1.5">
+              <span className="text-[13px]" style={{ color: C.text2 }}>{it.description}</span>
+              <span className="text-[13px] font-semibold tabular" style={{ color: C.text }}>
+                R$ {it.subtotal?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          ))}
           {estimate.discount > 0 && (
-            <div className="flex justify-between text-sm text-ok">
-              <span>Desconto</span>
-              <span className="tabular">−{estimate.discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+            <div className="flex justify-between py-1.5 mt-1" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+              <span className="text-[13px]" style={{ color: C.muted }}>Desconto</span>
+              <span className="text-[13px] font-semibold" style={{ color: C.greenDk }}>
+                -R$ {estimate.discount?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
             </div>
           )}
-          <div className="h-px bg-border-md my-1" />
-          <div className="flex justify-between items-baseline">
-            <span className="font-bold text-base text-text">Total</span>
-            <span className="text-xl font-bold text-brand tabular">
-              {estimate.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          <div className="flex items-center gap-3 mt-3">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: C.greenDk }}>
+              <Shield size={13} /> Garantia 90 dias
+            </span>
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: C.greenDk }}>
+              <Check size={13} /> Peças originais
             </span>
           </div>
         </div>
+      )}
 
-        {/* Notes */}
-        {estimate.notes && (
-          <div className="flex items-start gap-3 bg-info-bg border border-info-border rounded-xl p-4">
-            <Info size={16} className="text-info mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-info leading-relaxed">{estimate.notes}</p>
-          </div>
-        )}
-
-        {/* CTA */}
-        {isPending && (
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <button
-              onClick={() => onAction('aprovar')}
-              className="flex items-center justify-center gap-2 py-3.5 bg-ok text-white
-                         rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-[0.97]"
-            >
-              <Check size={16} strokeWidth={2.5} /> Aprovar
-            </button>
-            <button
-              onClick={() => onAction('rejeitar')}
-              className="flex items-center justify-center gap-2 py-3.5 bg-crit-bg text-crit
-                         border border-crit-border rounded-xl font-bold text-sm
-                         hover:bg-crit/10 transition-all active:scale-[0.97]"
-            >
-              <X size={16} strokeWidth={2.5} /> Recusar
-            </button>
-          </div>
-        )}
-      </div>
-    </BottomSheet>
-  );
-}
-
-/* ─── Estimate Card ─────────────────────────────────────── */
-function EstimateCard({ estimate, onView, onAction }: {
-  estimate: Estimate;
-  onView: () => void;
-  onAction: (a: 'aprovar' | 'rejeitar') => void;
-}) {
-  const isPending = estimate.status === 'pendente';
-  const isExpired = estimate.status === 'expirado' || estimate.status === 'rejeitado';
-
-  return (
-    <div className={clsx(
-      'bg-white rounded-2xl border shadow-sm overflow-hidden transition-opacity',
-      isPending ? 'border-warn-border' : 'border-border',
-      isExpired && 'opacity-60',
-    )}>
-      {/* Pending indicator strip */}
-      {isPending && <div className="h-1 bg-gradient-to-r from-warn-mid to-warn" />}
-
-      {/* Header */}
-      <div className="flex items-start gap-3 p-4">
-        <div className={clsx(
-          'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
-          isPending ? 'bg-warn-bg' :
-          estimate.status === 'aprovado' ? 'bg-ok-bg' : 'bg-surface-3'
-        )}>
-          <FileText size={18} className={
-            isPending ? 'text-warn' :
-            estimate.status === 'aprovado' ? 'text-ok' : 'text-text-muted'
-          } />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-text">{estimate.number}</p>
-          <p className="text-xs text-text-muted mt-0.5 truncate">{estimate.vehicle_label}</p>
-          <p className="text-xs text-text-subtle mt-0.5">
-            {format(new Date(estimate.created_at), "d MMM yyyy", { locale: ptBR })}
-            {isPending && estimate.valid_until && (
-              <span className="text-warn font-semibold">
-                {' · '}Válido até {format(new Date(estimate.valid_until + 'T00:00:00'), "d MMM", { locale: ptBR })}
-              </span>
-            )}
-          </p>
-        </div>
-        <EstimateBadge status={estimate.status} />
-      </div>
-
-      {/* Items summary */}
-      <div className="px-4 pb-3 flex flex-col gap-1.5">
-        {estimate.items.slice(0, 2).map(item => (
-          <div key={item.id} className="flex justify-between items-baseline">
-            <p className="text-xs text-text-2 flex-1 truncate pr-3">{item.description}</p>
-            <p className="text-xs font-semibold text-text flex-shrink-0 tabular">
-              {item.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </p>
-          </div>
-        ))}
-        {estimate.items.length > 2 && (
-          <p className="text-xs text-text-subtle">+{estimate.items.length - 2} itens</p>
-        )}
-
-        <div className="flex justify-between items-baseline pt-2 border-t border-border mt-1">
-          <span className="text-sm font-bold text-text">Total</span>
-          <span className={clsx(
-            'text-base font-bold tabular',
-            isPending ? 'text-brand' :
-            estimate.status === 'aprovado' ? 'text-ok' : 'text-text-muted'
-          )}>
-            {estimate.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </span>
-        </div>
-      </div>
-
-      {/* Footer */}
-      {isPending ? (
-        <div className="flex gap-2 p-3 border-t border-border bg-surface-2">
-          <button
-            onClick={() => onAction('aprovar')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-ok
-                       text-white rounded-xl font-bold text-xs hover:brightness-110
-                       transition-all active:scale-[0.97]"
-          >
-            <Check size={14} strokeWidth={2.5} /> Aprovar
+      {/* Actions */}
+      {estimate.status === 'pendente' && (
+        <div className="flex gap-2.5 mt-3.5">
+          <button onClick={() => setOpen(!open)}
+            className="flex-1 py-2.5 rounded-[11px] text-[13px] font-bold"
+            style={{ border: `1.5px solid ${C.border}`, color: C.text }}>
+            {open ? 'Fechar' : 'Detalhes'}
           </button>
-          <button
-            onClick={() => onAction('rejeitar')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-crit-bg
-                       text-crit border border-crit-border rounded-xl font-bold text-xs
-                       hover:bg-crit/10 transition-all active:scale-[0.97]"
-          >
-            <X size={14} strokeWidth={2.5} /> Recusar
-          </button>
-          <button
-            onClick={onView}
-            className="w-10 flex items-center justify-center py-2.5 bg-white border border-border
-                       rounded-xl text-text-muted hover:border-border-md transition-all"
-          >
-            <ChevronRight size={15} />
+          <button onClick={() => setConfirm(true)}
+            className="flex-1 py-2.5 rounded-[11px] text-[13px] font-bold text-white" style={{ background: C.green }}>
+            Aprovar
           </button>
         </div>
-      ) : (
-        <button
-          onClick={onView}
-          className="w-full flex items-center justify-center gap-1.5 py-3 border-t border-border
-                     bg-surface-2 text-xs font-semibold text-text-muted
-                     hover:bg-surface-3 transition-colors"
-        >
-          Ver detalhes completos <ChevronRight size={13} />
+      )}
+      {open && estimate.status === 'pendente' && (
+        <button onClick={onReject}
+          className="w-full mt-2.5 py-2.5 rounded-[11px] text-[13px] font-bold"
+          style={{ border: `1.5px solid ${C.brand}`, color: C.brand }}>
+          Recusar orçamento
         </button>
+      )}
+
+      {/* Approve confirmation */}
+      {confirm && (
+        <BottomSheet onClose={() => setConfirm(false)} title="Aprovar orçamento?">
+          <p className="text-[13.5px] leading-relaxed pt-1 pb-1" style={{ color: C.muted }}>
+            Você está aprovando <b style={{ color: C.text }}>{estimate.number}</b> no valor de{' '}
+            <b style={{ color: C.text }}>R$ {estimate.total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</b>.
+            A oficina iniciará o serviço após a aprovação.
+          </p>
+          <div className="flex flex-col gap-2.5 mt-5">
+            <button onClick={() => { onApprove(); setConfirm(false); }}
+              className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white active:scale-[0.98]"
+              style={{ background: C.green, fontFamily: FONT_HEAD }}>
+              Confirmar aprovação
+            </button>
+            <button onClick={() => setConfirm(false)}
+              className="w-full py-[15px] rounded-[14px] font-bold text-[15px]"
+              style={{ border: `1.5px solid ${C.border}`, color: C.text, fontFamily: FONT_HEAD }}>
+              Cancelar
+            </button>
+          </div>
+        </BottomSheet>
       )}
     </div>
   );
 }
 
-/* ─── Estimates Screen ──────────────────────────────────── */
 export function EstimatesScreen() {
+  const [tab, setTab] = useState<Tab>('pendente');
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<FilterValue>('all');
-  const [detail, setDetail] = useState<Estimate | null>(null);
-  const [action, setAction] = useState<{ estimate: Estimate; type: 'aprovar' | 'rejeitar' } | null>(null);
 
   const { data: estimates = [], isLoading } = useQuery({
-    queryKey: ['estimates'],
-    queryFn: () => estimatesApi.list().then(r => r.data),
+    queryKey: ['estimates', tab],
+    queryFn: () => estimatesApi.list(tab).then(r => r.data),
+    staleTime: 30_000,
   });
 
-  const { mutate: doAction, isPending } = useMutation({
-    mutationFn: ({ estimate, type, comment }: { estimate: Estimate; type: 'aprovar' | 'rejeitar'; comment: string }) =>
-      type === 'aprovar'
-        ? estimatesApi.approve(estimate.id, comment)
-        : estimatesApi.reject(estimate.id, comment),
-    onSuccess: (_, { type }) => {
-      toast.success(type === 'aprovar' ? '✓ Orçamento aprovado!' : 'Orçamento recusado.');
-      qc.invalidateQueries({ queryKey: ['estimates'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      setAction(null);
-      setDetail(null);
-    },
-    onError: () => toast.error('Erro ao processar. Tente novamente.'),
+  const { mutate: approve } = useMutation({
+    mutationFn: async (id: string) => { await estimatesApi.approve(id); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['estimates'] }); toast.success('Orçamento aprovado!'); },
+    onError: () => toast.error('Erro ao aprovar'),
+  });
+  const { mutate: reject } = useMutation({
+    mutationFn: async (id: string) => { await estimatesApi.reject(id); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['estimates'] }); toast.success('Orçamento recusado'); },
+    onError: () => toast.error('Erro ao recusar'),
   });
 
-  const filtered = filter === 'all' ? estimates : estimates.filter(e => e.status === filter);
-  const pendingCount = estimates.filter(e => e.status === 'pendente').length;
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'pendente',  label: 'Pendentes' },
+    { key: 'aprovado',  label: 'Aprovados' },
+    { key: 'rejeitado', label: 'Recusados' },
+  ];
 
   return (
-    <>
-      <MainLayout topbar={<Topbar title="Orçamentos" showBack />}>
-        <div className="px-4 pt-4 flex flex-col gap-4">
-
-          {/* Pending alert */}
-          {pendingCount > 0 && (
-            <div className="flex items-center gap-3 bg-warn-bg border border-warn-border
-                            rounded-xl px-4 py-3">
-              <div className="w-8 h-8 bg-warn-mid/15 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FileText size={16} className="text-warn" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-warn">
-                  {pendingCount} orçamento{pendingCount > 1 ? 's' : ''} aguardando aprovação
-                </p>
-                <p className="text-xs text-warn/70 mt-0.5">Responda antes do prazo expirar</p>
-              </div>
-            </div>
-          )}
-
-          <FilterChips options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
-
-          {isLoading ? (
-            <SkeletonList count={2} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              icon={<FileText size={34} />}
-              title={filter === 'pendente' ? 'Nenhum orçamento pendente' : 'Nenhum orçamento'}
-              description="Seus orçamentos aparecerão aqui quando o mecânico enviar uma proposta."
-            />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {filtered.map(est => (
-                <EstimateCard
-                  key={est.id}
-                  estimate={est}
-                  onView={() => setDetail(est)}
-                  onAction={type => setAction({ estimate: est, type })}
-                />
-              ))}
-            </div>
-          )}
+    <MainLayout showNav={false} topbar={<Topbar title="Orçamentos" showBack />}>
+      <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
+        {/* Tabs */}
+        <div className="flex gap-2">
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className="text-[12.5px] font-bold px-4 py-2 rounded-full transition-all"
+              style={tab === t.key ? { background: C.brand, color: '#fff' } : { color: C.muted, background: C.card, border: `1px solid ${C.border}` }}>
+              {t.label}
+            </button>
+          ))}
         </div>
-      </MainLayout>
 
-      <AnimatePresence>
-        {detail && !action && (
-          <DetailSheet
-            estimate={detail}
-            onClose={() => setDetail(null)}
-            onAction={type => { setAction({ estimate: detail, type }); setDetail(null); }}
+        {isLoading ? (
+          [0,1].map(i => <Skeleton key={i} className="h-[150px] rounded-[16px]" />)
+        ) : estimates.length === 0 ? (
+          <FullState
+            icon={<FileText size={42} strokeWidth={1.4} />}
+            title={`Nenhum orçamento ${tab === 'pendente' ? 'pendente' : tab === 'aprovado' ? 'aprovado' : 'recusado'}`}
+            desc="Quando a oficina enviar um orçamento, ele aparecerá aqui para você aprovar ou recusar."
           />
+        ) : (
+          estimates.map(e => (
+            <EstimateCard key={e.id} estimate={e} onApprove={() => approve(e.id)} onReject={() => reject(e.id)} />
+          ))
         )}
-        {action && (
-          <ActionSheet
-            estimate={action.estimate}
-            action={action.type}
-            onClose={() => setAction(null)}
-            loading={isPending}
-            onConfirm={comment => doAction({ ...action, comment })}
-          />
-        )}
-      </AnimatePresence>
-    </>
+      </div>
+    </MainLayout>
   );
 }
