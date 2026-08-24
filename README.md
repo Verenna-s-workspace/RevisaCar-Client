@@ -270,7 +270,7 @@ npm run dev   # → http://localhost:5174
 
 ```bash
 # Backend — pytest (sem rede/banco; env dummy via pytest-env)
-cd backend && pip install -r requirements-dev.txt && pytest      # 26 tests
+cd backend && pip install -r requirements-dev.txt && pytest      # 33 tests
 
 # Frontend — Vitest
 cd frontend && npm install && npm test                          # 7 tests
@@ -278,8 +278,9 @@ cd frontend && npm install && npm test                          # 7 tests
 
 Cobertura atual: validações de serializer (CPF, placa, confirmação de senha,
 data de agendamento no passado, hash de senha), lógica de score de saúde do
-veículo (`compute_health`, urgência e categorização) e os stores Zustand
-(sessão de auth + wizard de agendamento).
+veículo (`compute_health`, urgência e categorização), segurança das views
+(`_supabase_err` não vaza detalhes internos, `_decode_bearer`) e os stores
+Zustand (sessão de auth + wizard de agendamento).
 
 CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) roda a cada push/PR
 para `main`: backend (flake8 + pytest) e frontend (typecheck + Vitest + build).
