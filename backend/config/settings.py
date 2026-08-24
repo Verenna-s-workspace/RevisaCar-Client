@@ -6,9 +6,22 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "insecure-customer-dev-key-change-in-production")
-DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = ["*"]
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+# Em produção a chave TEM que vir do ambiente — nunca um default embutido no
+# repositório. Em dev (DEBUG=True) cai num placeholder para não travar o setup.
+_secret = os.environ.get("DJANGO_SECRET_KEY")
+if not _secret:
+    if DEBUG:
+        _secret = "insecure-customer-dev-key-change-in-production"
+    else:
+        raise RuntimeError(
+            "DJANGO_SECRET_KEY não configurada. Defina a variável de ambiente antes de iniciar em produção."
+        )
+SECRET_KEY = _secret
+
+# Em produção defina ALLOWED_HOSTS com os domínios reais (separados por vírgula).
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
