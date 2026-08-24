@@ -35,9 +35,9 @@ function HealthArc({ score }: { score: number }) {
               fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"
               strokeDasharray={`${dash} ${total}`} />
         <text x={cx} y={cy-10} textAnchor="middle" fontSize="30" fontWeight="800"
-              fill={TEXT} fontFamily="'Sora',sans-serif">{score}</text>
+              fill={TEXT} fontFamily="var(--font-heading)">{score}</text>
         <text x={cx} y={cy+10} textAnchor="middle" fontSize="11" fontWeight="600"
-              fill={color} fontFamily="'Plus Jakarta Sans',sans-serif">{label}</text>
+              fill={color} fontFamily="'DM Sans',sans-serif">{label}</text>
       </svg>
       <p className="text-[10px] font-bold tracking-widest mt-0.5" style={{ color: SUBTLE }}>SAÚDE</p>
     </div>
@@ -91,7 +91,7 @@ export function DashboardScreen() {
               style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
         <div>
           <p className="text-[11px] font-medium" style={{ color: SUBTLE }}>Bem-vindo de volta</p>
-          <p className="text-[16px] font-bold" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[16px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Olá, {firstName}
           </p>
         </div>
@@ -114,10 +114,10 @@ export function DashboardScreen() {
           <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-bold text-[17px]" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+                <p className="font-bold text-[17px]" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
                   {vehicle.brand} {vehicle.model}
                 </p>
-                <p className="text-[12px] mt-0.5 font-medium" style={{ color: MUTED }}>
+                <p className="text-[12px] mt-0.5 font-medium data-mono" style={{ color: MUTED }}>
                   {vehicle.plate} · {vehicle.fuel_type} · {vehicle.mileage?.toLocaleString('pt-BR')} km
                 </p>
               </div>
@@ -175,7 +175,7 @@ export function DashboardScreen() {
         {/* Atividade recente */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+            <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
               Atividade recente
             </p>
             <button onClick={() => navigate('/historico')} className="flex items-center gap-1">
@@ -210,7 +210,7 @@ export function DashboardScreen() {
                     </p>
                   </div>
                   {s.total_cost && (
-                    <span className="text-[13px] font-bold tabular" style={{ color: TEXT }}>
+                    <span className="text-[13px] font-bold data-mono" style={{ color: TEXT }}>
                       R$ {s.total_cost.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                     </span>
                   )}

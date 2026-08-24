@@ -31,7 +31,7 @@ export function RewardsScreen() {
           <p className="text-[11px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,.5)' }}>
             SEUS PONTOS
           </p>
-          <p className="text-[48px] font-black tabular" style={{ color: '#fff', fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[48px] font-black tabular" style={{ color: '#fff', fontFamily: "var(--font-heading)" }}>
             {POINTS.toLocaleString('pt-BR')}
           </p>
           <div className="flex items-center gap-2 mt-1">
@@ -56,7 +56,7 @@ export function RewardsScreen() {
 
         {/* Trocar pontos header */}
         <div className="flex items-center justify-between">
-          <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Trocar pontos
           </p>
         </div>

@@ -27,7 +27,7 @@ function VehicleRow({ v, onClick }: { v: Vehicle; onClick: () => void }) {
                   style={{ background: C.greenBg, color: C.greenDk }}>Principal</span>
           )}
         </div>
-        <p className="text-[12px] mt-0.5" style={{ color: C.muted }}>
+        <p className="text-[12px] mt-0.5 data-mono" style={{ color: C.muted }}>
           {v.plate} · {v.fuel_type} · {v.mileage?.toLocaleString('pt-BR')} km
         </p>
       </div>

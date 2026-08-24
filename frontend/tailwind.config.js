@@ -17,8 +17,9 @@ export default {
         dark:    { DEFAULT:'#111111', 2:'#1A1A1A', 3:'#222222' },
       },
       fontFamily: {
-        sans: ['"Inter"', '"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        logo: ['"Inter"', 'sans-serif'],
+        sans: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['"DM Mono"', '"JetBrains Mono"', 'Menlo', 'monospace'],
+        logo: ['"Fredoka"', '"DM Sans"', 'cursive'],
       },
       borderRadius: { xs:'4px', sm:'8px', md:'12px', lg:'16px', xl:'22px', '2xl':'28px' },
       boxShadow: {

@@ -108,7 +108,8 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
           transition={{ delay: 0.25, duration: 0.4 }}
           className="text-center"
         >
-          <div className="text-[2.6rem] font-bold text-white tracking-tight leading-none mb-2">
+          <div className="text-[2.9rem] text-white leading-none mb-2"
+               style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, letterSpacing: '-0.01em' }}>
             verenna
           </div>
           <p className="text-sm text-white/60 font-medium leading-relaxed max-w-[240px]">

@@ -72,7 +72,7 @@ export function VehicleDetailScreen() {
                   <circle cx="28" cy="28" r="24" fill="none" stroke={C.border} strokeWidth="5" />
                   <circle cx="28" cy="28" r="24" fill="none" stroke={color} strokeWidth="5" strokeLinecap="round"
                           strokeDasharray={`${(score/100)*2*Math.PI*24} ${2*Math.PI*24}`} transform="rotate(-90 28 28)" />
-                  <text x="28" y="33" textAnchor="middle" fontSize="17" fontWeight="800" fill={C.text} fontFamily="'Sora',sans-serif">{score}</text>
+                  <text x="28" y="33" textAnchor="middle" fontSize="17" fontWeight="800" fill={C.text} fontFamily="var(--font-heading)">{score}</text>
                 </svg>
               </div>
               <div className="flex-1 text-left">

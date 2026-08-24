@@ -30,7 +30,7 @@ export function CostAnalysisScreen() {
           <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: SUBTLE }}>
             Total em 2024
           </p>
-          <p className="text-[36px] font-black tabular" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[36px] font-black tabular" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             R$ {TOTAL.toLocaleString('pt-BR')}
           </p>
           <div className="flex items-center gap-1.5 mt-1">
@@ -43,7 +43,7 @@ export function CostAnalysisScreen() {
 
         {/* Bar chart */}
         <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Por mês
           </p>
           <div className="flex items-end gap-2 h-[100px]">
@@ -66,7 +66,7 @@ export function CostAnalysisScreen() {
 
         {/* Categories */}
         <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Por categoria
           </p>
           <div className="flex flex-col gap-3">
