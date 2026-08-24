@@ -55,12 +55,15 @@ SIMPLE_JWT = {
 
 # ── DRF ───────────────────────────────────────────────────────────────────────
 
+# A autenticação é feita dentro de cada view via _require_auth() (JWT customizado
+# com claim customer_id) — ver customer_api/views.py. O DRF NÃO deve autenticar
+# globalmente: a JWTAuthentication do SimpleJWT espera um claim user_id + um
+# modelo de usuário Django, que este app não usa, e rejeitava todo token válido
+# ("token_not_valid"). SimpleJWT continua sendo usado só como biblioteca de tokens.
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": [
