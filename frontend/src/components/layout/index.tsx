@@ -24,7 +24,7 @@ function OfflineBanner() {
 }
 
 /* ─── Design tokens ─────────────────────────────────────── */
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const ACTIVE = BRAND;
 const IDLE   = '#9AA0A8';
 

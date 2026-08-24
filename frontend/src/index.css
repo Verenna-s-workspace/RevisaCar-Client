@@ -7,13 +7,13 @@
    DESIGN TOKENS — RevisaCar Customer App
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* Brand — RevisaCar Pro Red */
-  --brand:       #E5071A;
-  --brand-dark:  #C20617;
-  --brand-deep:  #8B0410;
-  --brand-light: #FF1A2E;
-  --brand-glow:  rgba(229, 7, 26, 0.18);
-  --brand-tint:  rgba(229, 7, 26, 0.06);
+  /* Brand — unificada com o app da oficina (#CC1400 "ferrari") */
+  --brand:       #CC1400;
+  --brand-dark:  #A01000;
+  --brand-deep:  #740C00;
+  --brand-light: #E01500;
+  --brand-glow:  rgba(204, 20, 0, 0.14);
+  --brand-tint:  rgba(204, 20, 0, 0.06);
 
   /* Backgrounds */
   --bg:          #F7F6F3;
@@ -46,9 +46,9 @@
   --warn-bg:     rgba(245, 158, 11, 0.08);
   --warn-border: rgba(245, 158, 11, 0.22);
 
-  --crit:        #E8190A;
-  --crit-bg:     rgba(232, 25, 10, 0.06);
-  --crit-border: rgba(232, 25, 10, 0.20);
+  --crit:        #CC1400;
+  --crit-bg:     rgba(204, 20, 0, 0.06);
+  --crit-border: rgba(204, 20, 0, 0.20);
 
   --info:        #1D4ED8;
   --info-bg:     rgba(29, 78, 216, 0.06);

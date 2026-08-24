@@ -71,8 +71,8 @@ function TextInput({
         className={`w-full px-4 py-3.5 rounded-xl border-[1.5px] text-sm font-medium text-text bg-white
                     outline-none transition-all placeholder:text-text-ghost font-sans
                     ${error
-                      ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(232,25,10,0.1)]'
-                      : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(232,25,10,0.1)]'
+                      ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(204,20,0,0.1)]'
+                      : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.1)]'
                     }`}
         {...props}
       />
@@ -427,7 +427,7 @@ export function AuthScreen() {
       {/* Background car silhouette — decorative */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute bottom-[30%] left-0 right-0 h-64
-                        bg-[radial-gradient(ellipse_at_center,_rgba(232,25,10,0.08)_0%,_transparent_70%)]" />
+                        bg-[radial-gradient(ellipse_at_center,_rgba(204,20,0,0.08)_0%,_transparent_70%)]" />
         <div className="absolute top-1/4 -right-20 w-80 h-80 rounded-full
                         bg-white/[0.015] blur-3xl" />
         <div className="absolute top-10 -left-10 w-52 h-52 rounded-full

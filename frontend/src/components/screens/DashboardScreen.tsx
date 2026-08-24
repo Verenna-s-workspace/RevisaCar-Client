@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 /* ─── Tokens ────────────────────────────────────────────── */
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';
@@ -142,7 +142,7 @@ export function DashboardScreen() {
 
         {/* Próxima ação */}
         <div className="rounded-[14px] p-4 flex items-center gap-3"
-             style={{ background: '#FDEAEC', border: `1px solid rgba(229,7,26,.12)` }}>
+             style={{ background: '#FDEAEC', border: `1px solid rgba(204,20,0,.12)` }}>
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
                style={{ background: BRAND }}>
             <Calendar size={17} color="#fff" />

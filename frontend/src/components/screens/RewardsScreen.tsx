@@ -1,7 +1,7 @@
 import { Gift, Users, Star } from 'lucide-react';
 import { MainLayout, Topbar } from '../layout';
 
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';

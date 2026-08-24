@@ -93,7 +93,7 @@ export function QRCodeScreen() {
             <div className="rounded-[24px] p-6 relative overflow-hidden"
                  style={{ background: 'linear-gradient(165deg,#23272F,#14161A 70%)' }}>
               <div style={{ position:'absolute', top:-50, right:-40, width:180, height:180, borderRadius:'50%',
-                            background:'radial-gradient(circle,rgba(229,7,26,.18),transparent 70%)' }} />
+                            background:'radial-gradient(circle,rgba(204,20,0,.18),transparent 70%)' }} />
 
               {/* Header */}
               <div className="flex items-center justify-between relative">

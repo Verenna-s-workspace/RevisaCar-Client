@@ -7,7 +7,7 @@ const BG     = '#F7F6F3';
 const CARD   = '#FFFFFF';
 const BORDER = '#E2DFD8';
 const GREEN  = '#18B26B';
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 
 const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun'];
 const VALUES = [310, 160, 0, 250, 420, 0];

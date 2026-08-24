@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
    RevisaCar Pro — shared design tokens & primitives
    ═══════════════════════════════════════════════ */
 export const C = {
-  brand:  '#E5071A',
+  brand:  '#CC1400',
   text:   '#14161A',
   text2:  '#23272F',
   text3:  '#3a3d44',

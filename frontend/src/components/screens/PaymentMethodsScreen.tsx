@@ -49,7 +49,7 @@ export function PaymentMethodsScreen() {
           <div className="rounded-[18px] p-5 relative overflow-hidden"
                style={{ background: 'linear-gradient(135deg,#1B1E25,#0E1014)', minHeight: 178 }}>
             <div style={{ position:'absolute', top:-40, right:-30, width:160, height:160, borderRadius:'50%',
-                          background:'radial-gradient(circle,rgba(229,7,26,.25),transparent 70%)' }} />
+                          background:'radial-gradient(circle,rgba(204,20,0,.25),transparent 70%)' }} />
             <div className="flex items-center justify-between relative">
               <span className="text-[13px] font-bold tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>VISA</span>
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"

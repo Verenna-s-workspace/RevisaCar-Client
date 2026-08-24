@@ -75,7 +75,7 @@ export function HistoryScreen() {
           <>
             {/* Próxima manutenção */}
             <div className="rounded-[16px] p-4 mb-4 flex items-center gap-3"
-                 style={{ background: '#FDEAEC', border: '1px solid rgba(229,7,26,.12)' }}>
+                 style={{ background: '#FDEAEC', border: '1px solid rgba(204,20,0,.12)' }}>
               <div className="flex flex-col items-center flex-none">
                 <span className="text-[9px] font-bold tracking-wide" style={{ color: C.brand }}>PRÓXIMA</span>
                 <span className="text-[15px] font-extrabold tabular" style={{ color: C.brand, fontFamily: FONT_HEAD }}>46.200</span>
