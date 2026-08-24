@@ -134,7 +134,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] mx-auto relative" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col w-full max-w-[430px] mx-auto relative overflow-x-hidden" style={{ background: 'var(--bg)' }}>
       <OfflineBanner />
       {topbar}
       <AnimatePresence mode="wait">
@@ -144,7 +144,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
           initial="initial"
           animate="animate"
           exit="exit"
-          className={showNav ? 'flex-1 overflow-y-auto pb-safe' : 'flex-1 overflow-y-auto pb-8'}
+          className={showNav ? 'flex-1 overflow-y-auto overflow-x-hidden pb-safe' : 'flex-1 overflow-y-auto overflow-x-hidden pb-8'}
         >
           {children}
         </motion.main>
@@ -157,7 +157,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
 /* ─── Auth Layout ───────────────────────────────────────── */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] mx-auto" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col w-full max-w-[430px] mx-auto overflow-x-hidden" style={{ background: 'var(--bg)' }}>
       {children}
     </div>
   );
