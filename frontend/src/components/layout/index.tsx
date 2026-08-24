@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Car, ChevronLeft, History, User, WifiOff } from 'lucide-react';
+import { Home, Car, ChevronLeft, FileText, Clock, User, WifiOff } from 'lucide-react';
 import { clsx } from 'clsx';
 
 /* ─── Offline banner ────────────────────────────── */
@@ -73,10 +73,11 @@ export function Topbar({ title, showBack, onBack, right }: TopbarProps) {
 
 /* ─── Bottom Nav — 4 items ──────────────────────────────── */
 const NAV = [
-  { to: '/',          icon: Home,    label: 'Início'   },
-  { to: '/veiculo',   icon: Car,     label: 'Veículo'  },
-  { to: '/historico', icon: History, label: 'Histórico'},
-  { to: '/perfil',    icon: User,    label: 'Perfil'   },
+  { to: '/',          icon: Home,     label: 'Início'  },
+  { to: '/historico', icon: FileText, label: 'Serviços'},
+  { to: '/agendar',   icon: Clock,    label: 'Agendar' },
+  { to: '/veiculo',   icon: Car,      label: 'Veículo' },
+  { to: '/perfil',    icon: User,     label: 'Perfil'  },
 ];
 
 export function BottomNav() {
@@ -101,7 +102,7 @@ export function BottomNav() {
           <NavLink
             key={to}
             to={to}
-            className="flex flex-col items-center gap-[3px] py-2 px-4 min-w-[60px]"
+            className="flex flex-col items-center gap-[3px] py-2 flex-1 min-w-0"
           >
             <Icon
               size={21}
