@@ -6,7 +6,6 @@ Tables: customers, customer_vehicles, appointments,
         vehicle_qr_links, vehicle_documents
 """
 from __future__ import annotations
-import os
 from django.conf import settings
 from supabase import create_client, Client
 
@@ -330,34 +329,29 @@ def _match_category(service_name: str) -> str:
     return "Geral"
 
 
-def get_vehicle_health(vehicle_id: str, customer_id: str) -> dict | None:
-    from .serializers import now_iso
+def compute_health(reminders: list[dict]) -> dict:
+    """Score de saúde do veículo a partir dos lembretes de manutenção.
 
-    vehicle = get_vehicle(vehicle_id, customer_id)
-    if not vehicle:
-        return None
-
-    reminders = list_vehicle_reminders(vehicle_id, customer_id)
-
-    # Compute overall score
+    Puro (sem IO) para ser testável: recebe a lista de lembretes e devolve
+    {overall_score, categories}. Sem lembretes → 100 com categorias padrão.
+    """
+    # Score geral: penaliza conforme urgência de cada lembrete, limitado a [0, 100].
     penalty = sum(_urgency_penalty(r.get("urgency", "ok")) for r in reminders)
     overall = max(0, min(100, 100 - penalty))
 
-    # Compute per-category scores
+    # Score por categoria.
     cat_scores: dict[str, list[int]] = {}
     for r in reminders:
         cat = _match_category(r.get("service_name", ""))
         score = max(0, 100 - _urgency_penalty(r.get("urgency", "ok")) * 2)
         cat_scores.setdefault(cat, []).append(score)
 
-    # Average per category, show top 6
     categories = [
         {"name": cat, "score": round(sum(scores) / len(scores)), "icon": "wrench"}
         for cat, scores in cat_scores.items()
     ]
     categories.sort(key=lambda x: x["score"])
 
-    # If no reminders, return perfect score with default categories
     if not categories:
         categories = [
             {"name": "Motor",     "score": 100, "icon": "engine"},
@@ -366,11 +360,23 @@ def get_vehicle_health(vehicle_id: str, customer_id: str) -> dict | None:
             {"name": "Suspensão", "score": 100, "icon": "car"},
         ]
 
+    return {"overall_score": overall, "categories": categories[:6]}
+
+
+def get_vehicle_health(vehicle_id: str, customer_id: str) -> dict | None:
+    from .serializers import now_iso
+
+    vehicle = get_vehicle(vehicle_id, customer_id)
+    if not vehicle:
+        return None
+
+    reminders = list_vehicle_reminders(vehicle_id, customer_id)
+    health = compute_health(reminders)
+
     return {
         "vehicle_id": vehicle_id,
-        "overall_score": overall,
-        "categories": categories[:6],
         "last_updated": now_iso(),
+        **health,
     }
 
 
