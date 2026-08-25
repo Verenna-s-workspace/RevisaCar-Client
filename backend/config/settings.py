@@ -109,4 +109,25 @@ MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
 STORAGE_PREFIX = os.getenv("STORAGE_PREFIX", "customer-docs")
 
+# ── E-mail (recuperação de senha) ─────────────────────────────────────────────
+# Em dev sem SMTP, usa o backend de console (imprime o e-mail no stdout).
+# Em produção defina EMAIL_HOST/USER/PASSWORD para enviar de verdade.
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend" if os.getenv("EMAIL_HOST")
+    else "django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "RevisaCar <nao-responder@revisacar.com>")
+
+# URL do app do cliente (usada no link de redefinição de senha).
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5174")
+
+# Tempo de vida do token de reset (15 min).
+RESET_TOKEN_LIFETIME_SECONDS = int(os.getenv("RESET_TOKEN_LIFETIME_SECONDS", "900"))
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

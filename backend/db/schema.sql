@@ -180,6 +180,26 @@ create table if not exists vehicle_documents (
 );
 create index if not exists idx_documents_customer on vehicle_documents (customer_id);
 
+-- ── Segurança: rate limiting (anti brute-force) ─────────────────────────────
+create table if not exists auth_rate_limit (
+  id          uuid primary key default gen_random_uuid(),
+  bucket      text not null,   -- e-mail (login/forgot)
+  kind        text not null,   -- 'login' | 'forgot'
+  created_at  double precision not null  -- epoch (segundos)
+);
+create index if not exists idx_rate_bucket_kind on auth_rate_limit (bucket, kind);
+
+-- ── Segurança: tokens de recuperação de senha (só o hash) ───────────────────
+create table if not exists password_reset_tokens (
+  token_hash  text primary key,
+  customer_id uuid references customers(id) on delete cascade,
+  email       text,
+  expires_at  double precision not null,
+  used        boolean default false,
+  created_at  timestamptz default now()
+);
+create index if not exists idx_reset_expires on password_reset_tokens (expires_at);
+
 -- ── Seed opcional: horários disponíveis para os próximos 30 dias ─────────────
 -- (08:00–17:00 de seg a sáb). Descomente para popular a agenda de exemplo.
 -- insert into availability_slots (date, time_slot, is_available)
