@@ -24,6 +24,7 @@ urlpatterns = [
     path("customer/dashboard",            views.dashboard,       name="dashboard"),
 
     # ── Vehicles ──────────────────────────────────────────────────────────────
+    path("customer/plate-lookup",                        views.plate_lookup,      name="plate-lookup"),
     path("customer/vehicles",                            views.vehicles_list,     name="vehicles-list"),
     path("customer/vehicles/<str:vehicle_id>",           views.vehicle_detail,    name="vehicle-detail"),
     path("customer/vehicles/<str:vehicle_id>/health",    views.vehicle_health,    name="vehicle-health"),

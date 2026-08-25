@@ -10,7 +10,7 @@ import type { Vehicle, VehicleFormData } from '../types';
 import {
   mockProfile, mockDashboard, mockVehicleStore, mockEstimateStore, cloneEstimate,
   makeAvailableDates, DEFAULT_TIMES, mockHistory, mockInspections, mockNotifStore,
-  mockHealth, mockDocuments,
+  mockHealth, mockDocuments, mockPlateDb,
 } from './data';
 
 const P = '*/customer';
@@ -39,6 +39,13 @@ export const handlers = [
   http.post(`${P}/vehicles/:id/qr/refresh`, ({ params }) => {
     const id = params.id as string;
     return HttpResponse.json({ uuid: `rc-${id}-${Date.now()}`, vehicle_id: id, created_at: new Date().toISOString(), is_active: true });
+  }),
+  // Consulta de placa (mock do provedor) — envelope {available, found, vehicle}.
+  http.get(`${P}/plate-lookup`, ({ request }) => {
+    const raw = new URL(request.url).searchParams.get('plate') ?? '';
+    const key = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const hit = mockPlateDb[key];
+    return HttpResponse.json({ available: true, found: !!hit, vehicle: hit ? { ...hit, plate: key } : null });
   }),
   http.get(`${P}/vehicles`, () => HttpResponse.json(mockVehicleStore.vehicles)),
   http.get(`${P}/vehicles/:id`, ({ params }) => {

@@ -110,6 +110,17 @@ export const dashboardApi = {
 
 // ── Vehicles ──────────────────────────────────────────────────────────────────
 
+export interface PlateLookupResult {
+  available: boolean;
+  found: boolean;
+  vehicle: (Partial<VehicleFormData> & { plate: string }) | null;
+}
+
+export const plateApi = {
+  // Consulta de placa (provedor externo). Envelope: {available, found, vehicle}.
+  lookup: (plate: string) => apiClient.get<PlateLookupResult>('/customer/plate-lookup', { params: { plate } }),
+};
+
 export const vehiclesApi = {
   list: () => apiClient.get<Vehicle[]>('/customer/vehicles'),
   get: (id: string) => apiClient.get<Vehicle>(`/customer/vehicles/${id}`),

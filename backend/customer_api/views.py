@@ -33,6 +33,9 @@ LOGIN_MAX_ATTEMPTS = 10
 LOGIN_WINDOW_SECONDS = 15 * 60
 FORGOT_MAX_ATTEMPTS = 5
 FORGOT_WINDOW_SECONDS = 60 * 60
+# Consulta de placa: limite por cliente p/ não queimar créditos do provedor.
+PLATE_MAX_ATTEMPTS = 20
+PLATE_WINDOW_SECONDS = 60 * 60
 
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
@@ -200,6 +203,39 @@ def logout(request):
     resp = Response({"detail": "Sessão encerrada"})
     resp.delete_cookie(settings.REFRESH_COOKIE_NAME, path=settings.REFRESH_COOKIE_PATH)
     return resp
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def plate_lookup(request):
+    """Pré-preenche marca/modelo/ano/cor a partir da placa (provedor externo).
+
+    Envelope 200: {available, found, vehicle}. `available=false` quando nenhum
+    provedor está configurado — o front cai no preenchimento manual sem erro.
+    Rate-limited por cliente para não queimar créditos do provedor.
+    """
+    from . import plate_lookup as pl
+
+    c, err = _require_auth(request)
+    if err:
+        return err
+
+    plate = (request.GET.get("plate") or "").strip()
+    if not plate:
+        return Response({"detail": "Placa obrigatória"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not pl.is_enabled():
+        return Response({"available": False, "found": False, "vehicle": None})
+
+    if not auth_store.is_allowed(c["id"], "plate", max_attempts=PLATE_MAX_ATTEMPTS, window_seconds=PLATE_WINDOW_SECONDS):
+        return Response(
+            {"detail": "Muitas consultas. Tente novamente mais tarde."},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+    auth_store.record_attempt(c["id"], "plate")
+
+    data = pl.lookup_plate(plate)
+    return Response({"available": True, "found": bool(data), "vehicle": data})
 
 
 def _send_reset_email(email: str, token: str):

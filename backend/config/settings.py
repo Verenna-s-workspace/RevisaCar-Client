@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -160,5 +161,21 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5174")
 
 # Tempo de vida do token de reset (15 min).
 RESET_TOKEN_LIFETIME_SECONDS = int(os.getenv("RESET_TOKEN_LIFETIME_SECONDS", "900"))
+
+# ── Consulta de placa (provedor externo, opcional) ────────────────────────────
+# Não há API DETRAN oficial gratuita — a consulta real exige provedor pago.
+# Fica desligada até PLATE_LOOKUP_URL ser definida (use {plate} como placeholder).
+# PLATE_LOOKUP_MAP mapeia campos da resposta do provedor (JSON), ex.:
+#   PLATE_LOOKUP_MAP='{"brand":"data.marca","model":"data.modelo","year":"data.ano"}'
+PLATE_LOOKUP_URL = os.getenv("PLATE_LOOKUP_URL", "")
+PLATE_LOOKUP_TOKEN = os.getenv("PLATE_LOOKUP_TOKEN", "")
+PLATE_LOOKUP_AUTH_HEADER = os.getenv("PLATE_LOOKUP_AUTH_HEADER", "Authorization")
+PLATE_LOOKUP_TIMEOUT = float(os.getenv("PLATE_LOOKUP_TIMEOUT", "6"))
+PLATE_LOOKUP_ROOT = os.getenv("PLATE_LOOKUP_ROOT", "")  # raiz opcional (ex.: "data")
+_pl_map = os.getenv("PLATE_LOOKUP_MAP", "")
+try:
+    PLATE_LOOKUP_MAP = json.loads(_pl_map) if _pl_map else None
+except (ValueError, TypeError):
+    PLATE_LOOKUP_MAP = None
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
