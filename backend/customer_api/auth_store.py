@@ -77,3 +77,34 @@ def mark_reset_token_used(token: str):
         models.PasswordResetToken.objects.filter(token_hash=hash_token(token)).update(used=True)
     except Exception as exc:
         logger.error("[reset] marcar usado falhou: %s", exc)
+
+
+# ── Tokens de verificação de e-mail ───────────────────────────────────────────
+
+def save_verification_token(token: str, *, customer_id: str, email: str, expires_at: float):
+    models.EmailVerificationToken.objects.create(
+        token_hash=hash_token(token),
+        customer_id=customer_id,
+        email=email,
+        expires_at=expires_at,
+        used=False,
+    )
+
+
+def get_valid_verification_token(token: str):
+    """Retorna {customer_id, email} se o token existe, não foi usado e não expirou."""
+    try:
+        row = models.EmailVerificationToken.objects.filter(token_hash=hash_token(token)).first()
+    except Exception as exc:
+        logger.error("[verify] leitura falhou: %s", exc)
+        return None
+    if not row or row.used or (row.expires_at or 0) < time.time():
+        return None
+    return {"customer_id": str(row.customer_id), "email": row.email}
+
+
+def mark_verification_token_used(token: str):
+    try:
+        models.EmailVerificationToken.objects.filter(token_hash=hash_token(token)).update(used=True)
+    except Exception as exc:
+        logger.error("[verify] marcar usado falhou: %s", exc)

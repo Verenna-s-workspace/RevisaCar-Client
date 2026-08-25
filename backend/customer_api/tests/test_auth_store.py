@@ -69,3 +69,17 @@ def test_reset_token_guardado_com_hash(customer):
 
 def test_reset_token_inexistente(db):
     assert auth_store.get_valid_reset_token("nao-existe") is None
+
+
+# ── Tokens de verificação de e-mail ───────────────────────────────────────────
+
+def test_verification_token_valido_depois_usado(customer):
+    auth_store.save_verification_token("vtok", customer_id=str(customer.id), email=customer.email, expires_at=time.time() + 100)
+    assert auth_store.get_valid_verification_token("vtok") == {"customer_id": str(customer.id), "email": customer.email}
+    auth_store.mark_verification_token_used("vtok")
+    assert auth_store.get_valid_verification_token("vtok") is None
+
+
+def test_verification_token_expirado(customer):
+    auth_store.save_verification_token("vtok", customer_id=str(customer.id), email=customer.email, expires_at=time.time() - 1)
+    assert auth_store.get_valid_verification_token("vtok") is None

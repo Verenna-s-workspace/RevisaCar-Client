@@ -7,6 +7,7 @@ import { useAuthStore } from './store/auth';
 /* ─── Lazy screens ──────────────────────────────────────── */
 const Auth            = lazy(() => import('./components/screens/AuthScreen').then(m => ({ default: m.AuthScreen })));
 const ResetPassword   = lazy(() => import('./components/screens/ResetPasswordScreen').then(m => ({ default: m.ResetPasswordScreen })));
+const VerifyEmail     = lazy(() => import('./components/screens/VerifyEmailScreen').then(m => ({ default: m.VerifyEmailScreen })));
 const Dashboard       = lazy(() => import('./components/screens/DashboardScreen').then(m => ({ default: m.DashboardScreen })));
 const Vehicles        = lazy(() => import('./components/screens/VehiclesScreen').then(m => ({ default: m.VehiclesScreen })));
 const VehicleDetail   = lazy(() => import('./components/screens/VehicleDetailScreen').then(m => ({ default: m.VehicleDetailScreen })));
@@ -90,6 +91,7 @@ function AppRouter() {
         <Route path="/login"    element={shouldBypassAuth ? <Navigate to="/" replace /> : <Auth />} />
         <Route path="/cadastro" element={shouldBypassAuth ? <Navigate to="/" replace /> : <Auth />} />
         <Route path="/recuperar-senha" element={<ResetPassword />} />
+        <Route path="/verificar-email" element={<VerifyEmail />} />
 
         {/* Core nav (4 items) */}
         <Route path="/"             element={<RequireAuth><Dashboard /></RequireAuth>} />

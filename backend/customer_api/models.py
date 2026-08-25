@@ -19,6 +19,7 @@ class Customer(models.Model):
     address = models.TextField(blank=True, default="")
     pwhash = models.CharField(max_length=255)
     avatar_url = models.URLField(null=True, blank=True)
+    email_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -232,3 +233,15 @@ class PasswordResetToken(models.Model):
 
     class Meta:
         db_table = "password_reset_tokens"
+
+
+class EmailVerificationToken(models.Model):
+    token_hash = models.CharField(max_length=64, primary_key=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, db_column="customer_id")
+    email = models.EmailField()
+    expires_at = models.FloatField()  # epoch (segundos)
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "email_verification_tokens"
