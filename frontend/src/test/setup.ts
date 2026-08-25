@@ -29,3 +29,12 @@ Object.defineProperty(globalThis, 'localStorage', {
   configurable: true,
   writable: true,
 });
+
+// MSW: mesma camada de mock do dev, disponível nos testes. Requisições não
+// mapeadas passam direto (bypass), então testes que não tocam rede não mudam.
+import { afterAll, afterEach, beforeAll } from 'vitest';
+import { server } from '../mocks/server';
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
