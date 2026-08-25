@@ -96,252 +96,167 @@ def update_customer(customer_id: str, data: dict):
 # ── Vehicles ──────────────────────────────────────────────────────────────────
 
 def list_vehicles(customer_id: str):
-    r = (
-        get_client().table("customer_vehicles")
-        .select("*")
-        .eq("customer_id", customer_id)
-        .eq("deleted", False)
-        .order("created_at", desc=True)
-        .execute()
-    )
-    return r.data or []
+    qs = models.CustomerVehicle.objects.filter(customer_id=customer_id, deleted=False).order_by("-created_at")
+    return [_row(v) for v in qs]
 
 
 def get_vehicle(vehicle_id: str, customer_id: str):
-    r = (
-        get_client().table("customer_vehicles")
-        .select("*")
-        .eq("id", vehicle_id)
-        .eq("customer_id", customer_id)
-        .eq("deleted", False)
-        .limit(1)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    return _row(models.CustomerVehicle.objects.filter(id=vehicle_id, customer_id=customer_id, deleted=False).first())
 
 
 def create_vehicle(data: dict):
-    r = get_client().table("customer_vehicles").insert(data).execute()
-    return r.data[0] if r.data else None
+    obj = models.CustomerVehicle.objects.create(**_clean(models.CustomerVehicle, data))
+    return _row(obj)
 
 
 def update_vehicle(vehicle_id: str, customer_id: str, data: dict):
-    r = (
-        get_client().table("customer_vehicles")
-        .update(data)
-        .eq("id", vehicle_id)
-        .eq("customer_id", customer_id)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    fields = _clean(models.CustomerVehicle, data)
+    fields.pop("id", None)
+    models.CustomerVehicle.objects.filter(id=vehicle_id, customer_id=customer_id).update(**fields)
+    return _row(models.CustomerVehicle.objects.filter(id=vehicle_id, customer_id=customer_id).first())
 
 
 def soft_delete_vehicle(vehicle_id: str, customer_id: str):
-    from .serializers import now_iso
-    r = (
-        get_client().table("customer_vehicles")
-        .update({"deleted": True, "updated_at": now_iso()})
-        .eq("id", vehicle_id)
-        .eq("customer_id", customer_id)
-        .execute()
-    )
-    return bool(r.data)
+    n = models.CustomerVehicle.objects.filter(id=vehicle_id, customer_id=customer_id).update(deleted=True)
+    return bool(n)
 
 
 # ── Appointments ──────────────────────────────────────────────────────────────
 
 def list_appointments(customer_id: str, status: str | None = None):
-    q = (
-        get_client().table("appointments")
-        .select("*")
-        .eq("customer_id", customer_id)
-        .order("date", desc=True)
-    )
+    qs = models.Appointment.objects.filter(customer_id=customer_id).order_by("-date")
     if status:
-        q = q.eq("status", status)
-    return q.execute().data or []
+        qs = qs.filter(status=status)
+    return [_row(a) for a in qs]
 
 
 def get_appointment(appointment_id: str, customer_id: str):
-    r = (
-        get_client().table("appointments")
-        .select("*")
-        .eq("id", appointment_id)
-        .eq("customer_id", customer_id)
-        .limit(1)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    return _row(models.Appointment.objects.filter(id=appointment_id, customer_id=customer_id).first())
 
 
 def create_appointment(data: dict):
-    r = get_client().table("appointments").insert(data).execute()
-    return r.data[0] if r.data else None
+    obj = models.Appointment.objects.create(**_clean(models.Appointment, data))
+    return _row(obj)
 
 
 def cancel_appointment(appointment_id: str, customer_id: str):
-    from .serializers import now_iso
-    r = (
-        get_client().table("appointments")
-        .update({"status": "cancelado", "updated_at": now_iso()})
-        .eq("id", appointment_id)
-        .eq("customer_id", customer_id)
-        .in_("status", ["pendente", "confirmado"])
-        .execute()
+    qs = models.Appointment.objects.filter(
+        id=appointment_id, customer_id=customer_id, status__in=["pendente", "confirmado"]
     )
-    return r.data[0] if r.data else None
+    if not qs.exists():
+        return None
+    qs.update(status="cancelado")
+    return _row(models.Appointment.objects.filter(id=appointment_id, customer_id=customer_id).first())
 
 
 # ── Availability ──────────────────────────────────────────────────────────────
 
 def get_available_slots(year: int, month: int):
     from datetime import date
-    start = date(year, month, 1).isoformat()
-    end = date(year + 1, 1, 1).isoformat() if month == 12 else date(year, month + 1, 1).isoformat()
-    r = (
-        get_client().table("availability_slots")
-        .select("*")
-        .gte("date", start)
-        .lt("date", end)
-        .eq("is_available", True)
-        .order("date")
-        .execute()
-    )
-    return r.data or []
+    start = date(year, month, 1)
+    end = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+    qs = models.AvailabilitySlot.objects.filter(
+        date__gte=start, date__lt=end, is_available=True
+    ).order_by("date")
+    return [_row(s) for s in qs]
 
 
 def get_available_times(date_str: str):
-    r = (
-        get_client().table("availability_slots")
-        .select("*")
-        .eq("date", date_str)
-        .eq("is_available", True)
-        .order("time_slot")
-        .execute()
-    )
-    return r.data or []
+    qs = models.AvailabilitySlot.objects.filter(date=date_str, is_available=True).order_by("time_slot")
+    return [_row(s) for s in qs]
 
 
 # ── Estimates ─────────────────────────────────────────────────────────────────
 
+def _estimate_row(est):
+    d = _row(est)
+    d["estimate_items"] = [_row(i) for i in est.items.all()]
+    return d
+
+
 def list_estimates(customer_id: str, status: str | None = None):
-    q = (
-        get_client().table("estimates")
-        .select("*, estimate_items(*)")
-        .eq("customer_id", customer_id)
-        .order("created_at", desc=True)
-    )
+    qs = models.Estimate.objects.filter(customer_id=customer_id).order_by("-created_at").prefetch_related("items")
     if status:
-        q = q.eq("status", status)
-    return q.execute().data or []
+        qs = qs.filter(status=status)
+    return [_estimate_row(e) for e in qs]
 
 
 def get_estimate(estimate_id: str, customer_id: str):
-    r = (
-        get_client().table("estimates")
-        .select("*, estimate_items(*)")
-        .eq("id", estimate_id)
-        .eq("customer_id", customer_id)
-        .limit(1)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    est = models.Estimate.objects.filter(id=estimate_id, customer_id=customer_id).prefetch_related("items").first()
+    return _estimate_row(est) if est else None
 
 
 def update_estimate_status(estimate_id: str, customer_id: str, new_status: str, comment: str = ""):
-    from .serializers import now_iso
-    data: dict = {"status": new_status, "updated_at": now_iso()}
+    fields: dict = {"status": new_status}
     if comment:
-        data["customer_comment"] = comment
-    r = (
-        get_client().table("estimates")
-        .update(data)
-        .eq("id", estimate_id)
-        .eq("customer_id", customer_id)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+        fields["customer_comment"] = comment
+    models.Estimate.objects.filter(id=estimate_id, customer_id=customer_id).update(**fields)
+    est = models.Estimate.objects.filter(id=estimate_id, customer_id=customer_id).prefetch_related("items").first()
+    return _estimate_row(est) if est else None
 
 
 # ── Service History ───────────────────────────────────────────────────────────
 
+def _history_row(h):
+    d = _row(h)
+    d["service_history_items"] = [_row(i) for i in h.items.all()]
+    return d
+
+
 def list_service_history(customer_id: str, vehicle_id: str | None = None):
-    q = (
-        get_client().table("service_history")
-        .select("*, service_history_items(*)")
-        .eq("customer_id", customer_id)
-        .order("service_date", desc=True)
-    )
+    qs = models.ServiceHistory.objects.filter(customer_id=customer_id).order_by("-service_date").prefetch_related("items")
     if vehicle_id:
-        q = q.eq("vehicle_id", vehicle_id)
-    return q.execute().data or []
+        qs = qs.filter(vehicle_id=vehicle_id)
+    return [_history_row(h) for h in qs]
 
 
 def get_service_history_item(history_id: str, customer_id: str):
-    r = (
-        get_client().table("service_history")
-        .select("*, service_history_items(*)")
-        .eq("id", history_id)
-        .eq("customer_id", customer_id)
-        .limit(1)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    h = models.ServiceHistory.objects.filter(id=history_id, customer_id=customer_id).prefetch_related("items").first()
+    return _history_row(h) if h else None
 
 
 # ── Notifications ─────────────────────────────────────────────────────────────
 
 def list_notifications(customer_id: str, unread_only: bool = False):
-    q = (
-        get_client().table("notifications")
-        .select("*")
-        .eq("customer_id", customer_id)
-        .order("created_at", desc=True)
-        .limit(50)
-    )
+    qs = models.Notification.objects.filter(customer_id=customer_id).order_by("-created_at")
     if unread_only:
-        q = q.eq("is_read", False)
-    return q.execute().data or []
+        qs = qs.filter(is_read=False)
+    return [_row(n) for n in qs[:50]]
 
 
 def mark_notification_read(notification_id: str, customer_id: str):
-    r = (
-        get_client().table("notifications")
-        .update({"is_read": True})
-        .eq("id", notification_id)
-        .eq("customer_id", customer_id)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    models.Notification.objects.filter(id=notification_id, customer_id=customer_id).update(is_read=True)
+    return _row(models.Notification.objects.filter(id=notification_id, customer_id=customer_id).first())
 
 
 def mark_all_notifications_read(customer_id: str):
-    get_client().table("notifications").update({"is_read": True}).eq("customer_id", customer_id).execute()
+    models.Notification.objects.filter(customer_id=customer_id).update(is_read=True)
 
 
 # ── Maintenance Reminders ─────────────────────────────────────────────────────
 
 def list_reminders(customer_id: str):
-    r = (
-        get_client().table("maintenance_reminders")
-        .select("*, customer_vehicles(brand, model, year, plate, mileage)")
-        .eq("customer_id", customer_id)
-        .order("urgency_score", desc=True)
-        .execute()
+    qs = (
+        models.MaintenanceReminder.objects
+        .filter(customer_id=customer_id).select_related("vehicle").order_by("-urgency_score")
     )
-    return r.data or []
+    out = []
+    for rem in qs:
+        d = _row(rem)
+        v = rem.vehicle
+        d["customer_vehicles"] = (
+            {"brand": v.brand, "model": v.model, "year": v.year, "plate": v.plate, "mileage": v.mileage}
+            if v else None
+        )
+        out.append(d)
+    return out
 
 
 def list_vehicle_reminders(vehicle_id: str, customer_id: str):
-    r = (
-        get_client().table("maintenance_reminders")
-        .select("*")
-        .eq("vehicle_id", vehicle_id)
-        .eq("customer_id", customer_id)
-        .order("urgency_score", desc=True)
-        .execute()
-    )
-    return r.data or []
+    qs = models.MaintenanceReminder.objects.filter(
+        vehicle_id=vehicle_id, customer_id=customer_id
+    ).order_by("-urgency_score")
+    return [_row(rem) for rem in qs]
 
 
 # ── Vehicle Health (computed) ─────────────────────────────────────────────────
@@ -422,58 +337,33 @@ def get_vehicle_health(vehicle_id: str, customer_id: str) -> dict | None:
 # ── QR Code ───────────────────────────────────────────────────────────────────
 
 def get_active_qr(vehicle_id: str, customer_id: str):
-    from datetime import datetime, timezone
-    r = (
-        get_client().table("vehicle_qr_links")
-        .select("*")
-        .eq("vehicle_id", vehicle_id)
-        .eq("customer_id", customer_id)
-        .eq("is_active", True)
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
+    from django.utils import timezone
+    qr = (
+        models.VehicleQrLink.objects
+        .filter(vehicle_id=vehicle_id, customer_id=customer_id, is_active=True)
+        .order_by("-created_at").first()
     )
-    if not r.data:
+    if not qr:
         return None
-    qr = r.data[0]
-    # Check expiry
-    expires = qr.get("expires_at")
-    if expires:
-        try:
-            exp_dt = datetime.fromisoformat(expires.replace("Z", "+00:00"))
-            if exp_dt < datetime.now(timezone.utc):
-                return None  # expired
-        except Exception:
-            pass
-    return qr
+    if qr.expires_at and qr.expires_at < timezone.now():
+        return None  # expirado
+    return _row(qr)
 
 
 def create_qr_link(vehicle_id: str, customer_id: str) -> dict:
     import uuid as _uuid
-    from .serializers import now_iso
-    from datetime import datetime, timedelta, timezone
+    from django.utils import timezone
+    from datetime import timedelta
 
-    # Deactivate old ones
-    (
-        get_client().table("vehicle_qr_links")
-        .update({"is_active": False})
-        .eq("vehicle_id", vehicle_id)
-        .eq("customer_id", customer_id)
-        .execute()
+    models.VehicleQrLink.objects.filter(vehicle_id=vehicle_id, customer_id=customer_id).update(is_active=False)
+    obj = models.VehicleQrLink.objects.create(
+        uuid=_uuid.uuid4(),
+        vehicle_id=vehicle_id,
+        customer_id=customer_id,
+        is_active=True,
+        expires_at=timezone.now() + timedelta(hours=24),
     )
-
-    expires = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
-    data = {
-        "id": str(_uuid.uuid4()),
-        "uuid": str(_uuid.uuid4()),
-        "vehicle_id": vehicle_id,
-        "customer_id": customer_id,
-        "is_active": True,
-        "created_at": now_iso(),
-        "expires_at": expires,
-    }
-    r = get_client().table("vehicle_qr_links").insert(data).execute()
-    return r.data[0] if r.data else data
+    return _row(obj)
 
 
 def get_or_create_qr(vehicle_id: str, customer_id: str) -> dict:
@@ -484,58 +374,41 @@ def get_or_create_qr(vehicle_id: str, customer_id: str) -> dict:
 
 
 def resolve_qr_uuid(uuid_str: str) -> dict | None:
-    """Public endpoint — resolve UUID to vehicle info (no PII)."""
-    r = (
-        get_client().table("vehicle_qr_links")
-        .select("*, customer_vehicles(brand, model, year, plate, color, fuel_type)")
-        .eq("uuid", uuid_str)
-        .eq("is_active", True)
-        .limit(1)
-        .execute()
+    """Endpoint público — resolve o UUID para info do veículo (sem PII)."""
+    qr = models.VehicleQrLink.objects.filter(uuid=uuid_str, is_active=True).select_related("vehicle").first()
+    if not qr:
+        return None
+    d = _row(qr)
+    v = qr.vehicle
+    d["customer_vehicles"] = (
+        {"brand": v.brand, "model": v.model, "year": v.year, "plate": v.plate,
+         "color": v.color, "fuel_type": v.fuel_type}
+        if v else None
     )
-    return r.data[0] if r.data else None
+    return d
 
 
 # ── Documents ─────────────────────────────────────────────────────────────────
 
 def list_documents(customer_id: str, vehicle_id: str | None = None):
-    q = (
-        get_client().table("vehicle_documents")
-        .select("*")
-        .eq("customer_id", customer_id)
-        .order("created_at", desc=True)
-    )
+    qs = models.VehicleDocument.objects.filter(customer_id=customer_id).order_by("-created_at")
     if vehicle_id:
-        q = q.eq("vehicle_id", vehicle_id)
-    return q.execute().data or []
+        qs = qs.filter(vehicle_id=vehicle_id)
+    return [_row(d) for d in qs]
 
 
 def get_document(doc_id: str, customer_id: str):
-    r = (
-        get_client().table("vehicle_documents")
-        .select("*")
-        .eq("id", doc_id)
-        .eq("customer_id", customer_id)
-        .limit(1)
-        .execute()
-    )
-    return r.data[0] if r.data else None
+    return _row(models.VehicleDocument.objects.filter(id=doc_id, customer_id=customer_id).first())
 
 
 def create_document(data: dict):
-    r = get_client().table("vehicle_documents").insert(data).execute()
-    return r.data[0] if r.data else None
+    obj = models.VehicleDocument.objects.create(**_clean(models.VehicleDocument, data))
+    return _row(obj)
 
 
 def delete_document(doc_id: str, customer_id: str) -> bool:
-    r = (
-        get_client().table("vehicle_documents")
-        .delete()
-        .eq("id", doc_id)
-        .eq("customer_id", customer_id)
-        .execute()
-    )
-    return bool(r.data)
+    n, _ = models.VehicleDocument.objects.filter(id=doc_id, customer_id=customer_id).delete()
+    return bool(n)
 
 
 def upload_document_file(bucket: str, path: str, file_bytes: bytes, content_type: str) -> str:
