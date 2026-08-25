@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Bell, ChevronRight, Calendar, FileText, QrCode, MapPin, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardApi } from '../../services/api';
+import { dashboardApi, healthApi } from '../../services/api';
 import { MainLayout } from '../layout';
 import { Skeleton } from '../ui';
 import { useAuthStore } from '../../store/auth';
@@ -78,12 +78,19 @@ export function DashboardScreen() {
   });
 
   const vehicle = dash?.active_vehicle;
-  const health  = dash?.health_score ?? 86;
-  const systems = [
-    { label: 'Óleo',   score: 65 },
-    { label: 'Freios', score: 90 },
-    { label: 'Pneus',  score: 77 },
-  ];
+
+  // Saúde real do veículo ativo (endpoint /vehicles/:id/health, calculado a
+  // partir dos lembretes de manutenção). Antes era um número fixo (86) com
+  // pills chumbados — dados fictícios para o dono do veículo.
+  const { data: healthData } = useQuery({
+    queryKey: ['vehicle-health', vehicle?.id],
+    queryFn: () => healthApi.get(vehicle!.id).then(r => r.data),
+    enabled: !!vehicle?.id,
+    staleTime: 30_000,
+  });
+
+  const health = healthData?.overall_score ?? dash?.health_score ?? 100;
+  const systems = (healthData?.categories ?? []).slice(0, 3).map(c => ({ label: c.name, score: c.score }));
 
   return (
     <MainLayout topbar={
