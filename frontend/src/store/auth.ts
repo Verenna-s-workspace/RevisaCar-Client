@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CustomerSession } from '../types';
+import { authApi } from '../services/api';
 
 // Bypass login for local development when VITE_BYPASS_LOGIN=true
 const BypassLogin = import.meta.env.VITE_BYPASS_LOGIN === 'true';
@@ -38,6 +39,7 @@ export const useAuthStore = create<AuthState>()(
         set({ session, isAuthenticated: true });
       },
       clearSession: () => {
+        authApi.logout(); // apaga o cookie httpOnly do refresh no servidor (best-effort)
         localStorage.removeItem('customer_session');
         set({ session: null, isAuthenticated: false });
       },

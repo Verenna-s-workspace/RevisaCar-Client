@@ -87,6 +87,8 @@ export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10_000,
+  // Envia/recebe o cookie httpOnly do refresh token (o JS nunca o lê — anti-XSS).
+  withCredentials: true,
 });
 
 // ── Attach JWT to every request ───────────────────────────────────────────────
@@ -118,7 +120,13 @@ apiClient.interceptors.response.use(
           const raw = localStorage.getItem('customer_session');
           if (raw) {
             const session: CustomerSession = JSON.parse(raw);
-            const { data } = await axios.post(`${BASE_URL}/customer/auth/refresh`, { refresh: session.refresh });
+            // O refresh token vem do cookie httpOnly (withCredentials). O corpo
+            // segue apenas como fallback para sessões antigas ainda no localStorage.
+            const { data } = await axios.post(
+              `${BASE_URL}/customer/auth/refresh`,
+              session.refresh ? { refresh: session.refresh } : {},
+              { withCredentials: true },
+            );
             session.access = data.access;
             localStorage.setItem('customer_session', JSON.stringify(session));
             orig.headers.Authorization = `Bearer ${data.access}`;
@@ -155,6 +163,9 @@ export const authApi = {
 
   resendVerification: (email: string) =>
     apiClient.post('/customer/auth/resend-verification', { email }),
+
+  logout: () =>
+    apiClient.post('/customer/auth/logout').catch(() => { /* limpar cookie é best-effort */ }),
 };
 
 // ── Profile ───────────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ urlpatterns = [
     path("customer/auth/register",        views.register,       name="register"),
     path("customer/auth/login",           views.login,          name="login"),
     path("customer/auth/refresh",         views.token_refresh,  name="token-refresh"),
+    path("customer/auth/logout",          views.logout,          name="logout"),
     path("customer/auth/forgot-password", views.forgot_password, name="forgot-password"),
     path("customer/auth/reset-password",  views.reset_password,  name="reset-password"),
     path("customer/auth/verify-email",    views.verify_email,    name="verify-email"),

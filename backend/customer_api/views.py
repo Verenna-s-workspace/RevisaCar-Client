@@ -51,6 +51,26 @@ def _make_tokens(customer_id: str, name: str) -> dict:
     }
 
 
+def _set_refresh_cookie(response, refresh_token: str):
+    """Guarda o refresh token num cookie httpOnly — o JS nunca o lê (anti-XSS)."""
+    response.set_cookie(
+        settings.REFRESH_COOKIE_NAME, refresh_token,
+        max_age=settings.REFRESH_COOKIE_MAX_AGE, httponly=True,
+        secure=settings.REFRESH_COOKIE_SECURE, samesite=settings.REFRESH_COOKIE_SAMESITE,
+        path=settings.REFRESH_COOKIE_PATH,
+    )
+    return response
+
+
+def _auth_response(body: dict, tokens: dict, status_code: int = status.HTTP_200_OK):
+    """Monta a resposta de auth: access no corpo, refresh só no cookie httpOnly."""
+    refresh = tokens.pop("refresh", None)
+    resp = Response({**tokens, **body}, status=status_code)
+    if refresh:
+        _set_refresh_cookie(resp, refresh)
+    return resp
+
+
 def _decode_bearer(request):
     auth = request.META.get("HTTP_AUTHORIZATION", "")
     if not auth.startswith("Bearer "):
@@ -116,9 +136,9 @@ def register(request):
 
     _issue_email_verification(cid, d["email"])
     tokens = _make_tokens(cid, d["name"])
-    return Response(
-        {**tokens, "customer": {"id": cid, "name": d["name"], "email": d["email"], "email_verified": False}},
-        status=status.HTTP_201_CREATED,
+    return _auth_response(
+        {"customer": {"id": cid, "name": d["name"], "email": d["email"], "email_verified": False}},
+        tokens, status.HTTP_201_CREATED,
     )
 
 
@@ -150,19 +170,19 @@ def login(request):
 
     auth_store.clear_attempts(email, "login")  # sucesso zera o contador
     tokens = _make_tokens(customer["id"], customer["name"])
-    return Response({
-        **tokens,
+    return _auth_response({
         "customer": {
             "id": customer["id"], "name": customer["name"], "email": customer["email"],
             "email_verified": customer.get("email_verified", False),
         },
-    })
+    }, tokens)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def token_refresh(request):
-    refresh_token = request.data.get("refresh")
+    # Prioriza o cookie httpOnly; body só como fallback (clientes antigos/curl).
+    refresh_token = request.COOKIES.get(settings.REFRESH_COOKIE_NAME) or request.data.get("refresh")
     if not refresh_token:
         return Response({"detail": "refresh token obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
     try:
@@ -171,6 +191,15 @@ def token_refresh(request):
         return Response({"access": str(token.access_token)})
     except Exception:
         return Response({"detail": "Sessão expirada. Faça login novamente."}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def logout(request):
+    """Encerra a sessão apagando o cookie httpOnly do refresh token."""
+    resp = Response({"detail": "Sessão encerrada"})
+    resp.delete_cookie(settings.REFRESH_COOKIE_NAME, path=settings.REFRESH_COOKIE_PATH)
+    return resp
 
 
 def _send_reset_email(email: str, token: str):

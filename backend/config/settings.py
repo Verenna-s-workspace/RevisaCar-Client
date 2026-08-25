@@ -69,6 +69,17 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# ── Refresh token via cookie httpOnly ──────────────────────────────────────────
+# O refresh token deixa de ser exposto ao JavaScript (proteção contra XSS): vai
+# num cookie httpOnly e o front nunca o lê. O access token (curto, 2h) continua
+# no corpo da resposta / memória. Para cross-site (front no Vercel, API no
+# Render), produção precisa de REFRESH_COOKIE_SAMESITE=None + REFRESH_COOKIE_SECURE=True.
+REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "revisacar_refresh")
+REFRESH_COOKIE_SAMESITE = os.getenv("REFRESH_COOKIE_SAMESITE", "Lax")
+REFRESH_COOKIE_SECURE = os.getenv("REFRESH_COOKIE_SECURE", str(not DEBUG)) == "True"
+REFRESH_COOKIE_PATH = os.getenv("REFRESH_COOKIE_PATH", "/api/customer/auth")
+REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 dias (== REFRESH_TOKEN_LIFETIME)
+
 # ── DRF ───────────────────────────────────────────────────────────────────────
 
 # A autenticação é feita dentro de cada view via _require_auth() (JWT customizado
