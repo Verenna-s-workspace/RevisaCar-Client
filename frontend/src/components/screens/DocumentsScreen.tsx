@@ -10,14 +10,16 @@ import { Skeleton } from '../ui';
 import { C, FullState, PrimaryBtn } from '../ui/pro';
 import type { VehicleDocument } from '../../types';
 
+// Tipos diferenciados pelo ÍCONE (forma), com acento único da marca — sem
+// tiles multicoloridos. O status (válido/vencido) segue colorido, pois é semântico.
 const TYPE_CFG: Record<string, { bg: string; color: string; Icon: any; label: string }> = {
-  crlv:        { bg: C.redBg,   color: C.brand,  Icon: Car,       label: 'CRLV' },
-  seguro:      { bg: C.infoBg,  color: C.info,   Icon: Shield,    label: 'Seguro' },
-  ipva:        { bg: '#FFF3D6', color: '#C98A00',Icon: Receipt,   label: 'IPVA' },
-  garantia:    { bg: C.greenBg, color: C.greenDk,Icon: FileCheck, label: 'Garantia' },
-  nota_fiscal: { bg: '#FFF3D6', color: '#C98A00',Icon: Receipt,   label: 'Nota fiscal' },
-  laudo:       { bg: C.bg,      color: C.muted,  Icon: FileText,  label: 'Laudo' },
-  outro:       { bg: C.bg,      color: C.muted,  Icon: FileText,  label: 'Documento' },
+  crlv:        { bg: C.borderSoft, color: C.brand, Icon: Car,       label: 'CRLV' },
+  seguro:      { bg: C.borderSoft, color: C.brand, Icon: Shield,    label: 'Seguro' },
+  ipva:        { bg: C.borderSoft, color: C.brand, Icon: Receipt,   label: 'IPVA' },
+  garantia:    { bg: C.borderSoft, color: C.brand, Icon: FileCheck, label: 'Garantia' },
+  nota_fiscal: { bg: C.borderSoft, color: C.brand, Icon: Receipt,   label: 'Nota fiscal' },
+  laudo:       { bg: C.borderSoft, color: C.muted, Icon: FileText,  label: 'Laudo' },
+  outro:       { bg: C.borderSoft, color: C.muted, Icon: FileText,  label: 'Documento' },
 };
 
 function statusOf(expiry?: string) {

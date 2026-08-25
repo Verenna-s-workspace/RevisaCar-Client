@@ -9,12 +9,13 @@ import { Skeleton } from '../ui';
 import { C, FONT_HEAD } from '../ui/pro';
 import type { Notification, NotificationType } from '../../types';
 
+// Tipo diferenciado pelo ÍCONE, com acento único da marca (sem tiles multicoloridos).
 const ICON_CFG: Record<NotificationType, { Icon: any; bg: string; color: string }> = {
-  agendamento: { Icon: CalendarCheck, bg: C.greenBg, color: C.greenDk },
-  orcamento:   { Icon: FileText,      bg: C.infoBg,  color: C.info },
-  lembrete:    { Icon: Clock,         bg: C.redBg,   color: C.brand },
-  servico:     { Icon: Wrench,        bg: '#FFF3D6', color: '#C98A00' },
-  sistema:     { Icon: Tag,           bg: C.bg,      color: C.muted },
+  agendamento: { Icon: CalendarCheck, bg: C.borderSoft, color: C.brand },
+  orcamento:   { Icon: FileText,      bg: C.borderSoft, color: C.brand },
+  lembrete:    { Icon: Clock,         bg: C.borderSoft, color: C.brand },
+  servico:     { Icon: Wrench,        bg: C.borderSoft, color: C.brand },
+  sistema:     { Icon: Tag,           bg: C.borderSoft, color: C.muted },
 };
 
 function NotifRow({ n, onClick }: { n: Notification; onClick: () => void }) {

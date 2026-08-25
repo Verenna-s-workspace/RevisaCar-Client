@@ -13,10 +13,11 @@ const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun'];
 const VALUES = [310, 160, 0, 250, 420, 0];
 const MAX = Math.max(...VALUES, 1);
 
+// Escala monocromática da marca (sem azul/amarelo destoando).
 const CATEGORIES = [
-  { label: 'Motor e óleo',         value: 470, color: BRAND    },
-  { label: 'Freios',               value: 420, color: '#2A6FDB'},
-  { label: 'Pneus e alinhamento',  value: 250, color: '#F4A724'},
+  { label: 'Motor e óleo',         value: 470, color: '#CC1400' },
+  { label: 'Freios',               value: 420, color: '#E0644F' },
+  { label: 'Pneus e alinhamento',  value: 250, color: '#F0A594' },
 ];
 const TOTAL = CATEGORIES.reduce((a, c) => a + c.value, 0);
 
@@ -30,7 +31,7 @@ export function CostAnalysisScreen() {
           <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: SUBTLE }}>
             Total em 2024
           </p>
-          <p className="text-[36px] font-black tabular" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+          <p className="text-[34px] font-black data-mono" style={{ color: TEXT }}>
             R$ {TOTAL.toLocaleString('pt-BR')}
           </p>
           <div className="flex items-center gap-1.5 mt-1">
@@ -77,7 +78,7 @@ export function CostAnalysisScreen() {
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />
                     <p className="text-[13px] font-semibold" style={{ color: TEXT }}>{c.label}</p>
                   </div>
-                  <p className="text-[13px] font-bold tabular" style={{ color: TEXT }}>
+                  <p className="text-[13px] font-bold data-mono" style={{ color: TEXT }}>
                     R$ {c.value.toLocaleString('pt-BR')}
                   </p>
                 </div>
