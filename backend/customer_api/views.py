@@ -114,9 +114,12 @@ def register(request):
     except Exception as exc:
         return _supabase_err(exc)
 
+    _issue_email_verification(cid, d["email"])
     tokens = _make_tokens(cid, d["name"])
-    return Response({**tokens, "customer": {"id": cid, "name": d["name"], "email": d["email"]}},
-                    status=status.HTTP_201_CREATED)
+    return Response(
+        {**tokens, "customer": {"id": cid, "name": d["name"], "email": d["email"], "email_verified": False}},
+        status=status.HTTP_201_CREATED,
+    )
 
 
 @api_view(["POST"])
@@ -149,7 +152,10 @@ def login(request):
     tokens = _make_tokens(customer["id"], customer["name"])
     return Response({
         **tokens,
-        "customer": {"id": customer["id"], "name": customer["name"], "email": customer["email"]},
+        "customer": {
+            "id": customer["id"], "name": customer["name"], "email": customer["email"],
+            "email_verified": customer.get("email_verified", False),
+        },
     })
 
 
@@ -183,6 +189,77 @@ def _send_reset_email(email: str, token: str):
         )
     except Exception as exc:
         logger.error("[reset] falha ao enviar e-mail para %s: %s", email, exc)
+
+
+VERIFY_TOKEN_LIFETIME_SECONDS = 24 * 60 * 60
+
+
+def _issue_email_verification(customer_id: str, email: str):
+    """Gera token de verificação, guarda (hash) e envia o e-mail com o link.
+    Best-effort: falha de e-mail não quebra o cadastro (usuário pode reenviar)."""
+    token = secrets.token_urlsafe(32)
+    link = f"{settings.FRONTEND_URL}/verificar-email?token={token}"
+    try:
+        auth_store.save_verification_token(
+            token, customer_id=customer_id, email=email,
+            expires_at=time.time() + VERIFY_TOKEN_LIFETIME_SECONDS,
+        )
+        send_mail(
+            subject="Confirme seu e-mail — RevisaCar",
+            message=(
+                "Bem-vindo ao RevisaCar!\n\n"
+                "Confirme seu e-mail para ativar todos os recursos da sua conta.\n\n"
+                f"Use o link abaixo (válido por 24 horas):\n{link}\n\n"
+                "Se não foi você, ignore este e-mail."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        logger.error("[verify] falha ao emitir verificação para %s: %s", email, exc)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def verify_email(request):
+    token = request.data.get("token", "")
+    if not token:
+        return Response({"detail": "Token obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+
+    record = auth_store.get_valid_verification_token(token)
+    if not record:
+        return Response({"detail": "Link inválido ou expirado. Solicite um novo."},
+                        status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        services.update_customer(record["customer_id"], {"email_verified": True, "updated_at": now_iso()})
+        auth_store.mark_verification_token_used(token)
+    except Exception as exc:
+        return _supabase_err(exc)
+    return Response({"detail": "E-mail confirmado com sucesso!"})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def resend_verification(request):
+    email = (request.data.get("email") or "").strip().lower()
+    if not email:
+        return Response({"detail": "E-mail obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not auth_store.is_allowed(email, "verify", max_attempts=FORGOT_MAX_ATTEMPTS, window_seconds=FORGOT_WINDOW_SECONDS):
+        return Response({"detail": "Muitas solicitações. Tente novamente mais tarde."},
+                        status=status.HTTP_429_TOO_MANY_REQUESTS)
+    auth_store.record_attempt(email, "verify")
+
+    try:
+        customer = services.get_customer_by_email(email)
+    except Exception:
+        customer = None
+    # Anti-enumeração: só reenvia se existir e ainda não verificado; resposta sempre igual.
+    if customer and not customer.get("email_verified"):
+        _issue_email_verification(customer["id"], email)
+
+    return Response({"detail": "Se houver uma conta não verificada, enviamos um novo link."})
 
 
 @api_view(["POST"])
@@ -276,6 +353,7 @@ def profile(request):
             "cpf": customer.get("cpf", ""),
             "address": customer.get("address", ""),
             "avatar_url": customer.get("avatar_url"),
+            "email_verified": customer.get("email_verified", False),
             "created_at": customer.get("created_at"),
         })
 

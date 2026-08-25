@@ -149,6 +149,12 @@ export const authApi = {
 
   resetPassword: (token: string, new_password: string, new_password_confirm: string) =>
     apiClient.post('/customer/auth/reset-password', { token, new_password, new_password_confirm }),
+
+  verifyEmail: (token: string) =>
+    apiClient.post('/customer/auth/verify-email', { token }),
+
+  resendVerification: (email: string) =>
+    apiClient.post('/customer/auth/resend-verification', { email }),
 };
 
 // ── Profile ───────────────────────────────────────────────────────────────────
