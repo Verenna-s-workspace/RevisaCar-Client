@@ -146,6 +146,9 @@ export const authApi = {
 
   forgotPassword: (email: string) =>
     apiClient.post('/customer/auth/forgot-password', { email }),
+
+  resetPassword: (token: string, new_password: string, new_password_confirm: string) =>
+    apiClient.post('/customer/auth/reset-password', { token, new_password, new_password_confirm }),
 };
 
 // ── Profile ───────────────────────────────────────────────────────────────────
