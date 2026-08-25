@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Car, ChevronLeft, History, User, WifiOff } from 'lucide-react';
+import { Home, Car, ChevronLeft, FileText, Clock, User, WifiOff } from 'lucide-react';
 import { clsx } from 'clsx';
 
 /* ─── Offline banner ────────────────────────────── */
@@ -24,7 +24,7 @@ function OfflineBanner() {
 }
 
 /* ─── Design tokens ─────────────────────────────────────── */
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const ACTIVE = BRAND;
 const IDLE   = '#9AA0A8';
 
@@ -73,10 +73,11 @@ export function Topbar({ title, showBack, onBack, right }: TopbarProps) {
 
 /* ─── Bottom Nav — 4 items ──────────────────────────────── */
 const NAV = [
-  { to: '/',          icon: Home,    label: 'Início'   },
-  { to: '/veiculo',   icon: Car,     label: 'Veículo'  },
-  { to: '/historico', icon: History, label: 'Histórico'},
-  { to: '/perfil',    icon: User,    label: 'Perfil'   },
+  { to: '/',          icon: Home,     label: 'Início'  },
+  { to: '/historico', icon: FileText, label: 'Serviços'},
+  { to: '/agendar',   icon: Clock,    label: 'Agendar' },
+  { to: '/veiculo',   icon: Car,      label: 'Veículo' },
+  { to: '/perfil',    icon: User,     label: 'Perfil'  },
 ];
 
 export function BottomNav() {
@@ -101,7 +102,7 @@ export function BottomNav() {
           <NavLink
             key={to}
             to={to}
-            className="flex flex-col items-center gap-[3px] py-2 px-4 min-w-[60px]"
+            className="flex flex-col items-center gap-[3px] py-2 flex-1 min-w-0"
           >
             <Icon
               size={21}
@@ -134,7 +135,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] mx-auto relative" style={{ background: 'var(--bg)' }}>
+    <div className="h-[100dvh] flex flex-col w-full max-w-[430px] mx-auto relative overflow-hidden" style={{ background: 'var(--bg)' }}>
       <OfflineBanner />
       {topbar}
       <AnimatePresence mode="wait">
@@ -144,7 +145,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
           initial="initial"
           animate="animate"
           exit="exit"
-          className={showNav ? 'flex-1 overflow-y-auto pb-safe' : 'flex-1 overflow-y-auto pb-8'}
+          className={showNav ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-safe' : 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-8'}
         >
           {children}
         </motion.main>
@@ -157,7 +158,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
 /* ─── Auth Layout ───────────────────────────────────────── */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] mx-auto" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col w-full max-w-[430px] mx-auto overflow-x-hidden" style={{ background: 'var(--bg)' }}>
       {children}
     </div>
   );

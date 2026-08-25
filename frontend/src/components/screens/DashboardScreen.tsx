@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Bell, ChevronRight, Calendar, FileText, QrCode, MapPin, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardApi } from '../../services/api';
+import { dashboardApi, healthApi } from '../../services/api';
 import { MainLayout } from '../layout';
 import { Skeleton } from '../ui';
 import { useAuthStore } from '../../store/auth';
@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 /* ─── Tokens ────────────────────────────────────────────── */
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';
@@ -35,9 +35,9 @@ function HealthArc({ score }: { score: number }) {
               fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"
               strokeDasharray={`${dash} ${total}`} />
         <text x={cx} y={cy-10} textAnchor="middle" fontSize="30" fontWeight="800"
-              fill={TEXT} fontFamily="'Sora',sans-serif">{score}</text>
+              fill={TEXT} fontFamily="var(--font-heading)">{score}</text>
         <text x={cx} y={cy+10} textAnchor="middle" fontSize="11" fontWeight="600"
-              fill={color} fontFamily="'Plus Jakarta Sans',sans-serif">{label}</text>
+              fill={color} fontFamily="'DM Sans',sans-serif">{label}</text>
       </svg>
       <p className="text-[10px] font-bold tracking-widest mt-0.5" style={{ color: SUBTLE }}>SAÚDE</p>
     </div>
@@ -59,10 +59,10 @@ function SystemPill({ label, score }: { label: string; score: number }) {
 
 /* ─── Quick Actions ─────────────────────────────────────── */
 const ACTIONS = [
-  { icon: Calendar, label: 'Agendar',    to: '/agendar',    bg: '#FDEAEC', ic: BRAND     },
-  { icon: FileText, label: 'Orçamentos', to: '/orcamentos', bg: '#EAF1FB', ic: '#2A6FDB' },
-  { icon: QrCode,   label: 'QR Code',    to: '/qr',         bg: '#E9F7EF', ic: '#18B26B' },
-  { icon: MapPin,   label: 'Oficinas',   to: '/historico',  bg: '#FFF3D6', ic: '#C98A00' },
+  { icon: Calendar, label: 'Agendar',    to: '/agendar'    },
+  { icon: FileText, label: 'Orçamentos', to: '/orcamentos' },
+  { icon: QrCode,   label: 'QR Code',    to: '/qr'         },
+  { icon: MapPin,   label: 'Oficinas',   to: '/historico'  },
 ];
 
 /* ─── Dashboard ─────────────────────────────────────────── */
@@ -78,12 +78,19 @@ export function DashboardScreen() {
   });
 
   const vehicle = dash?.active_vehicle;
-  const health  = dash?.health_score ?? 86;
-  const systems = [
-    { label: 'Óleo',   score: 65 },
-    { label: 'Freios', score: 90 },
-    { label: 'Pneus',  score: 77 },
-  ];
+
+  // Saúde real do veículo ativo (endpoint /vehicles/:id/health, calculado a
+  // partir dos lembretes de manutenção). Antes era um número fixo (86) com
+  // pills chumbados — dados fictícios para o dono do veículo.
+  const { data: healthData } = useQuery({
+    queryKey: ['vehicle-health', vehicle?.id],
+    queryFn: () => healthApi.get(vehicle!.id).then(r => r.data),
+    enabled: !!vehicle?.id,
+    staleTime: 30_000,
+  });
+
+  const health = healthData?.overall_score ?? dash?.health_score ?? 100;
+  const systems = (healthData?.categories ?? []).slice(0, 3).map(c => ({ label: c.name, score: c.score }));
 
   return (
     <MainLayout topbar={
@@ -91,7 +98,7 @@ export function DashboardScreen() {
               style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
         <div>
           <p className="text-[11px] font-medium" style={{ color: SUBTLE }}>Bem-vindo de volta</p>
-          <p className="text-[16px] font-bold" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[16px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Olá, {firstName}
           </p>
         </div>
@@ -114,10 +121,10 @@ export function DashboardScreen() {
           <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-bold text-[17px]" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+                <p className="font-bold text-[17px]" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
                   {vehicle.brand} {vehicle.model}
                 </p>
-                <p className="text-[12px] mt-0.5 font-medium" style={{ color: MUTED }}>
+                <p className="text-[12px] mt-0.5 font-medium data-mono" style={{ color: MUTED }}>
                   {vehicle.plate} · {vehicle.fuel_type} · {vehicle.mileage?.toLocaleString('pt-BR')} km
                 </p>
               </div>
@@ -142,7 +149,7 @@ export function DashboardScreen() {
 
         {/* Próxima ação */}
         <div className="rounded-[14px] p-4 flex items-center gap-3"
-             style={{ background: '#FDEAEC', border: `1px solid rgba(229,7,26,.12)` }}>
+             style={{ background: '#FDEAEC', border: `1px solid rgba(204,20,0,.12)` }}>
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
                style={{ background: BRAND }}>
             <Calendar size={17} color="#fff" />
@@ -159,15 +166,16 @@ export function DashboardScreen() {
           </button>
         </div>
 
-        {/* Quick actions */}
-        <div className="grid grid-cols-4 gap-3">
-          {ACTIONS.map(({ icon: Icon, label, to, bg, ic }) => (
-            <button key={label} onClick={() => navigate(to)} className="flex flex-col items-center gap-2">
-              <div className="w-[58px] h-[58px] rounded-[16px] flex items-center justify-center"
-                   style={{ background: bg }}>
-                <Icon size={22} color={ic} strokeWidth={1.8} />
+        {/* Quick actions — paleta restrita, um único acento (marca) */}
+        <div className="grid grid-cols-4 gap-2.5">
+          {ACTIONS.map(({ icon: Icon, label, to }) => (
+            <button key={label} onClick={() => navigate(to)}
+                    className="flex flex-col items-center gap-2 press">
+              <div className="w-full aspect-square rounded-[18px] flex items-center justify-center"
+                   style={{ background: CARD, border: `1px solid ${BORDER}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                <Icon size={21} color={BRAND} strokeWidth={1.9} />
               </div>
-              <span className="text-[10.5px] font-semibold" style={{ color: MUTED }}>{label}</span>
+              <span className="text-[11px] font-semibold" style={{ color: TEXT }}>{label}</span>
             </button>
           ))}
         </div>
@@ -175,7 +183,7 @@ export function DashboardScreen() {
         {/* Atividade recente */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+            <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
               Atividade recente
             </p>
             <button onClick={() => navigate('/historico')} className="flex items-center gap-1">
@@ -210,7 +218,7 @@ export function DashboardScreen() {
                     </p>
                   </div>
                   {s.total_cost && (
-                    <span className="text-[13px] font-bold tabular" style={{ color: TEXT }}>
+                    <span className="text-[13px] font-bold data-mono" style={{ color: TEXT }}>
                       R$ {s.total_cost.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                     </span>
                   )}

@@ -2,7 +2,7 @@ import { MessageCircle, CheckCircle2, Circle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout, Topbar } from '../layout';
 
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';
@@ -33,7 +33,7 @@ export function ServiceTrackingScreen() {
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
                   style={{ background: '#FFF3D6', color: '#C98A00' }}>Em andamento</span>
           </div>
-          <p className="font-bold text-[16px] mb-3" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="font-bold text-[16px] mb-3" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Troca de óleo e filtros
           </p>
 
@@ -52,7 +52,7 @@ export function ServiceTrackingScreen() {
 
         {/* Timeline */}
         <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Progresso
           </p>
           <div className="flex flex-col gap-0">

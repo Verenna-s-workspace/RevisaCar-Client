@@ -4,20 +4,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand:   { DEFAULT:'#E8190A', dark:'#C71508', deep:'#8B0E05', light:'#FF2D1A' },
-        bg:      { DEFAULT:'#FFFFFF', alt:'#F7F7F7' },
-        surface: { DEFAULT:'#FFFFFF', 2:'#F7F7F7', 3:'#EFEFEF' },
-        border:  { DEFAULT:'#EBEBEB', md:'#D9D9D9', hi:'#C4C4C4' },
-        text:    { DEFAULT:'#1A1A1A', 2:'#333333', 3:'#555555', muted:'#888888', subtle:'#AAAAAA', ghost:'#CCCCCC' },
+        // Vermelho da marca unificado com o app da oficina (#CC1400 "ferrari").
+        brand:   { DEFAULT:'#CC1400', dark:'#A01000', deep:'#740C00', light:'#E01500' },
+        bg:      { DEFAULT:'#FFFFFF', alt:'#F7F6F3' },
+        surface: { DEFAULT:'#FFFFFF', 2:'#F7F6F3', 3:'#EFEDE8' },
+        border:  { DEFAULT:'#E2DFD8', md:'#C7C3BA', hi:'#A8AEB6' },
+        text:    { DEFAULT:'#14161A', 2:'#23272F', 3:'#3a3d44', muted:'#6B7078', subtle:'#9AA0A8', ghost:'#B6BAC0' },
         ok:      { DEFAULT:'#16803C', mid:'#22C55E', bg:'rgba(22,128,60,0.07)', border:'rgba(22,128,60,0.2)' },
         warn:    { DEFAULT:'#92400E', mid:'#F59E0B', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.22)' },
-        crit:    { DEFAULT:'#E8190A', bg:'rgba(232,25,10,0.06)',                  border:'rgba(232,25,10,0.2)' },
+        crit:    { DEFAULT:'#CC1400', bg:'rgba(204,20,0,0.06)',                  border:'rgba(204,20,0,0.2)' },
         info:    { DEFAULT:'#1D4ED8', bg:'rgba(29,78,216,0.06)',                  border:'rgba(29,78,216,0.18)' },
         dark:    { DEFAULT:'#111111', 2:'#1A1A1A', 3:'#222222' },
       },
       fontFamily: {
-        sans: ['"Inter"', '"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        logo: ['"Inter"', 'sans-serif'],
+        sans: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['"DM Mono"', '"JetBrains Mono"', 'Menlo', 'monospace'],
+        logo: ['"Fredoka"', '"DM Sans"', 'cursive'],
       },
       borderRadius: { xs:'4px', sm:'8px', md:'12px', lg:'16px', xl:'22px', '2xl':'28px' },
       boxShadow: {

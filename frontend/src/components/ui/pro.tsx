@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
    RevisaCar Pro — shared design tokens & primitives
    ═══════════════════════════════════════════════ */
 export const C = {
-  brand:  '#E5071A',
+  brand:  '#CC1400',
   text:   '#14161A',
   text2:  '#23272F',
   text3:  '#3a3d44',
@@ -25,7 +25,7 @@ export const C = {
   infoBg: '#EAF1FB',
 };
 
-export const FONT_HEAD = "'Sora', sans-serif";
+export const FONT_HEAD = "var(--font-heading)";
 
 /* ─── Vehicle health helpers ────────────────────── */
 const HEALTH_MAP: Record<string, number> = { v1: 86, v2: 68, v3: 78 };
@@ -51,7 +51,7 @@ export function HealthRing({ score, size = 46 }: { score: number; size?: number 
       <circle cx={cx} cy={cx} r={r} fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round"
               strokeDasharray={`${(score/100)*circ} ${circ}`} transform={`rotate(-90 ${cx} ${cx})`} />
       <text x={cx} y={cx + 4} textAnchor="middle" fontSize={size * 0.3} fontWeight="800"
-            fill={C.text} fontFamily="'Sora',sans-serif">{score}</text>
+            fill={C.text} fontFamily="var(--font-heading)">{score}</text>
     </svg>
   );
 }

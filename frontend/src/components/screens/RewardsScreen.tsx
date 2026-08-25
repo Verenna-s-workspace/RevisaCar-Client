@@ -1,7 +1,7 @@
-import { Gift, Users, Star } from 'lucide-react';
+import { Users, Star, Droplet, Wrench } from 'lucide-react';
 import { MainLayout, Topbar } from '../layout';
 
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';
@@ -11,9 +11,9 @@ const BORDER = '#E2DFD8';
 const GOLD   = '#C98A00';
 
 const REWARDS = [
-  { label: 'Troca de óleo grátis', pts: 800, icon: '🛢️' },
-  { label: 'Alinhamento grátis',   pts: 600, icon: '🔧' },
-  { label: 'Indique e ganhe',      pts: 300, icon: '👥', sub: 'Por cada amigo que fizer o 1º serviço.' },
+  { label: 'Troca de óleo grátis', pts: 800, Icon: Droplet },
+  { label: 'Alinhamento grátis',   pts: 600, Icon: Wrench },
+  { label: 'Indique e ganhe',      pts: 300, Icon: Users, sub: 'Por cada amigo que fizer o 1º serviço.' },
 ];
 
 const POINTS = 1250;
@@ -31,7 +31,7 @@ export function RewardsScreen() {
           <p className="text-[11px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,.5)' }}>
             SEUS PONTOS
           </p>
-          <p className="text-[48px] font-black tabular" style={{ color: '#fff', fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[46px] font-black data-mono" style={{ color: '#fff' }}>
             {POINTS.toLocaleString('pt-BR')}
           </p>
           <div className="flex items-center gap-2 mt-1">
@@ -56,7 +56,7 @@ export function RewardsScreen() {
 
         {/* Trocar pontos header */}
         <div className="flex items-center justify-between">
-          <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "'Sora',sans-serif" }}>
+          <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Trocar pontos
           </p>
         </div>
@@ -66,9 +66,9 @@ export function RewardsScreen() {
           {REWARDS.map(r => (
             <div key={r.label} className="rounded-[14px] p-4 flex items-center gap-3"
                  style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-              <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-none text-[22px]"
+              <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-none"
                    style={{ background: BG }}>
-                {r.icon}
+                <r.Icon size={20} color={BRAND} strokeWidth={1.9} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-[14px]" style={{ color: TEXT }}>{r.label}</p>

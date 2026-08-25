@@ -91,12 +91,13 @@ function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id
 }
 
 /* ─── Services ──────────────────────────────────────────── */
+// Paleta restrita: fundo neutro + ícone no acento da marca (sem arco-íris).
 const SERVICES = [
-  { id: 'oleo',        name: 'Troca de Óleo e Filtros',        desc: 'Óleo motor + filtro de óleo + filtro de ar',  icon: Gauge,    bg: 'bg-crit-bg',     ic: 'text-crit'     },
-  { id: 'revisao',     name: 'Revisão Geral',                  desc: 'Inspeção completa de 50+ itens do veículo',   icon: Wrench,   bg: 'bg-info-bg',     ic: 'text-info'     },
-  { id: 'freios',      name: 'Revisão dos Freios',             desc: 'Pastilhas, discos, fluido e sistema ABS',     icon: RotateCcw,bg: 'bg-warn-bg',     ic: 'text-warn'     },
-  { id: 'alinhamento', name: 'Alinhamento e Balanceamento',    desc: 'Geometria e equilíbrio das rodas',            icon: Zap,      bg: 'bg-ok-bg',       ic: 'text-ok'       },
-  { id: 'ar',          name: 'Manutenção do Ar-condicionado',  desc: 'Higienização, carga de gás e filtros',        icon: Wind,     bg: 'bg-surface-3',   ic: 'text-text-muted' },
+  { id: 'oleo',        name: 'Troca de Óleo e Filtros',        desc: 'Óleo motor + filtro de óleo + filtro de ar',  icon: Gauge,    bg: 'bg-surface-3',   ic: 'text-brand'      },
+  { id: 'revisao',     name: 'Revisão Geral',                  desc: 'Inspeção completa de 50+ itens do veículo',   icon: Wrench,   bg: 'bg-surface-3',   ic: 'text-brand'      },
+  { id: 'freios',      name: 'Revisão dos Freios',             desc: 'Pastilhas, discos, fluido e sistema ABS',     icon: RotateCcw,bg: 'bg-surface-3',   ic: 'text-brand'      },
+  { id: 'alinhamento', name: 'Alinhamento e Balanceamento',    desc: 'Geometria e equilíbrio das rodas',            icon: Zap,      bg: 'bg-surface-3',   ic: 'text-brand'      },
+  { id: 'ar',          name: 'Manutenção do Ar-condicionado',  desc: 'Higienização, carga de gás e filtros',        icon: Wind,     bg: 'bg-surface-3',   ic: 'text-brand'      },
   { id: 'outro',       name: 'Outro serviço',                  desc: 'Descreva o que seu veículo precisa',          icon: Plus,     bg: 'bg-surface-3',   ic: 'text-text-muted' },
 ];
 

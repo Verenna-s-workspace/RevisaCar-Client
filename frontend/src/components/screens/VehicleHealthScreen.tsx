@@ -5,7 +5,7 @@ import { dashboardApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
 
-const BRAND  = '#E5071A';
+const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';
@@ -43,9 +43,9 @@ function BigArc({ score }: { score: number }) {
               fill="none" stroke={color} strokeWidth="11" strokeLinecap="round"
               strokeDasharray={`${dash} ${total}`} />
         <text x={cx} y={cy-16} textAnchor="middle" fontSize="40" fontWeight="800"
-              fill={TEXT} fontFamily="'Sora',sans-serif">{score}</text>
+              fill={TEXT} fontFamily="var(--font-heading)">{score}</text>
         <text x={cx} y={cy+8} textAnchor="middle" fontSize="13" fontWeight="600"
-              fill={color} fontFamily="'Plus Jakarta Sans',sans-serif">{label}</text>
+              fill={color} fontFamily="'DM Sans',sans-serif">{label}</text>
       </svg>
       <p className="text-[11px] font-bold tracking-widest" style={{ color: SUBTLE }}>SAÚDE DO VEÍCULO</p>
       <p className="text-[12px] mt-1.5 text-center px-8" style={{ color: MUTED }}>

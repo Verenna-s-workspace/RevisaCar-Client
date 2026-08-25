@@ -57,7 +57,7 @@ export function InspectionReportScreen() {
                   <circle cx="32" cy="32" r="27" fill="none" stroke={C.border} strokeWidth="6" />
                   <circle cx="32" cy="32" r="27" fill="none" stroke={healthColor(insp.overall_score)} strokeWidth="6" strokeLinecap="round"
                           strokeDasharray={`${(insp.overall_score/100)*2*Math.PI*27} ${2*Math.PI*27}`} transform="rotate(-90 32 32)" />
-                  <text x="32" y="38" textAnchor="middle" fontSize="19" fontWeight="800" fill={C.text} fontFamily="'Sora',sans-serif">{insp.overall_score}</text>
+                  <text x="32" y="38" textAnchor="middle" fontSize="19" fontWeight="800" fill={C.text} fontFamily="var(--font-heading)">{insp.overall_score}</text>
                 </svg>
               </div>
               <div className="flex-1 min-w-0">

@@ -3,6 +3,7 @@ Customer API views — all endpoints under /api/customer/
 JWT required for all except auth + public QR resolve.
 """
 from __future__ import annotations
+import logging
 import jwt as pyjwt
 from datetime import datetime
 from django.conf import settings
@@ -20,6 +21,8 @@ from .serializers import (
     pw_hash, pw_check, new_id, now_iso,
 )
 from . import services
+
+logger = logging.getLogger(__name__)
 
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
@@ -58,7 +61,11 @@ def _require_auth(request):
     return c, None
 
 
-def _supabase_err(detail: str = "Erro interno do servidor"):
+def _supabase_err(exc=None, detail: str = "Serviço temporariamente indisponível"):
+    """Loga a exceção real no servidor e devolve uma mensagem genérica — nunca
+    expõe detalhes internos (stack, credenciais em URLs, etc.) ao cliente."""
+    if exc is not None:
+        logger.error("Erro no acesso ao Supabase: %s", exc, exc_info=True)
     return Response({"detail": detail}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
@@ -95,7 +102,7 @@ def register(request):
             "updated_at": now_iso(),
         })
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     tokens = _make_tokens(cid, d["name"])
     return Response({**tokens, "customer": {"id": cid, "name": d["name"], "email": d["email"]}},
@@ -113,7 +120,7 @@ def login(request):
     try:
         customer = services.get_customer_by_email(d["email"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     if not customer or not pw_check(d["password"], customer.get("pwhash", "")):
         return Response({"detail": "E-mail ou senha incorretos"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -135,8 +142,8 @@ def token_refresh(request):
         from rest_framework_simplejwt.tokens import RefreshToken as RT
         token = RT(refresh_token)
         return Response({"access": str(token.access_token)})
-    except Exception as e:
-        return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+    except Exception:
+        return Response({"detail": "Sessão expirada. Faça login novamente."}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(["POST"])
@@ -163,7 +170,7 @@ def profile(request):
     try:
         customer = services.get_customer_by_id(c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     if not customer:
         return Response({"detail": "Cliente não encontrado"}, status=status.HTTP_404_NOT_FOUND)
@@ -187,9 +194,20 @@ def profile(request):
     try:
         updated = services.update_customer(c["id"], {**s.validated_data, "updated_at": now_iso()})
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
-    return Response(updated)
+    updated = updated or {}
+    # Nunca devolver pwhash (nem outros campos sensíveis) ao cliente.
+    return Response({
+        "id": updated.get("id"),
+        "name": updated.get("name"),
+        "email": updated.get("email"),
+        "phone": updated.get("phone", ""),
+        "cpf": updated.get("cpf", ""),
+        "address": updated.get("address", ""),
+        "avatar_url": updated.get("avatar_url"),
+        "created_at": updated.get("created_at"),
+    })
 
 
 @api_view(["POST"])
@@ -205,7 +223,7 @@ def change_password(request):
     try:
         customer = services.get_customer_by_id(c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     if not pw_check(s.validated_data["old_password"], customer.get("pwhash", "")):
         return Response({"detail": "Senha atual incorreta"}, status=status.HTTP_400_BAD_REQUEST)
@@ -216,7 +234,7 @@ def change_password(request):
             "updated_at": now_iso(),
         })
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     return Response({"detail": "Senha alterada com sucesso"})
 
@@ -233,7 +251,7 @@ def dashboard(request):
     try:
         summary = services.get_dashboard_summary(c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
     return Response(summary)
 
 
@@ -267,7 +285,7 @@ def vehicles_list(request):
         })
         return Response(vehicle, status=status.HTTP_201_CREATED)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
@@ -295,7 +313,7 @@ def vehicle_detail(request, vehicle_id: str):
         updated = services.update_vehicle(vehicle_id, c["id"], {**s.validated_data, "updated_at": now_iso()})
         return Response(updated)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -312,7 +330,7 @@ def vehicle_health(request, vehicle_id: str):
     try:
         health = services.get_vehicle_health(vehicle_id, c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     if health is None:
         return Response({"detail": "Veículo não encontrado"}, status=status.HTTP_404_NOT_FOUND)
@@ -338,7 +356,7 @@ def vehicle_qr(request, vehicle_id: str):
     try:
         qr = services.get_or_create_qr(vehicle_id, c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     return Response(qr)
 
@@ -357,7 +375,7 @@ def vehicle_qr_refresh(request, vehicle_id: str):
     try:
         qr = services.create_qr_link(vehicle_id, c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     return Response(qr, status=status.HTTP_201_CREATED)
 
@@ -369,7 +387,7 @@ def qr_resolve(request, uuid_str: str):
     try:
         result = services.resolve_qr_uuid(uuid_str)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     if not result:
         return Response({"detail": "QR Code inválido ou expirado"}, status=status.HTTP_404_NOT_FOUND)
@@ -405,7 +423,7 @@ def documents_list(request):
         try:
             docs = services.list_documents(c["id"], vehicle_id=vehicle_id)
         except Exception as exc:
-            return _supabase_err(str(exc))
+            return _supabase_err(exc)
         return Response(docs)
 
     # POST — upload document
@@ -449,7 +467,7 @@ def documents_list(request):
     try:
         doc = services.create_document(doc_data)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
     return Response(doc, status=status.HTTP_201_CREATED)
 
@@ -472,7 +490,7 @@ def document_detail(request, doc_id: str):
         services.delete_document(doc_id, c["id"])
         return Response({"detail": "Documento removido"})
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -515,7 +533,7 @@ def appointments_list(request):
         })
         return Response(appt, status=status.HTTP_201_CREATED)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 @api_view(["GET", "DELETE"])
@@ -537,7 +555,7 @@ def appointment_detail(request, appointment_id: str):
             return Response({"detail": "Não foi possível cancelar"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": "Agendamento cancelado"})
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -552,7 +570,7 @@ def available_days(request):
     try:
         slots = services.get_available_slots(year, month)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
     available_dates = sorted({s["date"] for s in slots})
     return Response({"year": year, "month": month, "available_dates": available_dates})
 
@@ -566,7 +584,7 @@ def available_times(request):
     try:
         slots = services.get_available_times(date_str)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
     return Response({"date": date_str, "times": [s["time_slot"] for s in slots]})
 
 
@@ -583,7 +601,7 @@ def estimates_list(request):
         status_filter = request.query_params.get("status")
         return Response(services.list_estimates(c["id"], status=status_filter))
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 @api_view(["GET", "POST"])
@@ -613,7 +631,7 @@ def estimate_detail(request, estimate_id: str):
         )
         return Response(updated)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -629,7 +647,7 @@ def history_list(request):
         vehicle_id = request.query_params.get("vehicle_id")
         return Response(services.list_service_history(c["id"], vehicle_id=vehicle_id))
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 @api_view(["GET"])
@@ -643,7 +661,7 @@ def history_detail(request, history_id: str):
             return Response({"detail": "Serviço não encontrado"}, status=status.HTTP_404_NOT_FOUND)
         return Response(item)
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -659,7 +677,7 @@ def notifications_list(request):
         unread_only = request.query_params.get("unread", "false").lower() == "true"
         return Response(services.list_notifications(c["id"], unread_only=unread_only))
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
 
 
 @api_view(["POST"])
@@ -670,7 +688,7 @@ def notification_read(request, notification_id: str):
     try:
         services.mark_notification_read(notification_id, c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
     return Response({"detail": "Marcada como lida"})
 
 
@@ -682,7 +700,7 @@ def notifications_read_all(request):
     try:
         services.mark_all_notifications_read(c["id"])
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)
     return Response({"detail": "Todas marcadas como lidas"})
 
 
@@ -698,4 +716,4 @@ def reminders_list(request):
     try:
         return Response(services.list_reminders(c["id"]))
     except Exception as exc:
-        return _supabase_err(str(exc))
+        return _supabase_err(exc)

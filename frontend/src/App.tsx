@@ -60,7 +60,7 @@ function AppLoader() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#F7F6F3' }}>
       <div className="flex flex-col items-center gap-4">
         <div className="w-14 h-14 rounded-[18px] flex items-center justify-center"
-             style={{ background: '#E5071A' }}>
+             style={{ background: '#CC1400' }}>
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none"
                stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="1" y="3" width="15" height="12" rx="2"/>
@@ -72,7 +72,7 @@ function AppLoader() {
         <div className="flex gap-1.5">
           {[0,1,2].map(i => (
             <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
-                 style={{ background: '#E5071A', animationDelay: `${i * 120}ms` }} />
+                 style={{ background: '#CC1400', animationDelay: `${i * 120}ms` }} />
           ))}
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function App() {
             style: {
               background: '#14161A',
               color: '#FFFFFF',
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontFamily: "'DM Sans', sans-serif",
               fontSize: '0.875rem',
               fontWeight: '600',
               borderRadius: '14px',
@@ -161,7 +161,7 @@ export default function App() {
               boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
             },
             success: { iconTheme: { primary: '#18B26B', secondary: '#fff' } },
-            error:   { iconTheme: { primary: '#E5071A', secondary: '#fff' } },
+            error:   { iconTheme: { primary: '#CC1400', secondary: '#fff' } },
           }}
         />
       </BrowserRouter>
