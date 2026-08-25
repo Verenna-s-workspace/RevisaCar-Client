@@ -196,7 +196,18 @@ def profile(request):
     except Exception as exc:
         return _supabase_err(exc)
 
-    return Response(updated)
+    updated = updated or {}
+    # Nunca devolver pwhash (nem outros campos sensíveis) ao cliente.
+    return Response({
+        "id": updated.get("id"),
+        "name": updated.get("name"),
+        "email": updated.get("email"),
+        "phone": updated.get("phone", ""),
+        "cpf": updated.get("cpf", ""),
+        "address": updated.get("address", ""),
+        "avatar_url": updated.get("avatar_url"),
+        "created_at": updated.get("created_at"),
+    })
 
 
 @api_view(["POST"])
