@@ -36,12 +36,28 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "customer_api.middleware.RLSMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {}  # Supabase via REST — no local DB
+# Postgres direto (migração para ORM). Defina DATABASE_URL no .env com a
+# connection string do Supabase (Settings > Database > Connection string / URI).
+# Ex.: postgresql://postgres.<ref>:<senha>@aws-0-<região>.pooler.supabase.com:6543/postgres
+import dj_database_url  # noqa: E402
+
+_db_url = os.getenv("DATABASE_URL", "")
+if _db_url:
+    DATABASES = {
+        "default": dj_database_url.parse(_db_url, conn_max_age=600, ssl_require=not DEBUG),
+    }
+else:
+    # Sem DATABASE_URL (ex.: testes/CI ou ainda no modo REST): sqlite em memória
+    # só para o Django subir. As views ainda usam a camada Supabase REST.
+    DATABASES = {
+        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"},
+    }
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
 
@@ -85,11 +101,13 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
 
-# ── Supabase ──────────────────────────────────────────────────────────────────
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "customer-docs")
+# ── Storage de arquivos (documentos) ──────────────────────────────────────────
+# Dev: disco local (MEDIA_ROOT). Produção: configure django-storages (S3 /
+# Supabase Storage S3) via DEFAULT_FILE_STORAGE — services.upload_document_file
+# usa default_storage, então nada no código muda.
+MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
+MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
+STORAGE_PREFIX = os.getenv("STORAGE_PREFIX", "customer-docs")
 
 # ── E-mail (recuperação de senha) ─────────────────────────────────────────────
 # Em dev sem SMTP, usa o backend de console (imprime o e-mail no stdout).
