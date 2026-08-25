@@ -6,21 +6,60 @@ Tables: customers, customer_vehicles, appointments,
         vehicle_qr_links, vehicle_documents
 """
 from __future__ import annotations
+import datetime as _dt
+import decimal as _decimal
+import uuid as _uuid
+
 from django.conf import settings
-from supabase import create_client, Client
 
-_client: Client | None = None
+from . import models
+
+_client = None
 
 
-def get_client() -> Client:
+def get_client():
+    """Cliente Supabase REST — camada LEGADA, ainda usada pelos domínios não
+    migrados para o ORM. Vai embora ao fim da migração para Postgres direto."""
     global _client
     if _client is None:
+        from supabase import create_client
         url = settings.SUPABASE_URL
         key = settings.SUPABASE_KEY
         if not url or not key:
             raise RuntimeError("SUPABASE_URL / SUPABASE_KEY not set")
         _client = create_client(url, key)
     return _client
+
+
+def _row(obj):
+    """Serializa uma instância de model para dict com as MESMAS chaves/tipos que
+    a camada REST devolvia (colunas do banco) — para as views não precisarem
+    mudar durante a migração. FK vira `<campo>_id`; uuid/data/decimal viram
+    tipos JSON-friendly."""
+    if obj is None:
+        return None
+    out = {}
+    for f in obj._meta.fields:
+        val = getattr(obj, f.attname)
+        if isinstance(val, _uuid.UUID):
+            val = str(val)
+        elif isinstance(val, (_dt.datetime, _dt.date, _dt.time)):
+            val = val.isoformat()
+        elif isinstance(val, _decimal.Decimal):
+            val = float(val)
+        out[f.attname] = val
+    return out
+
+
+def _model_fields(model) -> set:
+    return {f.attname for f in model._meta.fields} | {f.name for f in model._meta.fields}
+
+
+def _clean(model, data: dict) -> dict:
+    """Mantém só chaves que existem no model e remove as auto-gerenciadas."""
+    auto = {f.attname for f in model._meta.fields if getattr(f, "auto_now", False) or getattr(f, "auto_now_add", False)}
+    allowed = _model_fields(model)
+    return {k: v for k, v in data.items() if k in allowed and k not in auto}
 
 
 def _safe(fn):
@@ -35,23 +74,23 @@ def _safe(fn):
 # ── Customers ─────────────────────────────────────────────────────────────────
 
 def get_customer_by_email(email: str):
-    r = get_client().table("customers").select("*").eq("email", email).limit(1).execute()
-    return r.data[0] if r.data else None
+    return _row(models.Customer.objects.filter(email=email).first())
 
 
 def get_customer_by_id(customer_id: str):
-    r = get_client().table("customers").select("*").eq("id", customer_id).limit(1).execute()
-    return r.data[0] if r.data else None
+    return _row(models.Customer.objects.filter(id=customer_id).first())
 
 
 def create_customer(data: dict):
-    r = get_client().table("customers").insert(data).execute()
-    return r.data[0] if r.data else None
+    obj = models.Customer.objects.create(**_clean(models.Customer, data))
+    return _row(obj)
 
 
 def update_customer(customer_id: str, data: dict):
-    r = get_client().table("customers").update(data).eq("id", customer_id).execute()
-    return r.data[0] if r.data else None
+    fields = _clean(models.Customer, data)
+    fields.pop("id", None)
+    models.Customer.objects.filter(id=customer_id).update(**fields)
+    return _row(models.Customer.objects.filter(id=customer_id).first())
 
 
 # ── Vehicles ──────────────────────────────────────────────────────────────────
