@@ -101,10 +101,12 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
 
-# ── Supabase ──────────────────────────────────────────────────────────────────
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "customer-docs")
+# ── Storage de arquivos (documentos) ──────────────────────────────────────────
+# Dev: disco local (MEDIA_ROOT). Produção: configure django-storages (S3 /
+# Supabase Storage S3) via DEFAULT_FILE_STORAGE — services.upload_document_file
+# usa default_storage, então nada no código muda.
+MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
+MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
+STORAGE_PREFIX = os.getenv("STORAGE_PREFIX", "customer-docs")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -442,7 +442,7 @@ def documents_list(request):
         file_bytes = file_obj.read()
         file_size_kb = len(file_bytes) // 1024
         file_name = file_obj.name
-        bucket = settings.SUPABASE_BUCKET
+        bucket = settings.STORAGE_PREFIX
         path = f"{c['id']}/{d['vehicle_id']}/{new_id()}_{file_name}"
         try:
             file_url = services.upload_document_file(bucket, path, file_bytes, file_obj.content_type)

@@ -1,34 +1,15 @@
 """
-Supabase service layer.
-Tables: customers, customer_vehicles, appointments,
-        estimates, estimate_items, service_history,
-        notifications, maintenance_reminders, availability_slots,
-        vehicle_qr_links, vehicle_documents
+Camada de serviço — Django ORM sobre Postgres.
+Tabelas: customers, customer_vehicles, appointments, estimates, estimate_items,
+service_history, notifications, maintenance_reminders, availability_slots,
+vehicle_qr_links, vehicle_documents. (migração da camada Supabase-REST concluída)
 """
 from __future__ import annotations
 import datetime as _dt
 import decimal as _decimal
 import uuid as _uuid
 
-from django.conf import settings
-
 from . import models
-
-_client = None
-
-
-def get_client():
-    """Cliente Supabase REST — camada LEGADA, ainda usada pelos domínios não
-    migrados para o ORM. Vai embora ao fim da migração para Postgres direto."""
-    global _client
-    if _client is None:
-        from supabase import create_client
-        url = settings.SUPABASE_URL
-        key = settings.SUPABASE_KEY
-        if not url or not key:
-            raise RuntimeError("SUPABASE_URL / SUPABASE_KEY not set")
-        _client = create_client(url, key)
-    return _client
 
 
 def _row(obj):
@@ -412,13 +393,15 @@ def delete_document(doc_id: str, customer_id: str) -> bool:
 
 
 def upload_document_file(bucket: str, path: str, file_bytes: bytes, content_type: str) -> str:
-    """Upload file to Supabase Storage and return public URL."""
-    client = get_client()
-    client.storage.from_(bucket).upload(
-        path, file_bytes,
-        file_options={"content-type": content_type, "upsert": "true"},
-    )
-    return client.storage.from_(bucket).get_public_url(path)
+    """Salva o arquivo no storage do Django e devolve a URL.
+
+    Dev: FileSystemStorage (MEDIA_ROOT). Produção: configure django-storages
+    (S3/Supabase Storage S3) via settings — nenhum código muda aqui.
+    """
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+    saved = default_storage.save(f"{bucket}/{path}", ContentFile(file_bytes))
+    return default_storage.url(saved)
 
 
 # ── Dashboard Summary ─────────────────────────────────────────────────────────
