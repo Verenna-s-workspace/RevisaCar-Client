@@ -262,6 +262,13 @@ export const mockHealth: Record<string, VehicleHealth> = {
   },
 };
 
+// ── Consulta de placa (mock do provedor no modo dev) ─────────────────────────────
+export const mockPlateDb: Record<string, { brand: string; model: string; year: number; color: string; fuel_type: string }> = {
+  ABC1D23: { brand: 'Hyundai', model: 'HB20', year: 2020, color: 'Prata', fuel_type: 'flex' },
+  XYZ4K56: { brand: 'Chevrolet', model: 'Onix', year: 2021, color: 'Branco', fuel_type: 'flex' },
+  ABC1234: { brand: 'Fiat', model: 'Uno', year: 2018, color: 'Prata', fuel_type: 'flex' },
+};
+
 // ── Documents ────────────────────────────────────────────────────────────────────
 export const mockDocuments: VehicleDocument[] = [
   { id: 'd1', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'crlv', title: 'CRLV 2026', file_url: '', file_name: 'crlv-2026.pdf', file_size_kb: 420, expiry_date: '2026-12-31', created_at: '2026-01-10T00:00:00Z' },
