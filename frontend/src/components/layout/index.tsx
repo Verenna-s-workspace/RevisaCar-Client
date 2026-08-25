@@ -135,7 +135,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col w-full max-w-[430px] mx-auto relative overflow-x-hidden" style={{ background: 'var(--bg)' }}>
+    <div className="h-[100dvh] flex flex-col w-full max-w-[430px] mx-auto relative overflow-hidden" style={{ background: 'var(--bg)' }}>
       <OfflineBanner />
       {topbar}
       <AnimatePresence mode="wait">
@@ -145,7 +145,7 @@ export function MainLayout({ children, topbar, showNav = true }: {
           initial="initial"
           animate="animate"
           exit="exit"
-          className={showNav ? 'flex-1 overflow-y-auto overflow-x-hidden pb-safe' : 'flex-1 overflow-y-auto overflow-x-hidden pb-8'}
+          className={showNav ? 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-safe' : 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-8'}
         >
           {children}
         </motion.main>
