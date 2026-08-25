@@ -113,12 +113,32 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
 
 # ── Storage de arquivos (documentos) ──────────────────────────────────────────
-# Dev: disco local (MEDIA_ROOT). Produção: configure django-storages (S3 /
-# Supabase Storage S3) via DEFAULT_FILE_STORAGE — services.upload_document_file
-# usa default_storage, então nada no código muda.
+# Dev: disco local (MEDIA_ROOT). Produção: ligue USE_S3=True e o storage passa a
+# ser S3 / Supabase Storage (S3-compatível) — services.upload_document_file usa
+# default_storage, então nenhum código de negócio muda.
 MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
 STORAGE_PREFIX = os.getenv("STORAGE_PREFIX", "customer-docs")
+
+USE_S3 = os.getenv("USE_S3", "False") == "True"
+if USE_S3:
+    # Credenciais S3. Para o Supabase Storage, use o endpoint S3 do projeto
+    # (Storage > Settings > S3 connection) e as chaves de acesso S3.
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "")
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL") or None
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN") or None
+    # Documentos são privados: sem ACL pública e com URLs assinadas por padrão.
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = os.getenv("AWS_QUERYSTRING_AUTH", "True") == "True"
+    AWS_QUERYSTRING_EXPIRE = int(os.getenv("AWS_QUERYSTRING_EXPIRE", "3600"))
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
 
 # ── E-mail (recuperação de senha) ─────────────────────────────────────────────
 # Em dev sem SMTP, usa o backend de console (imprime o e-mail no stdout).
