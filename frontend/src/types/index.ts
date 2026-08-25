@@ -2,7 +2,7 @@
 
 export interface AuthTokens {
   access: string;
-  refresh: string;
+  refresh?: string; // agora vai no cookie httpOnly; ausente no corpo da resposta
   customer_id: string;
   name: string;
 }
@@ -12,7 +12,7 @@ export interface CustomerSession {
   name: string;
   email: string;
   access: string;
-  refresh: string;
+  refresh?: string; // opcional: o refresh real vive no cookie httpOnly
 }
 
 // ── Customer ──────────────────────────────────────────────────────────────────
