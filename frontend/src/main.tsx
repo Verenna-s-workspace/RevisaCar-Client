@@ -3,9 +3,10 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { initObservability } from './lib/observability';
+import { initObservability, registerGlobalErrorHandlers } from './lib/observability';
 
 initObservability();
+registerGlobalErrorHandlers();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');

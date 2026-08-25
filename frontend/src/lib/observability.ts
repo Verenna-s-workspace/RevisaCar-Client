@@ -32,3 +32,21 @@ export function captureError(error: unknown, context?: Record<string, unknown>):
     console.error('[unhandled]', error, context ?? '');
   }
 }
+
+/**
+ * Captura erros que o ErrorBoundary NÃO pega (ele só cobre render): exceções
+ * assíncronas e promises rejeitadas sem catch. Idempotente.
+ */
+let globalHandlersRegistered = false;
+export function registerGlobalErrorHandlers(): void {
+  if (globalHandlersRegistered || typeof window === 'undefined') return;
+  globalHandlersRegistered = true;
+
+  window.addEventListener('unhandledrejection', (event) => {
+    captureError(event.reason ?? new Error('Unhandled promise rejection'), { kind: 'unhandledrejection' });
+  });
+  window.addEventListener('error', (event) => {
+    // ignora erros de recursos (img/script) — só exceções de código
+    if (event.error) captureError(event.error, { kind: 'window.onerror' });
+  });
+}

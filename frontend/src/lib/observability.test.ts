@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { initObservability, captureError } from './observability';
+import { initObservability, captureError, registerGlobalErrorHandlers } from './observability';
 
 describe('observability', () => {
   it('initObservability é no-op sem VITE_SENTRY_DSN (não lança)', async () => {
@@ -13,5 +13,9 @@ describe('observability', () => {
     captureError(err, { screen: 'Dashboard' });
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('registerGlobalErrorHandlers é idempotente e não lança', () => {
+    expect(() => { registerGlobalErrorHandlers(); registerGlobalErrorHandlers(); }).not.toThrow();
   });
 });
