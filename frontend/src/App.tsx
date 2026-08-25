@@ -152,7 +152,7 @@ export default function App() {
             style: {
               background: '#14161A',
               color: '#FFFFFF',
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontFamily: "'DM Sans', sans-serif",
               fontSize: '0.875rem',
               fontWeight: '600',
               borderRadius: '14px',
