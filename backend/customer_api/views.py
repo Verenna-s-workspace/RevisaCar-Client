@@ -4,9 +4,12 @@ JWT required for all except auth + public QR resolve.
 """
 from __future__ import annotations
 import logging
+import secrets
+import time
 import jwt as pyjwt
 from datetime import datetime
 from django.conf import settings
+from django.core.mail import send_mail
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -21,8 +24,15 @@ from .serializers import (
     pw_hash, pw_check, new_id, now_iso,
 )
 from . import services
+from . import auth_store
 
 logger = logging.getLogger(__name__)
+
+# ── Rate limiting (anti brute-force) ──────────────────────────────────────────
+LOGIN_MAX_ATTEMPTS = 10
+LOGIN_WINDOW_SECONDS = 15 * 60
+FORGOT_MAX_ATTEMPTS = 5
+FORGOT_WINDOW_SECONDS = 60 * 60
 
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
@@ -117,14 +127,25 @@ def login(request):
         return Response(s.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     d = s.validated_data
+    email = d["email"]
+
+    # Anti brute-force: bloqueia após muitas tentativas por e-mail na janela.
+    if not auth_store.is_allowed(email, "login", max_attempts=LOGIN_MAX_ATTEMPTS, window_seconds=LOGIN_WINDOW_SECONDS):
+        return Response(
+            {"detail": "Muitas tentativas. Aguarde alguns minutos e tente novamente."},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
     try:
-        customer = services.get_customer_by_email(d["email"])
+        customer = services.get_customer_by_email(email)
     except Exception as exc:
         return _supabase_err(exc)
 
     if not customer or not pw_check(d["password"], customer.get("pwhash", "")):
+        auth_store.record_attempt(email, "login")
         return Response({"detail": "E-mail ou senha incorretos"}, status=status.HTTP_401_UNAUTHORIZED)
 
+    auth_store.clear_attempts(email, "login")  # sucesso zera o contador
     tokens = _make_tokens(customer["id"], customer["name"])
     return Response({
         **tokens,
@@ -146,15 +167,86 @@ def token_refresh(request):
         return Response({"detail": "Sessão expirada. Faça login novamente."}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+def _send_reset_email(email: str, token: str):
+    link = f"{settings.FRONTEND_URL}/recuperar-senha?token={token}"
+    try:
+        send_mail(
+            subject="Redefinição de senha — RevisaCar",
+            message=(
+                "Olá,\n\nRecebemos um pedido para redefinir a senha da sua conta RevisaCar.\n\n"
+                f"Use o link abaixo (válido por 15 minutos):\n{link}\n\n"
+                "Se não foi você, ignore este e-mail."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        logger.error("[reset] falha ao enviar e-mail para %s: %s", email, exc)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def forgot_password(request):
     s = ForgotPasswordSerializer(data=request.data)
     if not s.is_valid():
         return Response(s.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-    # Anti-enumeration: always return success
-    # TODO: integrate email provider (SendGrid / Resend) to actually send reset link
+    email = s.validated_data["email"]
+
+    # Rate limit por e-mail (evita spam de e-mails e enumeração por timing).
+    if not auth_store.is_allowed(email, "forgot", max_attempts=FORGOT_MAX_ATTEMPTS, window_seconds=FORGOT_WINDOW_SECONDS):
+        return Response({"detail": "Muitas solicitações. Tente novamente mais tarde."},
+                        status=status.HTTP_429_TOO_MANY_REQUESTS)
+    auth_store.record_attempt(email, "forgot")
+
+    # Só gera/envia se a conta existir — mas a resposta é SEMPRE a mesma
+    # (anti-enumeração: o atacante não descobre se o e-mail está cadastrado).
+    try:
+        customer = services.get_customer_by_email(email)
+    except Exception:
+        customer = None
+
+    if customer:
+        token = secrets.token_urlsafe(32)
+        try:
+            auth_store.save_reset_token(
+                token,
+                customer_id=customer["id"],
+                email=email,
+                expires_at=time.time() + settings.RESET_TOKEN_LIFETIME_SECONDS,
+            )
+            _send_reset_email(email, token)
+        except Exception as exc:
+            logger.error("[reset] falha ao gerar token para %s: %s", email, exc)
+
     return Response({"detail": "Se o e-mail existir, você receberá as instruções em breve."})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def reset_password(request):
+    token = request.data.get("token", "")
+    new_password = request.data.get("new_password", "")
+    confirm = request.data.get("new_password_confirm", "")
+
+    if not token or not new_password:
+        return Response({"detail": "Token e nova senha são obrigatórios"}, status=status.HTTP_400_BAD_REQUEST)
+    if len(new_password) < 8:
+        return Response({"detail": "A senha deve ter pelo menos 8 caracteres"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    if new_password != confirm:
+        return Response({"detail": "As senhas não coincidem"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    record = auth_store.get_valid_reset_token(token)
+    if not record:
+        return Response({"detail": "Link inválido ou expirado. Solicite um novo."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        services.update_customer(record["customer_id"], {"pwhash": pw_hash(new_password), "updated_at": now_iso()})
+        auth_store.mark_reset_token_used(token)
+    except Exception as exc:
+        return _supabase_err(exc)
+
+    return Response({"detail": "Senha redefinida com sucesso. Faça login com a nova senha."})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
