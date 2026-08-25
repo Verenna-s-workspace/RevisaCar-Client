@@ -41,7 +41,22 @@ MIDDLEWARE = [
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {}  # Supabase via REST — no local DB
+# Postgres direto (migração para ORM). Defina DATABASE_URL no .env com a
+# connection string do Supabase (Settings > Database > Connection string / URI).
+# Ex.: postgresql://postgres.<ref>:<senha>@aws-0-<região>.pooler.supabase.com:6543/postgres
+import dj_database_url  # noqa: E402
+
+_db_url = os.getenv("DATABASE_URL", "")
+if _db_url:
+    DATABASES = {
+        "default": dj_database_url.parse(_db_url, conn_max_age=600, ssl_require=not DEBUG),
+    }
+else:
+    # Sem DATABASE_URL (ex.: testes/CI ou ainda no modo REST): sqlite em memória
+    # só para o Django subir. As views ainda usam a camada Supabase REST.
+    DATABASES = {
+        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"},
+    }
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
 
