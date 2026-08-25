@@ -59,10 +59,10 @@ function SystemPill({ label, score }: { label: string; score: number }) {
 
 /* ─── Quick Actions ─────────────────────────────────────── */
 const ACTIONS = [
-  { icon: Calendar, label: 'Agendar',    to: '/agendar',    bg: '#FDEAEC', ic: BRAND     },
-  { icon: FileText, label: 'Orçamentos', to: '/orcamentos', bg: '#EAF1FB', ic: '#2A6FDB' },
-  { icon: QrCode,   label: 'QR Code',    to: '/qr',         bg: '#E9F7EF', ic: '#18B26B' },
-  { icon: MapPin,   label: 'Oficinas',   to: '/historico',  bg: '#FFF3D6', ic: '#C98A00' },
+  { icon: Calendar, label: 'Agendar',    to: '/agendar'    },
+  { icon: FileText, label: 'Orçamentos', to: '/orcamentos' },
+  { icon: QrCode,   label: 'QR Code',    to: '/qr'         },
+  { icon: MapPin,   label: 'Oficinas',   to: '/historico'  },
 ];
 
 /* ─── Dashboard ─────────────────────────────────────────── */
@@ -166,15 +166,16 @@ export function DashboardScreen() {
           </button>
         </div>
 
-        {/* Quick actions */}
-        <div className="grid grid-cols-4 gap-3">
-          {ACTIONS.map(({ icon: Icon, label, to, bg, ic }) => (
-            <button key={label} onClick={() => navigate(to)} className="flex flex-col items-center gap-2">
-              <div className="w-[58px] h-[58px] rounded-[16px] flex items-center justify-center"
-                   style={{ background: bg }}>
-                <Icon size={22} color={ic} strokeWidth={1.8} />
+        {/* Quick actions — paleta restrita, um único acento (marca) */}
+        <div className="grid grid-cols-4 gap-2.5">
+          {ACTIONS.map(({ icon: Icon, label, to }) => (
+            <button key={label} onClick={() => navigate(to)}
+                    className="flex flex-col items-center gap-2 press">
+              <div className="w-full aspect-square rounded-[18px] flex items-center justify-center"
+                   style={{ background: CARD, border: `1px solid ${BORDER}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                <Icon size={21} color={BRAND} strokeWidth={1.9} />
               </div>
-              <span className="text-[10.5px] font-semibold" style={{ color: MUTED }}>{label}</span>
+              <span className="text-[11px] font-semibold" style={{ color: TEXT }}>{label}</span>
             </button>
           ))}
         </div>
