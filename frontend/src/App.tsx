@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/auth';
+import { SHOWCASE } from './config/features';
 
 /* ─── Lazy screens ──────────────────────────────────────── */
 const Auth            = lazy(() => import('./components/screens/AuthScreen').then(m => ({ default: m.AuthScreen })));
@@ -54,6 +55,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
   if (!shouldBypassAuth && !isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
+}
+
+// Telas de vitrine sem backend real: escondidas em produção (ver config/features).
+function Showcase({ children }: { children: React.ReactNode }) {
+  if (!SHOWCASE) return <Navigate to="/" replace />;
+  return <RequireAuth>{children}</RequireAuth>;
 }
 
 /* ─── Loader ────────────────────────────────────────────── */
@@ -110,9 +117,9 @@ function AppRouter() {
         <Route path="/agendar"      element={<RequireAuth><Schedule /></RequireAuth>} />
         <Route path="/manutencoes"  element={<RequireAuth><Maintenance /></RequireAuth>} />
         <Route path="/orcamentos"   element={<RequireAuth><Estimates /></RequireAuth>} />
-        <Route path="/acompanhar"   element={<RequireAuth><ServiceTracking /></RequireAuth>} />
+        <Route path="/acompanhar"   element={<Showcase><ServiceTracking /></Showcase>} />
         <Route path="/servico/:id"          element={<RequireAuth><ServiceDetail /></RequireAuth>} />
-        <Route path="/servico/:id/inspecao" element={<RequireAuth><InspectionReport /></RequireAuth>} />
+        <Route path="/servico/:id/inspecao" element={<Showcase><InspectionReport /></Showcase>} />
         <Route path="/garantia/:id"         element={<RequireAuth><Warranty /></RequireAuth>} />
 
         {/* Features */}
@@ -121,14 +128,14 @@ function AppRouter() {
         <Route path="/qr-code"      element={<RequireAuth><QRCode /></RequireAuth>} />
         <Route path="/qr"           element={<RequireAuth><QRCode /></RequireAuth>} />
         <Route path="/documentos"   element={<RequireAuth><Documents /></RequireAuth>} />
-        <Route path="/gastos"       element={<RequireAuth><CostAnalysis /></RequireAuth>} />
-        <Route path="/clube"        element={<RequireAuth><Rewards /></RequireAuth>} />
-        <Route path="/chat"         element={<RequireAuth><Chat /></RequireAuth>} />
+        <Route path="/gastos"       element={<Showcase><CostAnalysis /></Showcase>} />
+        <Route path="/clube"        element={<Showcase><Rewards /></Showcase>} />
+        <Route path="/chat"         element={<Showcase><Chat /></Showcase>} />
 
         {/* Conta & perfil */}
         <Route path="/ajustes"      element={<RequireAuth><SettingsScr /></RequireAuth>} />
         <Route path="/preferencias" element={<RequireAuth><NotifPrefs /></RequireAuth>} />
-        <Route path="/pagamento"    element={<RequireAuth><PaymentMethods /></RequireAuth>} />
+        <Route path="/pagamento"    element={<Showcase><PaymentMethods /></Showcase>} />
         <Route path="/seguranca"    element={<RequireAuth><Security /></RequireAuth>} />
         <Route path="/privacidade"  element={<RequireAuth><Privacy /></RequireAuth>} />
         <Route path="/ajuda"        element={<RequireAuth><HelpCenter /></RequireAuth>} />

@@ -4,6 +4,7 @@ import { Search, ChevronDown, MessageCircle, Phone, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { MainLayout, Topbar } from '../layout';
 import { C, FONT_HEAD, SectionLabel, CardGroup } from '../ui/pro';
+import { SHOWCASE } from '../../config/features';
 
 const FAQ = [
   { q: 'Como agendar uma manutenção?', a: 'Na tela inicial, toque em "Agendar", escolha o serviço, a data e o horário disponível. A oficina confirma em até 24h.' },
@@ -49,9 +50,10 @@ export function HelpCenterScreen() {
         </div>
 
         {/* Contact */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className={`grid gap-3 ${SHOWCASE ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {[
-            { icon: MessageCircle, label: 'Chat', bg: C.redBg, ic: C.brand, act: () => navigate('/chat') },
+            // Chat com a oficina ainda não tem backend → só em modo showcase.
+            ...(SHOWCASE ? [{ icon: MessageCircle, label: 'Chat', bg: C.redBg, ic: C.brand, act: () => navigate('/chat') }] : []),
             { icon: Phone, label: 'Telefone', bg: C.greenBg, ic: C.greenDk, act: () => toast('0800 123 4567', { icon: '📞' }) },
             { icon: Mail, label: 'E-mail', bg: C.infoBg, ic: C.info, act: () => toast('ajuda@revisacar.com', { icon: '✉️' }) },
           ].map(c => (
