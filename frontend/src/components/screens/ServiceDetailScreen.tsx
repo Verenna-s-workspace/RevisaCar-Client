@@ -8,6 +8,7 @@ import { historyApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
 import { C, FONT_HEAD } from '../ui/pro';
+import { SHOWCASE } from '../../config/features';
 
 export function ServiceDetailScreen() {
   const { id } = useParams();
@@ -84,7 +85,7 @@ export function ServiceDetailScreen() {
 
             {/* Actions */}
             <div className="rounded-[16px] overflow-hidden" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-              {s.inspection_id && (
+              {SHOWCASE && s.inspection_id && (
                 <button onClick={() => navigate(`/servico/${s.id}/inspecao`)}
                   className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left active:bg-black/[0.02]"
                   style={{ borderBottom: `1px solid ${C.borderSoft}` }}>

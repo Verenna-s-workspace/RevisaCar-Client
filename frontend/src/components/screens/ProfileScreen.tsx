@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
+import { SHOWCASE } from '../../config/features';
 import {
   Settings, User, CreditCard, Bell, Shield, Lock,
   HelpCircle, FileText, LogOut, Star, ChevronRight,
@@ -129,24 +130,28 @@ export function ProfileScreen() {
                 </div>
               </div>
 
-              {/* Clube badge */}
-              <button onClick={() => navigate('/clube')}
-                className="flex items-center gap-3 p-4 rounded-[16px]"
-                style={{ background: 'linear-gradient(135deg,#1a0a00,#3a1200)' }}>
-                <Star size={22} color={C.gold} fill={C.gold} />
-                <div className="flex-1 text-left">
-                  <p className="text-[14px] font-bold text-white">Clube Ouro</p>
-                  <p className="text-[12px]" style={{ color: 'rgba(255,255,255,.6)' }}>1.250 pontos · ver recompensas</p>
-                </div>
-                <ChevronRight size={18} color="rgba(255,255,255,.5)" />
-              </button>
+              {/* Clube badge (showcase) */}
+              {SHOWCASE && (
+                <button onClick={() => navigate('/clube')}
+                  className="flex items-center gap-3 p-4 rounded-[16px]"
+                  style={{ background: 'linear-gradient(135deg,#1a0a00,#3a1200)' }}>
+                  <Star size={22} color={C.gold} fill={C.gold} />
+                  <div className="flex-1 text-left">
+                    <p className="text-[14px] font-bold text-white">Clube Ouro</p>
+                    <p className="text-[12px]" style={{ color: 'rgba(255,255,255,.6)' }}>1.250 pontos · ver recompensas</p>
+                  </div>
+                  <ChevronRight size={18} color="rgba(255,255,255,.5)" />
+                </button>
+              )}
 
               {/* Conta */}
               <div>
                 <SectionLabel>Conta</SectionLabel>
                 <CardGroup>
                   <MenuRow icon={<User size={18} />} label="Meus dados" onClick={() => setShowEdit(true)} />
-                  <MenuRow icon={<CreditCard size={18} />} label="Formas de pagamento" onClick={() => navigate('/pagamento')} />
+                  {SHOWCASE && (
+                    <MenuRow icon={<CreditCard size={18} />} label="Formas de pagamento" onClick={() => navigate('/pagamento')} />
+                  )}
                   <MenuRow icon={<Bell size={18} />} label="Notificações" onClick={() => navigate('/preferencias')} />
                   <MenuRow icon={<Shield size={18} />} label="Segurança" onClick={() => navigate('/seguranca')} />
                   <MenuRow icon={<Lock size={18} />} label="Privacidade" last onClick={() => navigate('/privacidade')} />
