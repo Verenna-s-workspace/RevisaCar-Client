@@ -23,6 +23,11 @@ SECRET_KEY = _secret
 
 # Em produção defina ALLOWED_HOSTS com os domínios reais (separados por vírgula).
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# O Render injeta RENDER_EXTERNAL_HOSTNAME automaticamente — adiciona sem precisar
+# saber o domínio de antemão (deploy zero-config).
+_render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",

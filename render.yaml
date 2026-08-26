@@ -1,0 +1,36 @@
+# Blueprint do Render para o backend (Django). No Render: New → Blueprint →
+# aponta pro repo. Ele lê este arquivo e cria o serviço já configurado.
+# Preencha os envs marcados com sync:false (segredos) no painel.
+services:
+  - type: web
+    name: revisacar-customer-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    region: ohio          # mesma região do Supabase (us-east-2) — menor latência
+    plan: free            # sobe pra 'starter' se não quiser o spin-down do free
+    branch: main
+    healthCheckPath: /api/
+    # roda as migrações a cada deploy (com o usuário admin do banco)
+    preDeployCommand: python manage.py migrate --noinput
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true            # o Render gera um segredo forte
+      - key: REFRESH_COOKIE_SAMESITE
+        value: None                    # cross-site (front no Vercel)
+      - key: REFRESH_COOKIE_SECURE
+        value: "True"
+      # ── Preencher no painel (segredos / dependem do seu domínio) ──────────────
+      - key: DATABASE_URL
+        sync: false                    # connection string do Supabase
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false                    # https://SEU-FRONT.vercel.app (exato)
+      - key: FRONTEND_URL
+        sync: false                    # https://SEU-FRONT.vercel.app
+      # ── Opcionais (ligam features env-gated quando você tiver as chaves) ──────
+      # - key: USE_S3            (+ AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_STORAGE_BUCKET_NAME / AWS_S3_ENDPOINT_URL)
+      # - key: PLATE_LOOKUP_URL  (+ PLATE_LOOKUP_TOKEN / PLATE_LOOKUP_MAP)
+      # - key: VAPID_PUBLIC_KEY  (+ VAPID_PRIVATE_KEY / VAPID_SUBJECT)
+      # - key: EMAIL_HOST        (+ EMAIL_HOST_USER / EMAIL_HOST_PASSWORD)
