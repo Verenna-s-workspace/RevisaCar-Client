@@ -14,9 +14,14 @@
 -- COMO APLICAR (uma vez, no SQL Editor do Supabase ou via psql):
 --   1) Troque __DEFINA_UMA_SENHA_FORTE__ por uma senha forte.
 --   2) Rode este arquivo inteiro.
---   3) Atualize o DATABASE_URL do backend para conectar como revisacar_app:
---      postgresql://revisacar_app.<REF>:<SENHA>@aws-0-<regiao>.pooler.supabase.com:5432/postgres
---   4) Reinicie o backend e teste (login, dashboard, criar veículo).
+--   3) Atualize o DATABASE_URL do backend para conectar como revisacar_app
+--      (projeto kvfswsvramytyyfimvex, região us-east-2):
+--      postgresql://revisacar_app.kvfswsvramytyyfimvex:<SENHA>@aws-0-us-east-2.pooler.supabase.com:5432/postgres
+--   4) Reinicie o backend e confirme com:  python manage.py check_rls
+--      (e teste no app: login, dashboard, criar veículo).
+--
+-- ATENÇÃO: migrações continuam com o usuário `postgres` (o revisacar_app NÃO cria
+-- tabelas). Use o DATABASE_URL de admin apenas para `manage.py migrate`.
 --
 -- REVERTER: ver o bloco comentado no fim do arquivo.
 -- ============================================================================
