@@ -16,6 +16,11 @@ Os arquivos de deploy já estão no repo: `render.yaml` (backend) e `frontend/ve
    - `FRONTEND_URL` — mesmo domínio do front.
 3. `DEBUG=False`, `REFRESH_COOKIE_SAMESITE=None`, `REFRESH_COOKIE_SECURE=True` e o host já vêm do blueprint / automáticos (`RENDER_EXTERNAL_HOSTNAME`).
 
+> As **migrações rodam no boot** (`backend/start.sh`) porque o free tier do Render
+> não tem `preDeployCommand`. Se você ativar a RLS e o `DATABASE_URL` virar o role
+> `revisacar_app` (sem DDL), rode `migrate` uma vez com o usuário admin — o boot
+> tolera a falha e sobe assim mesmo.
+
 ## 2. Frontend na Vercel
 1. **New Project** → importa o repo → **Root Directory: `frontend`** (o `vercel.json` cuida do build e do SPA routing).
 2. Env var: `VITE_API_URL=https://SEU-APP.onrender.com/api`.

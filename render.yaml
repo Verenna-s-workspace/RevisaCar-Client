@@ -11,8 +11,8 @@ services:
     plan: free            # sobe pra 'starter' se não quiser o spin-down do free
     branch: main
     healthCheckPath: /api/
-    # roda as migrações a cada deploy (com o usuário admin do banco)
-    preDeployCommand: python manage.py migrate --noinput
+    # As migrações rodam no boot (backend/start.sh) — o free tier do Render não
+    # suporta preDeployCommand. migrate é idempotente.
     envVars:
       - key: DEBUG
         value: "False"
