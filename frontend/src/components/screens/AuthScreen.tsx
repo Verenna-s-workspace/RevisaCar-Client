@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,12 +62,16 @@ function Field({
   );
 }
 
-function TextInput({
-  error, suffix, ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { error?: string; suffix?: React.ReactNode }) {
+// forwardRef é essencial: o react-hook-form injeta um `ref` via {...register(...)}.
+// Sem encaminhá-lo ao <input>, o RHF não lê os valores e marca tudo como vazio.
+const TextInput = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> & { error?: string; suffix?: React.ReactNode }
+>(function TextInput({ error, suffix, ...props }, ref) {
   return (
     <div className="relative flex items-center">
       <input
+        ref={ref}
         className={`w-full px-4 py-3.5 rounded-xl border-[1.5px] text-sm font-medium text-text bg-white
                     outline-none transition-all placeholder:text-text-ghost font-sans
                     ${error
@@ -81,7 +85,7 @@ function TextInput({
       )}
     </div>
   );
-}
+});
 
 /* ─── Home Screen ───────────────────────────────────────── */
 function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; onRegister: () => void; onForgot: () => void }) {
