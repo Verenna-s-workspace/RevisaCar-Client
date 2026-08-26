@@ -10,4 +10,5 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn uvicorn
 COPY . .
 
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60"]
+# start.sh migra no boot (free tier do Render não tem preDeployCommand) e sobe o gunicorn.
+CMD ["sh", "start.sh"]
