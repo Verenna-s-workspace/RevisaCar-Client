@@ -2,13 +2,24 @@ import { useState } from 'react';
 import { Wrench, FileText, CalendarCheck, Tag, Smartphone, Mail, MessageSquare } from 'lucide-react';
 import { MainLayout, Topbar } from '../layout';
 import { SectionLabel, CardGroup, ToggleRow } from '../ui/pro';
+import { usePush } from '../../hooks/usePush';
 
 export function NotificationPreferencesScreen() {
   const [p, setP] = useState({
     manutencao: true, orcamentos: true, agendamentos: true, promocoes: false,
-    push: true, email: true, sms: false,
+    email: true, sms: false,
   });
   const t = (k: keyof typeof p) => setP(s => ({ ...s, [k]: !s[k] }));
+
+  // Push real: inscreve/cancela no service worker + backend (Web Push).
+  const push = usePush();
+  const pushDesc = !push.available
+    ? 'Indisponível neste dispositivo'
+    : push.subscribed ? 'Ativado neste dispositivo' : 'Receba avisos mesmo com o app fechado';
+  const togglePush = () => {
+    if (push.busy || !push.available) return;
+    push.subscribed ? push.unsubscribe() : push.subscribe();
+  };
 
   return (
     <MainLayout showNav={false} topbar={<Topbar title="Notificações" showBack />}>
@@ -31,7 +42,8 @@ export function NotificationPreferencesScreen() {
         <div>
           <SectionLabel>Como você recebe</SectionLabel>
           <CardGroup>
-            <ToggleRow icon={<Smartphone size={18} />} label="Push" on={p.push} onChange={() => t('push')} />
+            <ToggleRow icon={<Smartphone size={18} />} label="Push" desc={pushDesc}
+                       on={push.subscribed} onChange={togglePush} />
             <ToggleRow icon={<Mail size={18} />} label="E-mail" on={p.email} onChange={() => t('email')} />
             <ToggleRow icon={<MessageSquare size={18} />} label="SMS" on={p.sms} onChange={() => t('sms')} last />
           </CardGroup>

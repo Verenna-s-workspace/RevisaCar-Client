@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dashboardApi, vehiclesApi, estimatesApi, plateApi } from './api';
+import { dashboardApi, vehiclesApi, estimatesApi, plateApi, pushApi } from './api';
 
 // Prova que a camada de rede pura (sem ramos BYPASS) é atendida pelo MSW —
 // os mesmos mocks do modo dev/showcase, agora interceptados na rede.
@@ -30,5 +30,14 @@ describe('api ↔ MSW', () => {
     expect(miss.data.available).toBe(true);
     expect(miss.data.found).toBe(false);
     expect(miss.data.vehicle).toBeNull();
+  });
+
+  it('push: public-key reflete config e subscribe responde 201', async () => {
+    const key = await pushApi.publicKey();
+    expect(key.data).toHaveProperty('enabled');
+    expect(key.data).toHaveProperty('publicKey');
+
+    const sub = await pushApi.subscribe({ endpoint: 'https://push/x', keys: { p256dh: 'p', auth: 'a' } });
+    expect(sub.status).toBe(201);
   });
 });

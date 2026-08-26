@@ -10,6 +10,7 @@ const ROUTES = [
   '/notificacoes',
   '/documentos',
   '/gastos',
+  '/preferencias',
 ];
 
 for (const route of ROUTES) {
