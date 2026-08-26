@@ -113,3 +113,9 @@ htmlcov/
 *.pem
 *.key
 secrets.json
+
+# Playwright (E2E)
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.last-run.json
