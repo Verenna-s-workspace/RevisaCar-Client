@@ -136,6 +136,11 @@ export const handlers = [
     return HttpResponse.json({});
   }),
 
+  // ── Web Push (dev: desabilitado por padrão, sem chaves VAPID) ─────────────────
+  http.get(`${P}/push/public-key`, () => HttpResponse.json({ enabled: false, publicKey: '' })),
+  http.post(`${P}/push/subscribe`, () => HttpResponse.json({ detail: 'Inscrito' }, { status: 201 })),
+  http.post(`${P}/push/unsubscribe`, () => HttpResponse.json({ detail: 'Cancelado' })),
+
   // ── Documents ────────────────────────────────────────────────────────────────
   http.get(`${P}/documents`, ({ request }) => {
     const vehicleId = new URL(request.url).searchParams.get('vehicle_id');

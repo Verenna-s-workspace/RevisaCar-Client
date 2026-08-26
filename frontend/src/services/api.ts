@@ -189,6 +189,19 @@ export const remindersApi = {
   list: () => apiClient.get<MaintenanceReminder[]>('/customer/reminders'),
 };
 
+// ── Web Push ──────────────────────────────────────────────────────────────────
+
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+}
+
+export const pushApi = {
+  publicKey: () => apiClient.get<{ enabled: boolean; publicKey: string }>('/customer/push/public-key'),
+  subscribe: (sub: PushSubscriptionPayload) => apiClient.post('/customer/push/subscribe', sub),
+  unsubscribe: (endpoint: string) => apiClient.post('/customer/push/unsubscribe', { endpoint }),
+};
+
 // ── Vehicle Health ────────────────────────────────────────────────────────────
 
 export const healthApi = {

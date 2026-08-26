@@ -178,4 +178,11 @@ try:
 except (ValueError, TypeError):
     PLATE_LOOKUP_MAP = None
 
+# ── Web Push (notificações push, opcional) ────────────────────────────────────
+# Inerte até as chaves VAPID serem definidas. Gere um par com `vapid --gen`
+# (pacote py-vapid, dependência do pywebpush). VAPID_SUBJECT é um mailto: de contato.
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:contato@revisacar.com")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

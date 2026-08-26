@@ -61,4 +61,9 @@ urlpatterns = [
 
     # ── Reminders ─────────────────────────────────────────────────────────────
     path("customer/reminders",            views.reminders_list,  name="reminders-list"),
+
+    # ── Web Push ──────────────────────────────────────────────────────────────
+    path("customer/push/public-key",      views.push_public_key,  name="push-public-key"),
+    path("customer/push/subscribe",       views.push_subscribe,   name="push-subscribe"),
+    path("customer/push/unsubscribe",     views.push_unsubscribe, name="push-unsubscribe"),
 ]

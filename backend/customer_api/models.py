@@ -245,3 +245,18 @@ class EmailVerificationToken(models.Model):
 
     class Meta:
         db_table = "email_verification_tokens"
+
+
+class PushSubscription(models.Model):
+    """Inscrição de Web Push (um endpoint por dispositivo/navegador do cliente)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="push_subscriptions", db_column="customer_id")
+    endpoint = models.TextField(unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    user_agent = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "push_subscriptions"
+        indexes = [models.Index(fields=["customer"])]

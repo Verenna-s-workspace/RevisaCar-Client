@@ -207,6 +207,61 @@ def logout(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+def push_public_key(request):
+    """Chave pública VAPID + flag de disponibilidade (o front usa p/ se inscrever)."""
+    from . import push
+    return Response({"enabled": push.is_enabled(), "publicKey": push.public_key()})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def push_subscribe(request):
+    """Registra (upsert por endpoint) a inscrição de Web Push do dispositivo."""
+    from .models import PushSubscription
+
+    c, err = _require_auth(request)
+    if err:
+        return err
+
+    data = request.data or {}
+    endpoint = data.get("endpoint")
+    keys = data.get("keys") or {}
+    p256dh, auth = keys.get("p256dh"), keys.get("auth")
+    if not endpoint or not p256dh or not auth:
+        return Response({"detail": "Inscrição inválida"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                "customer_id": c["id"], "p256dh": p256dh, "auth": auth,
+                "user_agent": (request.META.get("HTTP_USER_AGENT", "") or "")[:255],
+            },
+        )
+    except Exception as exc:
+        return _supabase_err(exc)
+    return Response({"detail": "Inscrito"}, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def push_unsubscribe(request):
+    """Remove a inscrição do dispositivo (só a do próprio cliente)."""
+    from .models import PushSubscription
+
+    c, err = _require_auth(request)
+    if err:
+        return err
+
+    endpoint = (request.data or {}).get("endpoint")
+    if not endpoint:
+        return Response({"detail": "endpoint obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+    PushSubscription.objects.filter(customer_id=c["id"], endpoint=endpoint).delete()
+    return Response({"detail": "Cancelado"})
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def plate_lookup(request):
     """Pré-preenche marca/modelo/ano/cor a partir da placa (provedor externo).
 
