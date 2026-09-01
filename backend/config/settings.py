@@ -115,6 +115,22 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",
     "http://127.0.0.1:5174",
 ]
+# Produção: adiciona as origens do front via env (CORS_ALLOWED_ORIGINS, separadas
+# por vírgula) e o FRONTEND_URL. Com CORS_ALLOW_CREDENTIALS=True não dá pra usar
+# wildcard, então a origem exata do front precisa estar aqui. Aceita valores sem
+# scheme (o Render injeta só o host via fromService) — prefixamos https://.
+def _normalize_origin(raw):
+    raw = raw.strip().rstrip("/")
+    if raw and "://" not in raw:
+        raw = "https://" + raw
+    return raw
+
+for _origin in (
+    os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") + [os.getenv("FRONTEND_URL", "")]
+):
+    _origin = _normalize_origin(_origin)
+    if _origin and _origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_origin)
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
 
@@ -161,8 +177,9 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "RevisaCar <nao-responder@revisacar.com>")
 
-# URL do app do cliente (usada no link de redefinição de senha).
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5174")
+# URL do app do cliente (usada no link de redefinição de senha). Aceita valor sem
+# scheme (Render injeta só o host via fromService) — prefixamos https://.
+FRONTEND_URL = _normalize_origin(os.getenv("FRONTEND_URL", "http://localhost:5174"))
 
 # Tempo de vida do token de reset (15 min).
 RESET_TOKEN_LIFETIME_SECONDS = int(os.getenv("RESET_TOKEN_LIFETIME_SECONDS", "900"))
