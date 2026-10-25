@@ -22,6 +22,7 @@ from .serializers import (
     AppointmentCreateSerializer, EstimateActionSerializer,
     DocumentCreateSerializer,
     pw_hash, pw_check, new_id, now_iso,
+    ConviteUsarSerializer,
 )
 from . import services
 from . import auth_store
@@ -167,7 +168,7 @@ def login(request):
     except Exception as exc:
         return _supabase_err(exc)
 
-    if not customer or not pw_check(d["password"], customer.get("pwhash", "")):
+    if not customer or not pw_check(d["password"], customer.get("pwhash") or ""):
         auth_store.record_attempt(email, "login")
         return Response({"detail": "E-mail ou senha incorretos"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -807,6 +808,10 @@ def appointments_list(request):
         if not vehicle:
             return Response({"detail": "Veículo não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
 
+        oficina_doc, erro = services.resolver_oficina(c["id"], (d.get("oficina_doc") or "").strip() or None)
+        if erro:
+            return Response({"oficina_doc": erro}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
         appt = services.create_appointment({
             "id": new_id(),
             "customer_id": c["id"],
@@ -817,6 +822,7 @@ def appointments_list(request):
             "date": str(d["date"]),
             "time_slot": str(d["time_slot"]),
             "status": "pendente",
+            "oficina_doc": oficina_doc,
             "notes": d.get("notes", ""),
             "created_at": now_iso(),
             "updated_at": now_iso(),
@@ -858,7 +864,7 @@ def available_days(request):
     year = int(request.query_params.get("year", datetime.today().year))
     month = int(request.query_params.get("month", datetime.today().month))
     try:
-        slots = services.get_available_slots(year, month)
+        slots = services.get_available_slots(year, month, request.query_params.get("oficina_doc") or None)
     except Exception as exc:
         return _supabase_err(exc)
     available_dates = sorted({s["date"] for s in slots})
@@ -872,10 +878,74 @@ def available_times(request):
     if not date_str:
         return Response({"detail": "Parâmetro date obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        slots = services.get_available_times(date_str)
+        slots = services.get_available_times(date_str, request.query_params.get("oficina_doc") or None)
     except Exception as exc:
         return _supabase_err(exc)
     return Response({"date": date_str, "times": [s["time_slot"] for s in slots]})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# OFICINAS (carteira) e ORÇAMENTOS DA OFICINA
+# ══════════════════════════════════════════════════════════════════════════════
+
+@api_view(["GET"])
+def oficinas_list(request):
+    """Oficinas em que o cliente está vinculado."""
+    c, err = _require_auth(request)
+    if err:
+        return err
+    try:
+        return Response(services.list_oficinas(c["id"]))
+    except Exception as exc:
+        return _supabase_err(exc)
+
+
+@api_view(["POST"])
+def oficina_convite(request):
+    """Entra na carteira de uma oficina com o código do convite (QR/link que ela entrega).
+    Escanear o convite é o consentimento do cliente para a oficina vê-lo na carteira dela."""
+    c, err = _require_auth(request)
+    if err:
+        return err
+    s = ConviteUsarSerializer(data=request.data)
+    if not s.is_valid():
+        return Response(s.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    try:
+        res = services.usar_convite(s.validated_data["codigo"], c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    if not res.get("ok"):
+        # Mesma resposta para qualquer falha de convite (inexistente, expirado...): sem pistas sobre quais códigos existem
+        codigo = res.get("codigo")
+        http = status.HTTP_403_FORBIDDEN if codigo == "vinculo_bloqueado" else status.HTTP_400_BAD_REQUEST
+        return Response({"detail": res.get("mensagem") or "Convite inválido.", "codigo": codigo}, status=http)
+    return Response(res, status=status.HTTP_201_CREATED if res.get("novo") else status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def orcamentos_list(request):
+    """Orçamentos que as oficinas enviaram para as OS do cliente (somente leitura)."""
+    c, err = _require_auth(request)
+    if err:
+        return err
+    try:
+        return Response(services.list_orcamentos(c["id"], request.query_params.get("status")))
+    except Exception as exc:
+        return _supabase_err(exc)
+
+
+@api_view(["GET"])
+def orcamento_detail(request, orcamento_id: str):
+    c, err = _require_auth(request)
+    if err:
+        return err
+    try:
+        o = services.get_orcamento(orcamento_id, c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    if not o:
+        return Response({"detail": "Orçamento não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+    return Response(o)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

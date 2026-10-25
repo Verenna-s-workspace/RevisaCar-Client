@@ -55,7 +55,15 @@ def _safe(fn):
 # ── Customers ─────────────────────────────────────────────────────────────────
 
 def get_customer_by_email(email: str):
-    return _row(models.Customer.objects.filter(email=email).first())
+    """Conta do APP com esse e-mail. Cadastros de balcão (origem="oficina") ficam de
+    fora de propósito: não têm senha, são privados da oficina e podem repetir o e-mail
+    de uma conta do app — sem este filtro o login/cadastro/recuperação poderia pegar a
+    linha errada."""
+    if not email:
+        return None
+    return _row(
+        models.Customer.objects.filter(origem="app", email__iexact=email.strip()).order_by("created_at").first()
+    )
 
 
 def get_customer_by_id(customer_id: str):
@@ -132,19 +140,138 @@ def cancel_appointment(appointment_id: str, customer_id: str):
 
 # ── Availability ──────────────────────────────────────────────────────────────
 
-def get_available_slots(year: int, month: int):
+def _slots_da_oficina(qs, oficina_doc: str | None):
+    """Horários gerais (oficina_doc nulo) valem para todas; os da oficina valem só para ela."""
+    if oficina_doc:
+        from django.db.models import Q
+        qs = qs.filter(Q(oficina_doc=oficina_doc) | Q(oficina_doc__isnull=True))
+    return qs
+
+
+def get_available_slots(year: int, month: int, oficina_doc: str | None = None):
     from datetime import date
     start = date(year, month, 1)
     end = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
-    qs = models.AvailabilitySlot.objects.filter(
-        date__gte=start, date__lt=end, is_available=True
-    ).order_by("date")
-    return [_row(s) for s in qs]
+    qs = models.AvailabilitySlot.objects.filter(date__gte=start, date__lt=end, is_available=True)
+    return [_row(s) for s in _slots_da_oficina(qs, oficina_doc).order_by("date")]
 
 
-def get_available_times(date_str: str):
-    qs = models.AvailabilitySlot.objects.filter(date=date_str, is_available=True).order_by("time_slot")
-    return [_row(s) for s in qs]
+def get_available_times(date_str: str, oficina_doc: str | None = None):
+    qs = models.AvailabilitySlot.objects.filter(date=date_str, is_available=True)
+    return [_row(s) for s in _slots_da_oficina(qs, oficina_doc).order_by("time_slot")]
+
+
+# ── Oficinas (carteira) ───────────────────────────────────────────────────────
+
+def _nomes_das_oficinas(docs):
+    return {o.doc: o.nome for o in models.Oficina.objects.filter(doc__in=list(docs))}
+
+
+def list_oficinas(customer_id: str):
+    """Oficinas em que o cliente está vinculado (ativo), mais recentes primeiro."""
+    vinculos = list(models.OficinaCliente.objects.filter(customer_id=customer_id, status="ativo").order_by("-confirmado_em", "-created_at"))
+    nomes = _nomes_das_oficinas(v.oficina_doc for v in vinculos)
+    return [{
+        "oficina_doc": v.oficina_doc,
+        "nome": nomes.get(v.oficina_doc, ""),
+        "desde": v.confirmado_em.isoformat() if v.confirmado_em else None,
+    } for v in vinculos]
+
+
+def usar_convite(codigo: str, customer_id: str) -> dict:
+    """Entra na carteira da oficina que gerou o convite. A regra (validade, usos, vínculo bloqueado pela
+    própria oficina) está na função SQL `oficina_convite_usar`; aqui só validamos o formato e chamamos.
+    Retorna {"ok": bool, "codigo": str, "mensagem": str, "oficina": {...}?}."""
+    import json
+    from django.db import connection
+    try:
+        codigo = str(_uuid.UUID(str(codigo).strip()))
+    except (ValueError, AttributeError, TypeError):
+        return {"ok": False, "codigo": "convite_invalido", "mensagem": "Convite inválido ou cancelado."}
+    with connection.cursor() as cur:
+        cur.execute("select public.oficina_convite_usar(%s::uuid, %s::uuid)", [codigo, str(customer_id)])
+        res = cur.fetchone()[0]
+    if isinstance(res, (str, bytes)):
+        res = json.loads(res)
+    if res.get("ok"):
+        doc = res["oficina_doc"]
+        res = {"ok": True, "codigo": res.get("codigo") or "vinculado", "novo": bool(res.get("novo")),
+               "oficina": {"oficina_doc": doc, "nome": _nomes_das_oficinas([doc]).get(doc, "")}}
+    return res
+
+
+def resolver_oficina(customer_id: str, oficina_doc: str | None):
+    """Escolhe a oficina de um pedido de agendamento. Retorna (oficina_doc, None) ou (None, mensagem).
+    Sem informar: só vale se o cliente tem exatamente uma oficina. Informada: tem de ser uma das dele."""
+    ativas = [v["oficina_doc"] for v in list_oficinas(customer_id)]
+    if not ativas:
+        return None, "Entre em uma oficina com o convite que ela fornece antes de pedir um agendamento."
+    if oficina_doc:
+        if oficina_doc not in ativas:
+            return None, "Você não está vinculado a esta oficina."
+        return oficina_doc, None
+    if len(ativas) > 1:
+        return None, "Escolha a oficina do agendamento."
+    return ativas[0], None
+
+
+# ── Orçamentos da oficina (somente leitura) ───────────────────────────────────
+# Só os que a oficina ENVIOU (ou que já foram decididos) para uma OS ligada ao cliente.
+# Rascunho e versões substituídas são internos da oficina. Custo de peça nunca sai daqui.
+
+ORCAMENTO_VISIVEL = ("enviado", "aprovado", "recusado")
+
+
+def _orcamento_row(o, ordem, itens, nome_oficina):
+    return {
+        "id": str(o.id),
+        "oficina": {"oficina_doc": o.oficina_doc, "nome": nome_oficina or ""},
+        "os_num": ordem.os_num if ordem else None,
+        "vehicle_label": " — ".join(x for x in ((ordem.modelo if ordem else None), (ordem.placa if ordem else None)) if x),
+        "versao": o.versao,
+        "status": o.status,
+        "validade_ate": o.validade_ate.isoformat() if o.validade_ate else None,
+        "observacoes": o.observacoes,
+        "total": float(o.total),
+        "enviado_em": o.enviado_em.isoformat() if o.enviado_em else None,
+        "aprovado_em": o.aprovado_em.isoformat() if o.aprovado_em else None,
+        "recusado_em": o.recusado_em.isoformat() if o.recusado_em else None,
+        "motivo_recusa": o.motivo_recusa,
+        "itens": [{
+            "tipo": i.tipo, "descricao": i.descricao, "marca": i.marca,
+            "quantidade": float(i.quantidade), "preco_unitario": float(i.preco_unitario),
+            "subtotal": float(i.quantidade * i.preco_unitario),
+        } for i in itens],
+    }
+
+
+def _orcamentos_do_cliente(customer_id: str, orcamento_id: str | None = None):
+    ordens = {o.id: o for o in models.Ordem.objects.filter(customer_id=customer_id)}
+    if not ordens:
+        return []
+    qs = models.Orcamento.objects.filter(ordem_id__in=list(ordens), status__in=ORCAMENTO_VISIVEL)
+    if orcamento_id:
+        qs = qs.filter(id=orcamento_id)
+    orcs = list(qs.order_by("-created_at"))
+    por_orc: dict = {}
+    for i in models.OrcamentoItem.objects.filter(orcamento_id__in=[o.id for o in orcs]).order_by("posicao"):
+        por_orc.setdefault(i.orcamento_id, []).append(i)
+    nomes = _nomes_das_oficinas({o.oficina_doc for o in orcs})
+    return [_orcamento_row(o, ordens.get(o.ordem_id), por_orc.get(o.id, []), nomes.get(o.oficina_doc)) for o in orcs]
+
+
+def list_orcamentos(customer_id: str, status: str | None = None):
+    rows = _orcamentos_do_cliente(customer_id)
+    return [r for r in rows if not status or r["status"] == status]
+
+
+def get_orcamento(orcamento_id: str, customer_id: str):
+    try:
+        orcamento_id = str(_uuid.UUID(str(orcamento_id)))
+    except ValueError:
+        return None
+    rows = _orcamentos_do_cliente(customer_id, orcamento_id)
+    return rows[0] if rows else None
 
 
 # ── Estimates ─────────────────────────────────────────────────────────────────

@@ -46,6 +46,12 @@ urlpatterns = [
     path("customer/availability",         views.available_days,  name="available-days"),
     path("customer/availability/times",   views.available_times, name="available-times"),
 
+    # ── Oficinas (carteira) e orçamentos enviados por elas ─────────────────────
+    path("customer/oficinas",                          views.oficinas_list,    name="oficinas-list"),
+    path("customer/oficinas/convite",                  views.oficina_convite,  name="oficina-convite"),
+    path("customer/orcamentos",                        views.orcamentos_list,  name="orcamentos-list"),
+    path("customer/orcamentos/<str:orcamento_id>",     views.orcamento_detail, name="orcamento-detail"),
+
     # ── Estimates ─────────────────────────────────────────────────────────────
     path("customer/estimates",                         views.estimates_list,  name="estimates-list"),
     path("customer/estimates/<str:estimate_id>",       views.estimate_detail, name="estimate-detail"),
