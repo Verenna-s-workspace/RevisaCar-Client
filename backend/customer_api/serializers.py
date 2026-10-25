@@ -115,6 +115,8 @@ class AppointmentCreateSerializer(serializers.Serializer):
     date = serializers.DateField()
     time_slot = serializers.TimeField()
     notes = serializers.CharField(required=False, allow_blank=True)
+    # Oficina que vai atender. Pode ser omitida só se o cliente tiver exatamente uma oficina.
+    oficina_doc = serializers.CharField(required=False, allow_blank=True, max_length=40)
 
     def validate_date(self, v):
         if v < datetime.today().date():
@@ -272,3 +274,7 @@ def new_id() -> str:
 
 def now_iso() -> str:
     return datetime.utcnow().isoformat() + "Z"
+
+
+class ConviteUsarSerializer(serializers.Serializer):
+    codigo = serializers.CharField(max_length=100)

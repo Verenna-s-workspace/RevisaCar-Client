@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-DEBUG = os.getenv("DEBUG", "False") == "True"
-
+#DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG=True
 # Em produção a chave TEM que vir do ambiente — nunca um default embutido no
 # repositório. Em dev (DEBUG=True) cai num placeholder para não travar o setup.
 _secret = os.environ.get("DJANGO_SECRET_KEY")
