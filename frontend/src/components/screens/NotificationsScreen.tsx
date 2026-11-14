@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarCheck, FileText, Clock, Tag, Wrench, Bell, Check } from 'lucide-react';
-import { SwipeRow } from '../visual';
+import { SwipeRow, Segmented } from '../visual';
+import { useState } from 'react';
 import { notificationsApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
@@ -64,8 +65,10 @@ export function NotificationsScreen() {
     },
   });
 
-  const today = notifs.filter(n => isToday(new Date(n.created_at)));
-  const older = notifs.filter(n => !isToday(new Date(n.created_at)));
+  const [aba, setAba] = useState<'todas' | 'nao_lidas'>('todas');
+  const visiveis = aba === 'todas' ? notifs : notifs.filter(n => !n.is_read);
+  const today = visiveis.filter(n => isToday(new Date(n.created_at)));
+  const older = visiveis.filter(n => !isToday(new Date(n.created_at)));
   const hasUnread = notifs.some(n => !n.is_read);
 
   const open = (n: Notification) => { if (!n.is_read) markRead(n.id); navigate(`/notificacoes/${n.id}`); };
@@ -80,7 +83,11 @@ export function NotificationsScreen() {
         ) : undefined
       } />
     }>
-      <div className="px-4 pt-3 pb-8">
+      <div className="px-4 pt-1 pb-8">
+        <div className="mb-4">
+          <Segmented label="Filtrar avisos" value={aba} onChange={setAba}
+            options={[{ value: 'todas', label: 'Todas' }, { value: 'nao_lidas', label: `Não lidas${notifs.some(n => !n.is_read) ? ` (${notifs.filter(n => !n.is_read).length})` : ''}` }]} />
+        </div>
         {isLoading ? (
           <div className="flex flex-col gap-2">{[0,1,2,3].map(i => <Skeleton key={i} className="h-[72px] rounded-2xl" />)}</div>
         ) : notifs.length === 0 ? (

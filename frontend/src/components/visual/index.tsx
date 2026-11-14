@@ -3,6 +3,7 @@ import { clsx } from 'clsx';
 
 export { CarIllustration } from './CarIllustration';
 export { SwipeRow } from './SwipeRow';
+export { FotoVeiculo } from './FotoVeiculo';
 
 /*
  * Linguagem visual no estilo Apple: fundo agrupado neutro, cards sólidos,
@@ -57,9 +58,8 @@ export function Chip({ children, onClick, icon, active }: {
 }) {
   return (
     <button type="button" onClick={onClick}
-      className={clsx('chip flex-none inline-flex items-center gap-1.5 h-9 rounded-full t-subhead font-semibold whitespace-nowrap',
-        children ? 'px-3.5' : 'w-9 justify-center', active && 'chip-active')}
-      style={active ? undefined : { color: 'var(--tint)' }}>
+      className={clsx('chip flex-none inline-flex items-center gap-1.5 h-9 rounded-[10px] t-subhead font-semibold whitespace-nowrap',
+        children ? 'px-3.5' : 'w-9 justify-center', active && 'chip-active')}>
       {icon}{children}
     </button>
   );
@@ -153,14 +153,13 @@ export function Segmented<T extends string>({ options, value, onChange, label }:
   options: readonly { value: T; label: string }[]; value: T; onChange: (v: T) => void; label?: string;
 }) {
   return (
-    <div role="tablist" aria-label={label} className="flex p-[2px] rounded-[9px] w-full" style={{ background: 'var(--fill)' }}>
+    <div role="tablist" aria-label={label} className="flex p-[3px] rounded-[10px] w-full" style={{ background: 'var(--card-2)', border: '1px solid var(--line)' }}>
       {options.map(o => {
         const ativo = o.value === value;
         return (
           <button key={o.value} type="button" role="tab" aria-selected={ativo} onClick={() => onChange(o.value)}
-            className="flex-1 h-8 rounded-[7px] t-footnote font-semibold transition-all whitespace-nowrap px-2"
-            style={ativo ? { background: 'var(--seg-active)', color: 'var(--text)', boxShadow: '0 3px 8px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04)' }
-                         : { color: 'var(--text)' }}>
+            className="flex-1 h-8 rounded-[8px] t-footnote font-semibold transition-all whitespace-nowrap px-2"
+            style={ativo ? { background: 'var(--tint-fill)', color: '#fff' } : { color: 'var(--text-2)' }}>
             {o.label}
           </button>
         );

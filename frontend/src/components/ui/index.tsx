@@ -81,7 +81,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const BTN_V: Record<string, string> = {
   primary: 'bg-[var(--tint-fill)] text-white active:brightness-90',
-  ghost:   'chip text-text-2',
+  ghost:   'chip',
   danger:  'bg-crit-bg text-crit border border-crit-border hover:bg-crit/10',
   success: 'bg-ok text-white hover:brightness-110',
   outline: 'bg-transparent text-brand border-2 border-brand hover:bg-crit-bg',
@@ -91,7 +91,7 @@ const BTN_S: Record<string, string> = {
   xs: 'px-3 py-1.5 text-xs rounded-full gap-1.5',
   sm: 'px-4 py-2 text-sm rounded-full gap-2',
   md: 'px-5 h-11 t-body rounded-[12px] gap-2',
-  lg: 'px-6 h-[50px] t-headline rounded-[14px] gap-2',
+  lg: 'px-6 h-12 t-headline rounded-[10px] gap-2',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
@@ -145,7 +145,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           ref={ref}
           id={inputId}
           className={clsx(
-            'w-full border rounded-[10px] font-sans t-body text-text bg-surface transition-all duration-150 min-h-[44px]',
+            'w-full border border-[var(--line)] rounded-[10px] font-sans t-body text-text bg-surface transition-all duration-150 min-h-[44px]',
             'placeholder:text-text-ghost outline-none',
             prefix ? 'pl-10 pr-4 py-3' : suffix ? 'pl-4 pr-10 py-3' : 'px-4 py-3',
             error
@@ -400,13 +400,13 @@ export function FilterChips<T extends string>({
 }) {
   // Controle segmentado do iOS
   return (
-    <div role="tablist" className="flex p-[2px] rounded-[9px] w-full" style={{ background: 'var(--fill)' }}>
+    <div role="tablist" className="flex p-[3px] rounded-[10px] w-full" style={{ background: 'var(--card-2)', border: '1px solid var(--line)' }}>
       {options.map(opt => {
         const ativo = value === opt.value;
         return (
           <button key={opt.value} role="tab" aria-selected={ativo} onClick={() => onChange(opt.value)}
-            className="flex-1 h-8 rounded-[7px] t-footnote font-semibold transition-all"
-            style={ativo ? { background: 'var(--seg-active)', color: 'var(--text)', boxShadow: '0 3px 8px rgba(0,0,0,0.12)' } : { color: 'var(--text)' }}>
+            className="flex-1 h-8 rounded-[8px] t-footnote font-semibold transition-all"
+            style={ativo ? { background: 'var(--tint-fill)', color: '#fff' } : { color: 'var(--text-2)' }}>
             {opt.label}
           </button>
         );

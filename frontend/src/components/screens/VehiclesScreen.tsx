@@ -5,29 +5,27 @@ import { vehiclesApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
 import { C, FONT_HEAD } from '../ui/pro';
-import { Glass, StatTile, CarIllustration, V } from '../visual';
+import { Glass, FotoVeiculo, V } from '../visual';
 import { useVehicleHealth } from '../../hooks/useVehicleHealth';
 import type { Vehicle } from '../../types';
 
-/* ─── Card do veículo ──────────────────────────── */
+/* ─── Linha do veículo (foto + dados), como na referência ── */
 function VehicleRow({ v, onClick }: { v: Vehicle; onClick: () => void }) {
   const { data: health } = useVehicleHealth(v.id);
   return (
-    <Glass as="button" onClick={onClick} className="w-full p-4 flex flex-col">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 text-left">
-          <p className="text-[1.0625rem] font-normal truncate" style={{ color: V.text }}>{v.brand} {v.model}</p>
-          <p className="text-[0.75rem] mt-0.5 data-mono" style={{ color: V.subtle }}>{v.plate} · {v.year}</p>
+    <Glass as="button" onClick={onClick} className="w-full p-3 flex items-center gap-3">
+      <div className="w-[104px] flex-none"><FotoVeiculo marca={v.brand} modelo={v.model} cor={v.color} className="w-full" /></div>
+      <div className="flex-1 min-w-0 text-left">
+        <div className="flex items-start justify-between gap-2">
+          <p className="t-headline truncate" style={{ color: V.text }}>{v.brand} {v.model}</p>
+          {v.is_active && (
+            <span className="t-caption font-semibold px-2 py-0.5 rounded-md flex-none" style={{ background: V.okSoft, color: V.ok }}>Principal</span>
+          )}
         </div>
-        {v.is_active && (
-          <span className="text-[0.6875rem] px-2.5 py-1 rounded-full flex-none" style={{ background: V.okSoft, color: 'var(--green)' }}>Principal</span>
-        )}
-      </div>
-      <CarIllustration color={v.color} className="w-full max-w-[320px] mx-auto my-2" />
-      <div className="grid grid-cols-3 gap-2">
-        <StatTile label="Saúde" value={health ? `${health.overall_score}%` : '—'} />
-        <StatTile label="Km" value={(v.mileage ?? 0).toLocaleString('pt-BR')} />
-        <StatTile label="Cor" value={<span className="text-[0.9375rem]">{v.color || '—'}</span>} />
+        <p className="t-footnote mt-0.5" style={{ color: V.muted }}>{v.plate} • {v.year}{v.color ? ` • ${v.color}` : ''}</p>
+        <p className="t-footnote" style={{ color: V.muted }}>
+          {(v.mileage ?? 0).toLocaleString('pt-BR')} km{health ? ` • saúde ${health.overall_score}%` : ''}
+        </p>
       </div>
     </Glass>
   );
@@ -60,7 +58,7 @@ export function VehiclesScreen() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
             {vehicles.map(v => (
               <VehicleRow key={v.id} v={v} onClick={() => navigate(`/veiculo/${v.id}`)} />
             ))}
@@ -68,8 +66,7 @@ export function VehiclesScreen() {
         )}
 
         <button onClick={() => navigate('/veiculos/novo')}
-          className="chip w-full lg:w-auto lg:self-start lg:px-6 flex items-center justify-center gap-2 h-12 rounded-full font-medium text-[0.9375rem] mt-1"
-          style={{ color: C.brand }}>
+          className="chip w-full lg:w-auto lg:self-start lg:px-6 flex items-center justify-center gap-2 h-12 rounded-[10px] t-headline mt-1">
           <Plus size={18} /> Adicionar veículo
         </button>
       </div>

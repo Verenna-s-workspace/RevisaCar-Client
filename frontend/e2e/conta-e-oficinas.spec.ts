@@ -88,12 +88,18 @@ test.describe('Conta', () => {
 });
 
 test.describe('Veículo', () => {
-  test('detalhe tem abas com dados reais', async ({ page }) => {
+  test('detalhe tem foto, ficha e atalhos reais', async ({ page }) => {
     await page.goto('/veiculo/v1');
-    await expect(page.getByText('ABC-1234')).toBeVisible();
-    await page.getByRole('tab', { name: 'Manutenção' }).click();
+    await expect(page.getByRole('heading', { name: /ABC-1234/ })).toBeVisible();
+    await expect(page.getByText('Renavam')).toBeVisible();
+    await page.getByRole('button', { name: 'Manutenções programadas' }).click();
+    await expect(page).toHaveURL(/\/manutencoes$/);
     await expect(page.getByText('Troca de Óleo')).toBeVisible();
-    await page.getByRole('tab', { name: 'Documentos' }).click();
-    await expect(page.getByText('CRLV 2026')).toBeVisible();
+  });
+
+  test('créditos das fotos estão acessíveis', async ({ page }) => {
+    await page.goto('/creditos');
+    await expect(page.getByRole('heading', { name: 'Créditos de imagens' })).toBeVisible();
+    await expect(page.getByText('Hyundai HB20')).toBeVisible();
   });
 });

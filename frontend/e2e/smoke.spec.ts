@@ -1,14 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Smoke — app sobe e navega', () => {
-  test('Meu carro carrega com o veículo do cliente', async ({ page }) => {
+  test('Início carrega com o veículo do cliente', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Meu carro' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Fiat Uno/ })).toBeVisible();
-    await expect(page.getByText('Saúde geral', { exact: true })).toBeVisible();
-    // barra de abas com rótulos
+    await expect(page.getByRole('heading', { name: /Olá/ })).toBeVisible();
+    await expect(page.getByText('Próxima manutenção')).toBeVisible();
+    await expect(page.getByRole('img', { name: /Fiat Uno/ })).toBeVisible(); // foto real do modelo
     const abas = page.getByRole('navigation', { name: 'Menu principal' });
-    for (const nome of ['Meu carro', 'Manutenção', 'Agendar', 'Serviços', 'Conta']) {
+    for (const nome of ['Início', 'Serviços', 'Agendar', 'Veículo', 'Perfil']) {
       await expect(abas.getByRole('link', { name: nome })).toBeVisible();
     }
   });
@@ -16,17 +15,17 @@ test.describe('Smoke — app sobe e navega', () => {
   test('navega pelas abas e volta', async ({ page }) => {
     await page.goto('/');
     const abas = page.getByRole('navigation', { name: 'Menu principal' });
-    await abas.getByRole('link', { name: 'Manutenção' }).click();
-    await expect(page).toHaveURL(/\/manutencoes$/);
-    await expect(page.getByRole('heading', { name: 'Manutenção' })).toBeVisible();
-    await abas.getByRole('link', { name: 'Meu carro' }).click();
+    await abas.getByRole('link', { name: 'Veículo' }).click();
+    await expect(page).toHaveURL(/\/veiculo$/);
+    await expect(page.getByRole('heading', { name: 'Meus veículos' })).toBeVisible();
+    await abas.getByRole('link', { name: 'Início' }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('aba Conta abre a conta', async ({ page }) => {
+  test('aba Perfil abre o perfil', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link', { name: 'Conta' }).click();
+    await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link', { name: 'Perfil' }).click();
     await expect(page).toHaveURL(/\/perfil$/);
-    await expect(page.getByRole('heading', { name: 'Conta' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Perfil' })).toBeVisible();
   });
 });

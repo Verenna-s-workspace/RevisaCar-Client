@@ -14,11 +14,11 @@ test('barra lateral navega e a barra de abas some', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Voltar' })).toBeHidden();
 });
 
-test('painel mostra saúde, manutenções e custo', async ({ page }) => {
+test('Início mostra próxima manutenção, status e últimos serviços', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Saúde' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Próximas manutenções/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Custo de manutenção' })).toBeVisible();
+  await expect(page.getByText('Próxima manutenção')).toBeVisible();
+  await expect(page.getByText('Status atual')).toBeVisible();
+  await expect(page.getByText('Últimos serviços')).toBeVisible();
 });
 
 test('barra lateral tem grupos com rótulos e Sair', async ({ page }) => {
