@@ -7,7 +7,7 @@ test.describe('Smoke — app sobe e navega', () => {
     await expect(page.getByText('Fiat Uno')).toBeVisible();
     await expect(page.getByText('SAÚDE')).toBeVisible();
     // bottom nav presente
-    await expect(page.getByText('Início')).toBeVisible();
+    await expect(page.locator('nav.fixed').getByText('Início')).toBeVisible();
   });
 
   test('navega pela bottom nav até Perfil e volta', async ({ page }) => {

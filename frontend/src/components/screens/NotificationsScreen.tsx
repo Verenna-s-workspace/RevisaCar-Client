@@ -70,7 +70,7 @@ export function NotificationsScreen() {
   const open = (n: Notification) => { if (!n.is_read) markRead(n.id); navigate(`/notificacoes/${n.id}`); };
 
   return (
-    <MainLayout topbar={
+    <MainLayout width="wide" topbar={
       <Topbar title="Notificações" showBack right={
         hasUnread ? (
           <button onClick={() => markAll()} className="text-[12px] font-semibold pr-1" style={{ color: C.brand }}>

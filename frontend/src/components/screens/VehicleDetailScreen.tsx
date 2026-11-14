@@ -32,7 +32,7 @@ export function VehicleDetailScreen() {
   const color = healthColor(score);
 
   return (
-    <MainLayout showNav={false} topbar={
+    <MainLayout width="wide" showNav={false} topbar={
       <Topbar title={v ? `${v.brand} ${v.model}` : 'Veículo'} showBack
         right={
           <button onClick={() => navigate(`/veiculo/${id}/editar`)} className="w-10 h-10 flex items-center justify-center">

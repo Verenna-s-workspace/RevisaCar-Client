@@ -92,7 +92,7 @@ export function VehicleHealthScreen() {
   const isLoading = carregandoVeiculos || (!!vehicleId && carregandoSaude);
 
   return (
-    <MainLayout showNav={false} topbar={<Topbar title={veiculo ? `Saúde · ${veiculo.model}` : 'Saúde do veículo'} showBack />}>
+    <MainLayout width="wide" showNav={false} topbar={<Topbar title={veiculo ? `Saúde · ${veiculo.model}` : 'Saúde do veículo'} showBack />}>
       <div className="px-4 pb-8">
         {isLoading ? (
           <Skeleton className="h-[160px] rounded-[18px] mt-4" />

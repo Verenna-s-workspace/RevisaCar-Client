@@ -106,12 +106,12 @@ export function DashboardScreen() {
   const systems = (healthData?.categories ?? []).slice(0, 3).map(c => ({ label: c.name, score: c.score }));
 
   return (
-    <MainLayout topbar={
-      <header className="sticky top-0 z-50 flex items-center justify-between px-4 h-[56px]"
-              style={{ background: BG, borderBottom: `1px solid ${BORDER}` }}>
+    <MainLayout width="wide" topbar={
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-[56px] bg-[#F7F6F3] lg:bg-white lg:h-[72px] lg:px-8"
+              style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div>
-          <p className="text-[11px] font-medium" style={{ color: SUBTLE }}>Bem-vindo de volta</p>
-          <p className="text-[16px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+          <p className="text-[11px] font-medium lg:text-[12.5px]" style={{ color: SUBTLE }}>Bem-vindo de volta</p>
+          <p className="text-[16px] font-bold lg:text-[22px]" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Olá{firstName ? `, ${firstName}` : ''}
           </p>
         </div>
@@ -125,13 +125,13 @@ export function DashboardScreen() {
         </button>
       </header>
     }>
-      <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+      <div className="px-4 pt-4 pb-6 flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:gap-5 lg:items-start">
 
         {/* Vehicle card + Health Score */}
         {isLoading ? (
-          <Skeleton className="h-[192px] rounded-[18px]" />
+          <Skeleton className="h-[192px] rounded-[18px] lg:col-span-2" />
         ) : vehicle ? (
-          <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-[18px] p-5 lg:col-span-2" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="font-bold text-[17px]" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
@@ -153,13 +153,14 @@ export function DashboardScreen() {
             </button>}
           </div>
         ) : (
-          <button onClick={() => navigate('/veiculos')}
-                  className="rounded-[18px] p-5 flex flex-col items-center gap-3 border-2 border-dashed"
+          <button onClick={() => navigate('/veiculos/novo')}
+                  className="rounded-[18px] p-5 flex flex-col items-center gap-3 border-2 border-dashed lg:col-span-2"
                   style={{ borderColor: BORDER }}>
             <p className="text-[14px] font-semibold" style={{ color: MUTED }}>+ Adicionar veículo</p>
           </button>
         )}
 
+        <div className="flex flex-col gap-4">
         {/* Sem oficina: sem ela não dá para agendar nem receber orçamentos */}
         {oficinas && oficinas.length === 0 && (
           <button onClick={() => navigate('/oficinas')}
@@ -218,7 +219,7 @@ export function DashboardScreen() {
         )}
 
         {/* Quick actions — paleta restrita, um único acento (marca) */}
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-4 gap-2.5 lg:hidden">
           {ACTIONS.map(({ icon: Icon, label, to }) => (
             <button key={label} onClick={() => navigate(to)}
                     className="flex flex-col items-center gap-2 press">
@@ -231,8 +232,21 @@ export function DashboardScreen() {
           ))}
         </div>
 
+        {/* Atalhos no desktop: compactos (a sidebar já tem a navegação completa) */}
+        <div className="hidden lg:grid grid-cols-2 gap-2.5">
+          {ACTIONS.map(({ icon: Icon, label, to }) => (
+            <button key={label} onClick={() => navigate(to)}
+                    className="flex items-center gap-3 px-3.5 h-14 rounded-[14px] text-left hover:border-[#C7C3BA] transition-colors"
+                    style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+              <Icon size={19} color={BRAND} strokeWidth={1.9} />
+              <span className="text-[13px] font-semibold" style={{ color: TEXT }}>{label}</span>
+            </button>
+          ))}
+        </div>
+        </div>
+
         {/* Atividade recente */}
-        <div>
+        <div className="lg:col-span-3">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
               Atividade recente

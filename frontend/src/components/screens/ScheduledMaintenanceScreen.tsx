@@ -117,7 +117,7 @@ export function ScheduledMaintenanceScreen() {
   const filtered = filter === 'all' ? reminders : reminders.filter(r => r.urgency === filter);
 
   return (
-    <MainLayout topbar={<Topbar title="Manutenções Programadas" showBack />}>
+    <MainLayout width="wide" topbar={<Topbar title="Manutenções Programadas" showBack />}>
       <div className="px-4 pt-4 flex flex-col gap-4">
 
         {/* Hero CTA */}

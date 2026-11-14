@@ -126,7 +126,7 @@ export function EstimatesScreen() {
   });
 
   return (
-    <MainLayout showNav={false} topbar={<Topbar title="Orçamentos" showBack />}>
+    <MainLayout width="wide" showNav={false} topbar={<Topbar title="Orçamentos" showBack />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
         <div className="flex gap-2 flex-wrap" role="tablist">
           {TABS.map(t => (
