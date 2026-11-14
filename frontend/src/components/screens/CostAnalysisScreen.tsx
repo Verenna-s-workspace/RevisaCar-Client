@@ -27,8 +27,8 @@ export function CostAnalysisScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
 
         {/* Total card */}
-        <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[12px] font-bold uppercase tracking-widest mb-1" style={{ color: SUBTLE }}>
+        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[12px] font-medium uppercase tracking-widest mb-1" style={{ color: SUBTLE }}>
             Total em 2024
           </p>
           <p className="text-[34px] font-black data-mono" style={{ color: TEXT }}>
@@ -43,8 +43,8 @@ export function CostAnalysisScreen() {
         </div>
 
         {/* Bar chart */}
-        <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[13px] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Por mês
           </p>
           <div className="flex items-end gap-2 h-[100px]">
@@ -66,8 +66,8 @@ export function CostAnalysisScreen() {
         </div>
 
         {/* Categories */}
-        <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[13px] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Por categoria
           </p>
           <div className="flex flex-col gap-3">
@@ -78,7 +78,7 @@ export function CostAnalysisScreen() {
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />
                     <p className="text-[13px] font-semibold" style={{ color: TEXT }}>{c.label}</p>
                   </div>
-                  <p className="text-[13px] font-bold data-mono" style={{ color: TEXT }}>
+                  <p className="text-[13px] font-medium data-mono" style={{ color: TEXT }}>
                     R$ {c.value.toLocaleString('pt-BR')}
                   </p>
                 </div>

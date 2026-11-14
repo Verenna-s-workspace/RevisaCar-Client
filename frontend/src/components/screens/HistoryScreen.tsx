@@ -23,14 +23,13 @@ function TimelineItem({ item, last, onClick }: { item: ServiceHistory; last: boo
         <p className="text-[11.5px] font-semibold" style={{ color: C.subtle }}>
           {item.mileage_at_service?.toLocaleString('pt-BR')} km · {format(new Date(item.service_date), 'dd/MM/yyyy', { locale: ptBR })}
         </p>
-        <div className="flex items-center justify-between mt-1 rounded-[14px] p-3.5"
-             style={{ background: C.card, border: `1px solid ${C.border}` }}>
+        <div className="flex items-center justify-between mt-1 rounded-[22px] p-3.5 glass">
           <div className="min-w-0">
-            <p className="text-[14px] font-bold truncate" style={{ color: C.text }}>{item.service_type}</p>
+            <p className="text-[14px] font-medium truncate" style={{ color: C.text }}>{item.service_type}</p>
             <p className="text-[12px] mt-0.5" style={{ color: C.muted }}>{item.workshop_name ?? 'Oficina'}</p>
           </div>
           <div className="flex items-center gap-1.5 flex-none">
-            <span className="text-[14px] font-bold tabular" style={{ color: C.text }}>
+            <span className="text-[14px] font-medium tabular" style={{ color: C.text }}>
               R$ {item.total_cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
             <ChevronRight size={16} color={C.subtle} />
@@ -72,13 +71,13 @@ export function HistoryScreen() {
         </p>
 
         {isLoading ? (
-          <div className="flex flex-col gap-3">{[0,1,2].map(i => <Skeleton key={i} className="h-[80px] rounded-[14px]" />)}</div>
+          <div className="flex flex-col gap-3">{[0,1,2].map(i => <Skeleton key={i} className="h-[80px] rounded-[22px]" />)}</div>
         ) : history.length === 0 ? (
           <div className="flex flex-col items-center text-center pt-16 px-6">
             <div className="w-[80px] h-[80px] rounded-full flex items-center justify-center" style={{ background: C.bg }}>
               <Calendar size={36} color={C.subtle} strokeWidth={1.4} />
             </div>
-            <h2 className="text-[17px] font-extrabold mt-5" style={{ color: C.text, fontFamily: FONT_HEAD }}>
+            <h2 className="text-[17px] font-medium mt-5" style={{ color: C.text, fontFamily: FONT_HEAD }}>
               Nenhum serviço ainda
             </h2>
             <p className="text-[13px] mt-2" style={{ color: C.muted }}>
@@ -89,19 +88,20 @@ export function HistoryScreen() {
           <>
             {/* Próxima manutenção (lembrete mais urgente) */}
             {proxima && (
-            <div className="rounded-[16px] p-4 mb-4 flex items-center gap-3"
-                 style={{ background: '#FDEAEC', border: '1px solid rgba(204,20,0,.12)' }}>
-              {proxima.next_service_km != null && (
-                <div className="flex flex-col items-center flex-none">
-                  <span className="text-[9px] font-bold tracking-wide" style={{ color: C.brand }}>PRÓXIMA</span>
-                  <span className="text-[15px] font-extrabold tabular" style={{ color: C.brand, fontFamily: FONT_HEAD }}>
-                    {proxima.next_service_km.toLocaleString('pt-BR')}
-                  </span>
-                  <span className="text-[9px]" style={{ color: C.brand }}>km</span>
-                </div>
-              )}
+            <div className="glass rounded-[24px] p-4 mb-5 flex items-center gap-3.5">
+              <div className="w-[60px] h-[60px] rounded-full nav-raised flex flex-col items-center justify-center flex-none"
+                   style={{ boxShadow: '0 8px 18px rgba(204,20,0,0.28)' }}>
+                <span className="text-[9.5px] opacity-80">próxima</span>
+                <span className="text-[13px] font-medium tabular leading-tight">
+                  {proxima.next_service_km != null ? `${Math.round(proxima.next_service_km / 1000)} mil` : '—'}
+                </span>
+                <span className="text-[9.5px] opacity-80">km</span>
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-bold truncate" style={{ color: C.text }}>{proxima.service_name}</p>
+                <p className="text-[15px] font-medium truncate" style={{ color: C.text }}>{proxima.service_name}</p>
+                {proxima.next_service_km != null && (
+                  <p className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>Aos {proxima.next_service_km.toLocaleString('pt-BR')} km</p>
+                )}
                 {proxima.next_service_date && (
                   <p className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>
                     Estimada para {format(dataLocal(proxima.next_service_date), 'dd/MM/yyyy', { locale: ptBR })}
@@ -109,7 +109,7 @@ export function HistoryScreen() {
                 )}
               </div>
               <button onClick={() => navigate('/agendar')}
-                className="text-[12px] font-bold px-3 py-1.5 rounded-[8px] text-white" style={{ background: C.brand }}>
+                className="chip-active text-[12.5px] font-medium h-9 px-4 rounded-full">
                 Agendar
               </button>
             </div>
@@ -118,11 +118,11 @@ export function HistoryScreen() {
             {/* "Você está aqui" (km atual do veículo principal) */}
             {kmAtual != null && (
             <div className="flex items-center gap-2 mb-3 px-1">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.text }} />
-              <span className="text-[11px] font-bold tracking-wide" style={{ color: C.text }}>
-                VOCÊ ESTÁ AQUI · {kmAtual.toLocaleString('pt-BR')} km
+              <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.brand, boxShadow: '0 0 0 4px rgba(204,20,0,0.12)' }} />
+              <span className="text-[12.5px] font-medium" style={{ color: C.text }}>
+                Você está aqui · {kmAtual.toLocaleString('pt-BR')} km
               </span>
-              <div className="flex-1 h-[1px]" style={{ background: C.border }} />
+              <div className="flex-1 h-px" style={{ background: 'rgba(22,24,28,0.08)' }} />
             </div>
             )}
 

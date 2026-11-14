@@ -5,14 +5,12 @@ import { vehiclesApi } from '../../services/api';
 import { useVehicleHealth } from '../../hooks/useVehicleHealth';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
+import { Glass, DotRing, DotProgress } from '../visual';
 
 const BRAND  = '#CC1400';
 const TEXT   = '#14161A';
 const MUTED  = '#6B7078';
 const SUBTLE = '#9AA0A8';
-const BG     = '#F7F6F3';
-const CARD   = '#FFFFFF';
-const BORDER = '#E2DFD8';
 const GREEN  = '#18B26B';
 const YELLOW = '#F4A724';
 
@@ -22,58 +20,34 @@ function scoreColor(s: number) {
   return s >= 80 ? GREEN : s >= 60 ? YELLOW : BRAND;
 }
 
-/* ─── Arc SVG ───────────────────────────────────────────── */
+/* ─── Nota geral (anel de pontinhos) ───────────────────── */
 function BigArc({ score }: { score: number }) {
-  const r = 72, cx = 90, cy = 96;
-  const total = Math.PI * r;
-  const dash  = (score / 100) * total;
-  const color = scoreColor(score);
   const label = score >= 80 ? 'Bom estado' : score >= 60 ? 'Atenção necessária' : 'Estado crítico';
-
   return (
-    <div className="flex flex-col items-center py-4">
-      <svg width="180" height="110" viewBox="0 0 180 110">
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`}
-              fill="none" stroke={BORDER} strokeWidth="11" strokeLinecap="round" />
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`}
-              fill="none" stroke={color} strokeWidth="11" strokeLinecap="round"
-              strokeDasharray={`${dash} ${total}`} />
-        <text x={cx} y={cy-16} textAnchor="middle" fontSize="40" fontWeight="800"
-              fill={TEXT} fontFamily="var(--font-heading)">{score}</text>
-        <text x={cx} y={cy+8} textAnchor="middle" fontSize="13" fontWeight="600"
-              fill={color} fontFamily="'DM Sans',sans-serif">{label}</text>
-      </svg>
-      <p className="text-[11px] font-bold tracking-widest" style={{ color: SUBTLE }}>SAÚDE DO VEÍCULO</p>
-      <p className="text-[12px] mt-1.5 text-center px-8" style={{ color: MUTED }}>
+    <Glass className="flex flex-col items-center py-6 mt-2">
+      <DotRing value={score} label="saúde geral" size={200} />
+      <p className="text-[15px] font-medium mt-2" style={{ color: scoreColor(score) }}>{label}</p>
+      <p className="text-[12.5px] mt-1 text-center px-8" style={{ color: MUTED }}>
         Calculada a partir dos lembretes de manutenção do veículo.
       </p>
-    </div>
+    </Glass>
   );
 }
 
-/* ─── System Row ────────────────────────────────────────── */
+/* ─── Área ──────────────────────────────────────────────── */
 function SystemRow({ label, score, detail }: { label: string; score: number; detail: string }) {
   const color = scoreColor(score);
-  const pct = score;
-
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-[14px]"
-         style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-      <div className="flex items-center justify-between">
-        <p className="font-bold text-[14px]" style={{ color: TEXT }}>{label}</p>
-        <div className="flex items-center gap-2">
-          <span className="text-[13px] font-bold tabular" style={{ color }}>{score}</span>
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                style={{ background: `${color}18`, color }}>
-            {detail}
-          </span>
-        </div>
+    <Glass className="flex flex-col gap-3 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-medium text-[14.5px]" style={{ color: TEXT }}>{label}</p>
+        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ background: `${color}1A`, color }}>{detail}</span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: BG }}>
-        <div className="h-full rounded-full transition-all duration-700"
-             style={{ width: `${pct}%`, background: color }} />
+      <div className="flex items-end justify-between gap-3">
+        <span className="text-[26px] leading-none font-normal tabular" style={{ color: TEXT }}>{score}%</span>
+        <DotProgress pct={score} color={color} dots={20} />
       </div>
-    </div>
+    </Glass>
   );
 }
 
@@ -95,7 +69,7 @@ export function VehicleHealthScreen() {
     <MainLayout width="wide" showNav={false} topbar={<Topbar title={veiculo ? `Saúde · ${veiculo.model}` : 'Saúde do veículo'} showBack />}>
       <div className="px-4 pb-8">
         {isLoading ? (
-          <Skeleton className="h-[160px] rounded-[18px] mt-4" />
+          <Skeleton className="h-[160px] rounded-[22px] mt-4" />
         ) : !vehicleId ? (
           <p className="text-[13.5px] mt-6 text-center" style={{ color: MUTED }}>Cadastre um veículo para acompanhar a saúde dele.</p>
         ) : isError || !health ? (
@@ -103,7 +77,7 @@ export function VehicleHealthScreen() {
         ) : (
           <>
             <BigArc score={health.overall_score} />
-            <p className="text-[12px] font-bold uppercase tracking-widest mb-3 mt-2" style={{ color: SUBTLE }}>
+            <p className="text-[13px] font-medium mb-3 mt-5 px-1" style={{ color: MUTED }}>
               Por área
             </p>
             <div className="grid gap-2 lg:grid-cols-2">
@@ -116,7 +90,7 @@ export function VehicleHealthScreen() {
 
         <button
           onClick={() => navigate('/agendar')}
-          className="w-full mt-5 py-[14px] rounded-[12px] font-bold text-[14px] text-white lg:max-w-sm"
+          className="w-full mt-5 py-[14px] rounded-full font-medium text-[14px] text-white lg:max-w-sm"
           style={{ background: BRAND }}
         >
           Agendar manutenção

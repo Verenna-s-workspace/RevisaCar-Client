@@ -43,7 +43,7 @@ export function VerifyEmailScreen() {
             {status === 'loading' && (
               <>
                 <Loader2 size={40} color="var(--brand)" className="animate-spin" />
-                <h2 className="text-xl font-bold text-text">Confirmando seu e-mail…</h2>
+                <h2 className="text-xl font-medium text-text">Confirmando seu e-mail…</h2>
               </>
             )}
             {status === 'ok' && (
@@ -52,12 +52,12 @@ export function VerifyEmailScreen() {
                      style={{ background: 'rgba(22,128,60,0.1)' }}>
                   <CheckCircle2 size={34} color="#16803C" />
                 </div>
-                <h2 className="text-2xl font-bold text-text tracking-tight">E-mail confirmado!</h2>
+                <h2 className="text-2xl font-medium text-text tracking-tight">E-mail confirmado!</h2>
                 <p className="text-sm text-text-muted leading-relaxed max-w-[260px]">
                   Sua conta está ativa. Você já pode usar todos os recursos do RevisaCar.
                 </p>
                 <button onClick={() => navigate('/login', { replace: true })}
-                        className="w-full py-4 mt-2 bg-brand rounded-2xl text-white text-base font-bold
+                        className="w-full py-4 mt-2 bg-brand rounded-2xl text-white text-base font-medium
                                    active:scale-[0.97] transition-all hover:bg-brand-dark">
                   Ir para o login
                 </button>
@@ -69,7 +69,7 @@ export function VerifyEmailScreen() {
                      style={{ background: 'var(--brand-tint)' }}>
                   <XCircle size={34} color="var(--brand)" />
                 </div>
-                <h2 className="text-2xl font-bold text-text tracking-tight">Link inválido ou expirado</h2>
+                <h2 className="text-2xl font-medium text-text tracking-tight">Link inválido ou expirado</h2>
                 <p className="text-sm text-text-muted leading-relaxed max-w-[270px]">
                   Informe seu e-mail para receber um novo link de confirmação.
                 </p>
@@ -79,7 +79,7 @@ export function VerifyEmailScreen() {
                          className="w-full px-4 py-3.5 rounded-2xl text-[14px] font-medium outline-none border"
                          style={{ borderColor: 'var(--border)', color: 'var(--text)' }} />
                   <button type="submit" disabled={!resendEmail}
-                          className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold
+                          className="w-full py-4 bg-brand rounded-2xl text-white text-base font-medium
                                      disabled:opacity-50 active:scale-[0.97] transition-all hover:bg-brand-dark
                                      flex items-center justify-center gap-2">
                     <MailCheck size={18} /> Reenviar confirmação

@@ -23,7 +23,7 @@ export function PrivacyScreen() {
     <MainLayout showNav={false} topbar={<Topbar title="Privacidade" showBack />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
-        <div className="rounded-[16px] p-4" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+        <div className="rounded-[22px] p-4 glass">
           <p className="text-[13px] leading-relaxed" style={{ color: C.text2 }}>
             O RevisaCar não vende seus dados nem usa rastreamento de anúncios. As oficinas só veem
             seus dados depois que você entra nelas pelo convite.

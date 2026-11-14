@@ -53,7 +53,7 @@ export function ChatScreen() {
           {msgs.map((m, i) => (
             <div key={i} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className="max-w-[75%]">
-                <div className="px-4 py-2.5 rounded-[14px]"
+                <div className="px-4 py-2.5 rounded-[22px]"
                      style={{
                        background: m.from === 'user' ? BRAND : CARD,
                        color: m.from === 'user' ? '#fff' : TEXT,
@@ -79,12 +79,12 @@ export function ChatScreen() {
             onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send()}
             placeholder="Mensagem..."
-            className="flex-1 px-4 py-3 rounded-[12px] text-[14px] outline-none"
+            className="flex-1 px-4 py-3 rounded-full text-[14px] outline-none"
             style={{ background: BG, color: TEXT, border: `1px solid ${BORDER}` }}
           />
           <button
             onClick={send}
-            className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-none"
+            className="w-11 h-11 rounded-full flex items-center justify-center flex-none"
             style={{ background: text.trim() ? BRAND : BG }}>
             <Send size={18} color={text.trim() ? '#fff' : SUBTLE} />
           </button>

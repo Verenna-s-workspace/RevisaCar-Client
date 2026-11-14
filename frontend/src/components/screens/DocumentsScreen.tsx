@@ -86,21 +86,21 @@ function DocCard({ doc }: { doc: VehicleDocument }) {
     onError: () => toast.error('Não foi possível apagar'),
   });
 
-  const botao = 'w-8 h-8 rounded-[9px] flex items-center justify-center disabled:opacity-40';
+  const botao = 'w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-40';
   return (
-    <div className="flex items-center gap-3.5 p-4 rounded-[16px]" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-      <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-none" style={{ background: cfg.bg }}>
+    <div className="flex items-center gap-3.5 p-4 rounded-[22px] glass">
+      <div className="w-11 h-11 rounded-full flex items-center justify-center flex-none" style={{ background: cfg.bg }}>
         <cfg.Icon size={20} color={cfg.color} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-[14px] truncate" style={{ color: C.text }}>{doc.title}</p>
+        <p className="font-medium text-[14px] truncate" style={{ color: C.text }}>{doc.title}</p>
         <p className="text-[11.5px] mt-0.5 truncate" style={{ color: C.muted }}>
           {[cfg.label, doc.vehicle_label,
             doc.expiry_date ? `Venc. ${format(dia(doc.expiry_date), 'dd/MM/yyyy', { locale: ptBR })}` : null,
           ].filter(Boolean).join(' · ')}
         </p>
         {st && (
-          <span className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full"
+          <span className="inline-block mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
                 style={{ background: st.bg, color: st.color }}>{st.label}</span>
         )}
       </div>
@@ -174,7 +174,7 @@ function AddDocSheet({ onClose }: { onClose: () => void }) {
     onError: (e) => toast.error(erroDaApi(e, 'Não foi possível salvar o documento')),
   });
 
-  const campo = 'w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none';
+  const campo = 'w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none';
   const estilo = { border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card };
 
   return (
@@ -215,7 +215,7 @@ function AddDocSheet({ onClose }: { onClose: () => void }) {
         <input ref={inputRef} type="file" accept={ACEITOS} className="hidden"
                onChange={e => escolher(e.target.files?.[0])} />
         <button type="button" onClick={() => inputRef.current?.click()}
-          className="w-full flex items-center justify-center gap-2 py-4 px-3 rounded-[13px] text-[13.5px] font-semibold"
+          className="w-full flex items-center justify-center gap-2 py-4 px-3 rounded-2xl text-[13.5px] font-semibold"
           style={{ border: `1.5px dashed ${arquivo ? C.brand : C.border}`, color: arquivo ? C.text : C.muted }}>
           {arquivo ? <Paperclip size={17} /> : <Plus size={17} />}
           <span className="truncate">{arquivo ? arquivo.name : `Anexar arquivo (PDF ou foto, até ${MAX_MB} MB)`}</span>
@@ -242,14 +242,14 @@ export function DocumentsScreen() {
       <MainLayout width="wide" showNav={false} topbar={
         <Topbar title="Documentos" showBack right={
           <button aria-label="Adicionar documento" onClick={() => setShowAdd(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+            className="w-9 h-9 flex items-center justify-center rounded-xl glass">
             <Plus size={18} color={C.text} />
           </button>
         } />
       }>
         <div className="px-4 pt-4 pb-8 flex flex-col gap-3">
           {isLoading ? (
-            [0, 1, 2].map(i => <Skeleton key={i} className="h-[80px] rounded-[16px]" />)
+            [0, 1, 2].map(i => <Skeleton key={i} className="h-[80px] rounded-[22px]" />)
           ) : isError ? (
             <FullState icon={<FileText size={42} strokeWidth={1.4} />} title="Não foi possível carregar"
               desc="Verifique sua conexão e tente de novo." primary={{ label: 'Tentar de novo', onClick: () => refetch() }} />
@@ -261,7 +261,7 @@ export function DocumentsScreen() {
               primary={{ label: 'Adicionar documento', onClick: () => setShowAdd(true) }}
             />
           ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {docs.map(d => <DocCard key={d.id} doc={d} />)}
             </div>
           )}

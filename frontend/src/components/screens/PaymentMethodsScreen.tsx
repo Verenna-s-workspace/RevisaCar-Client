@@ -14,7 +14,7 @@ function AddCardSheet({ onClose }: { onClose: () => void }) {
         value={form[k]} maxLength={max}
         onChange={e => setForm(s => ({ ...s, [k]: e.target.value }))}
         placeholder={ph}
-        className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
+        className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none"
         style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
     </div>
   );
@@ -46,12 +46,12 @@ export function PaymentMethodsScreen() {
         <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
           {/* Primary card */}
-          <div className="rounded-[18px] p-5 relative overflow-hidden"
+          <div className="rounded-[22px] p-5 relative overflow-hidden"
                style={{ background: 'linear-gradient(135deg,#1B1E25,#0E1014)', minHeight: 178 }}>
             <div style={{ position:'absolute', top:-40, right:-30, width:160, height:160, borderRadius:'50%',
                           background:'radial-gradient(circle,rgba(204,20,0,.25),transparent 70%)' }} />
             <div className="flex items-center justify-between relative">
-              <span className="text-[13px] font-bold tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>VISA</span>
+              <span className="text-[13px] font-medium tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>VISA</span>
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
                     style={{ background: 'rgba(255,255,255,.12)', color: '#fff' }}>Principal</span>
             </div>
@@ -77,7 +77,7 @@ export function PaymentMethodsScreen() {
               <div className="flex items-center gap-3.5 px-4 py-3.5" style={{ borderBottom: `1px solid ${C.borderSoft}` }}>
                 <div className="w-10 h-7 rounded-[6px] flex items-center justify-center flex-none"
                      style={{ background: '#EAF1FB' }}>
-                  <span className="text-[9px] font-extrabold" style={{ color: C.info }}>MC</span>
+                  <span className="text-[9px] font-medium" style={{ color: C.info }}>MC</span>
                 </div>
                 <div className="flex-1">
                   <p className="text-[13.5px] font-semibold" style={{ color: C.text }}>Mastercard •••• 8888</p>
@@ -87,7 +87,7 @@ export function PaymentMethodsScreen() {
               <div className="flex items-center gap-3.5 px-4 py-3.5">
                 <div className="w-10 h-7 rounded-[6px] flex items-center justify-center flex-none"
                      style={{ background: C.greenBg }}>
-                  <span className="text-[12px] font-extrabold" style={{ color: C.greenDk }}>Pix</span>
+                  <span className="text-[12px] font-medium" style={{ color: C.greenDk }}>Pix</span>
                 </div>
                 <div className="flex-1">
                   <p className="text-[13.5px] font-semibold" style={{ color: C.text }}>Pix</p>
@@ -99,7 +99,7 @@ export function PaymentMethodsScreen() {
           </div>
 
           <button onClick={() => setShowAdd(true)}
-            className="w-full flex items-center justify-center gap-2 py-[14px] rounded-[14px] font-bold text-[14px]"
+            className="w-full flex items-center justify-center gap-2 py-[14px] rounded-[22px] font-medium text-[14px]"
             style={{ border: `1.5px dashed ${C.border}`, color: C.brand }}>
             <Plus size={18} /> Adicionar cartão
           </button>

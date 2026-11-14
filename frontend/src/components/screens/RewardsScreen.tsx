@@ -28,7 +28,7 @@ export function RewardsScreen() {
         {/* Points card */}
         <div className="rounded-[20px] p-5"
              style={{ background: `linear-gradient(135deg, #1a0a00 0%, #3a1200 100%)` }}>
-          <p className="text-[11px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,.5)' }}>
+          <p className="text-[11px] font-medium tracking-widest mb-3" style={{ color: 'rgba(255,255,255,.5)' }}>
             SEUS PONTOS
           </p>
           <p className="text-[46px] font-black data-mono" style={{ color: '#fff' }}>
@@ -36,7 +36,7 @@ export function RewardsScreen() {
           </p>
           <div className="flex items-center gap-2 mt-1">
             <Star size={14} color={GOLD} fill={GOLD} />
-            <p className="text-[13px] font-bold" style={{ color: GOLD }}>Nível Ouro</p>
+            <p className="text-[13px] font-medium" style={{ color: GOLD }}>Nível Ouro</p>
           </div>
 
           {/* Progress to next */}
@@ -56,7 +56,7 @@ export function RewardsScreen() {
 
         {/* Trocar pontos header */}
         <div className="flex items-center justify-between">
-          <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+          <p className="text-[14px] font-medium" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Trocar pontos
           </p>
         </div>
@@ -64,9 +64,9 @@ export function RewardsScreen() {
         {/* Rewards list */}
         <div className="flex flex-col gap-3">
           {REWARDS.map(r => (
-            <div key={r.label} className="rounded-[14px] p-4 flex items-center gap-3"
+            <div key={r.label} className="rounded-[22px] p-4 flex items-center gap-3"
                  style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-              <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-none"
+              <div className="w-11 h-11 rounded-full flex items-center justify-center flex-none"
                    style={{ background: BG }}>
                 <r.Icon size={20} color={BRAND} strokeWidth={1.9} />
               </div>
@@ -74,7 +74,7 @@ export function RewardsScreen() {
                 <p className="font-semibold text-[14px]" style={{ color: TEXT }}>{r.label}</p>
                 {r.sub && <p className="text-[11.5px] mt-0.5" style={{ color: SUBTLE }}>{r.sub}</p>}
               </div>
-              <button className="text-[12px] font-bold px-3 py-1.5 rounded-[8px] whitespace-nowrap"
+              <button className="text-[12px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap"
                       style={{ background: POINTS >= r.pts ? BRAND : BG,
                                color:    POINTS >= r.pts ? '#fff'  : SUBTLE }}>
                 {r.pts} pts

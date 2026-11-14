@@ -80,18 +80,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BTN_V: Record<string, string> = {
-  primary: 'bg-brand text-white hover:bg-brand-dark shadow-sm hover:shadow-brand/25 active:bg-brand-deep',
-  ghost:   'bg-surface-3 text-text-muted border border-border hover:border-border-md hover:text-text-2 hover:bg-surface-2',
+  primary: 'bg-brand text-white hover:bg-brand-dark shadow-[0_8px_20px_rgba(204,20,0,0.22)] active:bg-brand-deep disabled:shadow-none',
+  ghost:   'chip text-text-2',
   danger:  'bg-crit-bg text-crit border border-crit-border hover:bg-crit/10',
   success: 'bg-ok text-white hover:brightness-110',
   outline: 'bg-transparent text-brand border-2 border-brand hover:bg-crit-bg',
   subtle:  'bg-transparent text-text-3 hover:bg-surface-3 hover:text-text-2',
 };
 const BTN_S: Record<string, string> = {
-  xs: 'px-2.5 py-1.5 text-xs rounded-md gap-1.5',
-  sm: 'px-3.5 py-2 text-sm rounded-lg gap-2',
-  md: 'px-4 py-3 text-base rounded-xl gap-2',
-  lg: 'px-5 py-3.5 text-base rounded-xl gap-2 font-bold tracking-tight',
+  xs: 'px-3 py-1.5 text-xs rounded-full gap-1.5',
+  sm: 'px-4 py-2 text-sm rounded-full gap-2',
+  md: 'px-5 h-11 text-[15px] rounded-full gap-2',
+  lg: 'px-6 h-[52px] text-[15px] rounded-full gap-2 font-medium',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
@@ -101,7 +101,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     ref={ref}
     disabled={disabled || loading}
     className={clsx(
-      'inline-flex items-center justify-center font-semibold transition-all duration-150',
+      'inline-flex items-center justify-center font-medium transition-all duration-150',
       'disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.975]',
       'select-none focus-visible:outline-2 focus-visible:outline-brand',
       BTN_V[variant], BTN_S[size],
@@ -131,7 +131,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-xs font-semibold text-text-2 tracking-wide">
+        <label htmlFor={inputId} className="text-[12.5px] font-medium text-text-muted px-1">
           {label}
         </label>
       )}
@@ -145,12 +145,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           ref={ref}
           id={inputId}
           className={clsx(
-            'w-full border-[1.5px] rounded-xl font-sans text-sm text-text bg-surface transition-all duration-150',
+            'w-full border rounded-2xl font-sans text-[14px] text-text bg-white/85 transition-all duration-150',
             'placeholder:text-text-ghost outline-none',
             prefix ? 'pl-10 pr-4 py-3' : suffix ? 'pl-4 pr-10 py-3' : 'px-4 py-3',
             error
               ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]'
-              : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
+              : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
             className
           )}
           {...rest}
@@ -181,12 +181,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   const selectId = id || `s-${label?.toLowerCase().replace(/\s+/g,'-')}`;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label htmlFor={selectId} className="text-xs font-semibold text-text-2 tracking-wide">{label}</label>}
+      {label && <label htmlFor={selectId} className="text-[12.5px] font-medium text-text-muted px-1">{label}</label>}
       <select
         ref={ref} id={selectId}
         className={clsx(
-          'w-full px-4 py-3 border-[1.5px] rounded-xl font-sans text-sm text-text bg-surface outline-none transition-all',
-          error ? 'border-crit' : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
+          'w-full px-4 py-3 border rounded-2xl font-sans text-[14px] text-text bg-white/85 outline-none transition-all',
+          error ? 'border-crit' : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
           className
         )}
         {...rest}
@@ -209,12 +209,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ label,
   const taId = id || `ta-${label?.toLowerCase().replace(/\s+/g,'-')}`;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label htmlFor={taId} className="text-xs font-semibold text-text-2 tracking-wide">{label}</label>}
+      {label && <label htmlFor={taId} className="text-[12.5px] font-medium text-text-muted px-1">{label}</label>}
       <textarea
         ref={ref} id={taId} rows={3}
         className={clsx(
-          'w-full px-4 py-3 border-[1.5px] rounded-xl font-sans text-sm text-text bg-surface outline-none resize-none transition-all',
-          error ? 'border-crit' : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
+          'w-full px-4 py-3 border rounded-2xl font-sans text-[14px] text-text bg-white/85 outline-none resize-none transition-all',
+          error ? 'border-crit' : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
           className
         )}
         {...rest}
@@ -235,7 +235,7 @@ export function Card({ children, className, onClick, padding = true }: {
     <div
       onClick={onClick}
       className={clsx(
-        'bg-white rounded-2xl border border-border shadow-sm overflow-hidden',
+        'glass rounded-[24px] overflow-hidden',
         onClick && 'cursor-pointer active:scale-[0.99] transition-transform duration-100',
         padding && 'p-0',
         className
@@ -259,7 +259,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function SkeletonCard({ lines = 2 }: { lines?: number }) {
   return (
-    <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
+    <div className="glass rounded-[24px] p-4">
       <Skeleton className="h-5 w-3/5 mb-3" />
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton key={i} className={clsx('h-3.5 mb-2', i === lines - 1 ? 'w-2/5' : 'w-full')} />
@@ -293,7 +293,7 @@ export function EmptyState({ icon, title, description, action }: {
 }) {
   return (
     <div className="flex flex-col items-center gap-4 py-14 px-6 text-center animate-fade-up">
-      <div className="w-16 h-16 rounded-2xl bg-surface-3 flex items-center justify-center text-text-subtle">
+      <div className="glass w-16 h-16 rounded-full flex items-center justify-center text-text-subtle">
         {icon}
       </div>
       <div className="flex flex-col gap-1">
@@ -405,10 +405,8 @@ export function FilterChips<T extends string>({
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={clsx(
-            'flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 font-sans',
-            value === opt.value
-              ? 'border-brand bg-crit-bg text-brand shadow-sm'
-              : 'border-border bg-white text-text-muted hover:border-border-md hover:text-text-2'
+            'flex-shrink-0 px-4 h-10 rounded-full text-[13px] font-medium transition-all duration-150 font-sans',
+            value === opt.value ? 'chip chip-active' : 'chip text-text-2'
           )}
         >
           {opt.label}

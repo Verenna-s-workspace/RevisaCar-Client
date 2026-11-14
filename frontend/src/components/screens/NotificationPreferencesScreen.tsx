@@ -40,7 +40,7 @@ export function NotificationPreferencesScreen() {
             {AVISOS.map((a, i) => (
               <div key={a.label} className="flex items-center gap-3.5 px-4 py-3.5"
                    style={{ borderBottom: i === AVISOS.length - 1 ? 'none' : `1px solid ${C.borderSoft}` }}>
-                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: C.bg }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-none" style={{ background: C.bg }}>
                   <a.icon size={18} color={C.muted} />
                 </div>
                 <div className="min-w-0">

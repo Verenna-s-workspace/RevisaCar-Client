@@ -27,13 +27,13 @@ export function ServiceTrackingScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
 
         {/* OS header */}
-        <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
           <div className="flex items-center justify-between mb-1">
             <p className="text-[12px] font-semibold" style={{ color: SUBTLE }}>OS #1258 · HB20</p>
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+            <span className="text-[11px] font-medium px-2.5 py-1 rounded-full"
                   style={{ background: '#FFF3D6', color: '#C98A00' }}>Em andamento</span>
           </div>
-          <p className="font-bold text-[16px] mb-3" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+          <p className="font-medium text-[16px] mb-3" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Troca de óleo e filtros
           </p>
 
@@ -43,7 +43,7 @@ export function ServiceTrackingScreen() {
               <div className="h-full rounded-full transition-all duration-700"
                    style={{ width: `${progress}%`, background: GREEN }} />
             </div>
-            <span className="text-[13px] font-bold tabular" style={{ color: GREEN }}>{progress}%</span>
+            <span className="text-[13px] font-medium tabular" style={{ color: GREEN }}>{progress}%</span>
           </div>
           <p className="text-[11.5px] mt-2" style={{ color: SUBTLE }}>
             Previsão de conclusão · <span className="font-semibold">15:30</span>
@@ -51,8 +51,8 @@ export function ServiceTrackingScreen() {
         </div>
 
         {/* Timeline */}
-        <div className="rounded-[18px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-bold mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[13px] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Progresso
           </p>
           <div className="flex flex-col gap-0">
@@ -77,7 +77,7 @@ export function ServiceTrackingScreen() {
                 </div>
                 {/* Content */}
                 <div className="pb-4 flex-1 flex items-start justify-between">
-                  <p className={`text-[13px] font-semibold ${step.current ? 'font-bold' : ''}`}
+                  <p className={`text-[13px] font-semibold ${step.current ? 'font-medium' : ''}`}
                      style={{ color: step.current ? TEXT : step.done ? MUTED : SUBTLE }}>
                     {step.label}
                   </p>
@@ -93,7 +93,7 @@ export function ServiceTrackingScreen() {
         {/* Chat CTA */}
         <button
           onClick={() => navigate('/chat')}
-          className="w-full flex items-center justify-center gap-2 py-[13px] rounded-[12px] font-semibold text-[14px]"
+          className="w-full flex items-center justify-center gap-2 py-[13px] rounded-full font-semibold text-[14px]"
           style={{ background: BG, border: `1px solid ${BORDER}`, color: TEXT }}
         >
           <MessageCircle size={18} color={MUTED} />
