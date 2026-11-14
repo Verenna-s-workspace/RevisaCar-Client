@@ -44,14 +44,14 @@ export function LegalScreen() {
   return (
     <MainLayout showNav={false} topbar={<Topbar title={doc.title} showBack />}>
       <div className="px-4 pt-4 pb-10 flex flex-col gap-4">
-        <p className="text-[12px]" style={{ color: C.subtle }}>{doc.updated}</p>
+        <p className="text-[0.75rem]" style={{ color: C.subtle }}>{doc.updated}</p>
         {doc.sections.map(s => (
           <div key={s.h}>
-            <h2 className="text-[14px] font-medium mb-1.5" style={{ color: C.text, fontFamily: FONT_HEAD }}>{s.h}</h2>
-            <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>{s.b}</p>
+            <h2 className="text-[0.9375rem] font-medium mb-1.5" style={{ color: C.text, fontFamily: FONT_HEAD }}>{s.h}</h2>
+            <p className="text-[0.8125rem] leading-relaxed" style={{ color: C.muted }}>{s.b}</p>
           </div>
         ))}
-        <p className="text-[12px] leading-relaxed mt-2 pt-4" style={{ color: C.subtle, borderTop: `1px solid ${C.borderSoft}` }}>
+        <p className="text-[0.75rem] leading-relaxed mt-2 pt-4" style={{ color: C.subtle, borderTop: `1px solid ${C.borderSoft}` }}>
           Em caso de dúvidas, fale com a gente em ajuda@revisacar.com.
         </p>
       </div>

@@ -11,8 +11,8 @@ import type { InspectionStatus } from '../../types';
 
 const STATUS_CFG: Record<InspectionStatus, { color: string; bg: string; label: string; Icon: any }> = {
   ok:      { color: C.greenDk, bg: C.greenBg, label: 'OK',       Icon: Check },
-  atencao: { color: '#C98A00', bg: '#FFF3D6', label: 'Atenção',  Icon: AlertTriangle },
-  critico: { color: C.brand,   bg: '#FDEAEC', label: 'Crítico',  Icon: X },
+  atencao: { color: 'var(--orange)', bg: 'var(--orange-soft)', label: 'Atenção',  Icon: AlertTriangle },
+  critico: { color: C.brand,   bg: 'var(--red-soft)', label: 'Crítico',  Icon: X },
 };
 
 export function InspectionReportScreen() {
@@ -45,13 +45,13 @@ export function InspectionReportScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
         {isLoading || !insp ? (
           <>
-            <Skeleton className="h-[120px] rounded-[22px]" />
-            <Skeleton className="h-[260px] rounded-[22px]" />
+            <Skeleton className="h-[120px] rounded-2xl" />
+            <Skeleton className="h-[260px] rounded-2xl" />
           </>
         ) : (
           <>
             {/* Header with score */}
-            <div className="rounded-[22px] p-5 flex items-center gap-4 glass">
+            <div className="rounded-2xl p-5 flex items-center gap-4 glass">
               <div className="relative flex-none" style={{ width: 64, height: 64 }}>
                 <svg width="64" height="64" viewBox="0 0 64 64">
                   <circle cx="32" cy="32" r="27" fill="none" stroke={C.border} strokeWidth="6" />
@@ -61,13 +61,13 @@ export function InspectionReportScreen() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-medium" style={{ color: C.text, fontFamily: FONT_HEAD }}>{insp.vehicle_label}</p>
-                <p className="text-[12px] mt-0.5" style={{ color: C.muted }}>
+                <p className="text-[0.9375rem] font-medium" style={{ color: C.text, fontFamily: FONT_HEAD }}>{insp.vehicle_label}</p>
+                <p className="text-[0.75rem] mt-0.5" style={{ color: C.muted }}>
                   {format(new Date(insp.date), 'dd/MM/yyyy', { locale: ptBR })} · {insp.mileage?.toLocaleString('pt-BR')} km
                 </p>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <User size={13} color={C.subtle} />
-                  <span className="text-[11.5px]" style={{ color: C.subtle }}>Inspetor: {insp.inspector}</span>
+                  <span className="text-[0.75rem]" style={{ color: C.subtle }}>Inspetor: {insp.inspector}</span>
                 </div>
               </div>
             </div>
@@ -78,8 +78,8 @@ export function InspectionReportScreen() {
                 const cfg = STATUS_CFG[st];
                 return (
                   <div key={st} className="flex-1 rounded-full py-2.5 text-center" style={{ background: cfg.bg }}>
-                    <p className="text-[18px] font-medium tabular" style={{ color: cfg.color, fontFamily: FONT_HEAD }}>{n}</p>
-                    <p className="text-[10.5px] font-semibold" style={{ color: cfg.color }}>{cfg.label}</p>
+                    <p className="text-[1.0625rem] font-medium tabular" style={{ color: cfg.color, fontFamily: FONT_HEAD }}>{n}</p>
+                    <p className="text-[0.6875rem] font-semibold" style={{ color: cfg.color }}>{cfg.label}</p>
                   </div>
                 );
               })}
@@ -87,20 +87,20 @@ export function InspectionReportScreen() {
 
             {/* Photos */}
             <div>
-              <p className="text-[12px] font-medium uppercase tracking-wide mb-2.5" style={{ color: C.subtle }}>Fotos da inspeção</p>
+              <p className="text-[0.75rem] font-medium mb-2.5" style={{ color: C.subtle }}>Fotos da inspeção</p>
               <div className="flex gap-2.5 overflow-x-auto hide-scrollbar">
                 {insp.photos.map((label, i) => (
                   <div key={i} className="flex-none w-[88px] h-[88px] rounded-full flex flex-col items-center justify-center gap-1.5"
                        style={{ background: C.bg, border: `1px solid ${C.border}` }}>
                     <Camera size={20} color={C.subtle} />
-                    <span className="text-[9.5px] font-medium text-center px-1" style={{ color: C.muted }}>{label}</span>
+                    <span className="text-[0.6875rem] font-medium text-center px-1" style={{ color: C.muted }}>{label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Items checklist */}
-            <div className="rounded-[22px] overflow-hidden glass">
+            <div className="rounded-2xl overflow-hidden glass">
               {insp.items.map((it, i) => {
                 const cfg = STATUS_CFG[it.status];
                 return (
@@ -110,10 +110,10 @@ export function InspectionReportScreen() {
                       <cfg.Icon size={14} color={cfg.color} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13.5px] font-semibold" style={{ color: C.text }}>{it.name}</p>
-                      {it.note && <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: C.muted }}>{it.note}</p>}
+                      <p className="text-[0.8125rem] font-semibold" style={{ color: C.text }}>{it.name}</p>
+                      {it.note && <p className="text-[0.75rem] mt-0.5 leading-snug" style={{ color: C.muted }}>{it.note}</p>}
                     </div>
-                    <span className="text-[10.5px] font-medium px-2 py-0.5 rounded-full flex-none" style={{ background: cfg.bg, color: cfg.color }}>
+                    <span className="text-[0.6875rem] font-medium px-2 py-0.5 rounded-full flex-none" style={{ background: cfg.bg, color: cfg.color }}>
                       {cfg.label}
                     </span>
                   </div>
@@ -123,13 +123,13 @@ export function InspectionReportScreen() {
 
             {/* Recommendations */}
             {insp.recommendations.length > 0 && (
-              <div className="rounded-[22px] p-5" style={{ background: '#FFF3D6', border: '1px solid rgba(201,138,0,.2)' }}>
-                <p className="text-[12px] font-medium uppercase tracking-wide mb-2.5" style={{ color: '#9A7400' }}>Recomendações</p>
+              <div className="rounded-2xl p-5" style={{ background: 'var(--orange-soft)', border: '1px solid rgba(201,138,0,.2)' }}>
+                <p className="text-[0.75rem] font-medium mb-2.5" style={{ color: '#9A7400' }}>Recomendações</p>
                 <div className="flex flex-col gap-2">
                   {insp.recommendations.map((r, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <span className="text-[#C98A00] mt-0.5">•</span>
-                      <p className="text-[13px] leading-snug" style={{ color: '#7a5c00' }}>{r}</p>
+                      <p className="text-[0.8125rem] leading-snug" style={{ color: '#7a5c00' }}>{r}</p>
                     </div>
                   ))}
                 </div>
@@ -137,7 +137,7 @@ export function InspectionReportScreen() {
             )}
 
             <button onClick={() => navigate('/agendar')}
-              className="w-full py-[15px] rounded-[22px] font-medium text-[15px] text-white active:scale-[0.98] transition-all"
+              className="w-full py-[15px] rounded-2xl font-medium text-[0.9375rem] text-white active:scale-[0.98] transition-all"
               style={{ background: C.brand, fontFamily: FONT_HEAD }}>
               Agendar serviços recomendados
             </button>

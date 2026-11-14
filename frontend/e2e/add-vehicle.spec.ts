@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Adicionar veículo — consulta de placa', () => {
   test('busca pela placa pré-preenche o card editável e salva', async ({ page }) => {
     await page.goto('/veiculos/novo');
-    await expect(page.getByText('Adicionar veículo')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Adicionar veículo' })).toBeVisible();
 
     // placa conhecida no mock do provedor (mockPlateDb) → Hyundai HB20
     await page.getByPlaceholder('ABC1D23').fill('ABC1D23');

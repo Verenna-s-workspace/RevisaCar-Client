@@ -9,12 +9,12 @@ function AddCardSheet({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ number: '', name: '', exp: '', cvv: '' });
   const field = (k: keyof typeof form, label: string, ph: string, max?: number) => (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11.5px] font-semibold" style={{ color: C.muted }}>{label}</label>
+      <label className="text-[0.75rem] font-semibold" style={{ color: C.muted }}>{label}</label>
       <input
         value={form[k]} maxLength={max}
         onChange={e => setForm(s => ({ ...s, [k]: e.target.value }))}
         placeholder={ph}
-        className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none"
+        className="w-full px-4 py-3 rounded-2xl text-[0.8125rem] font-medium outline-none"
         style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
     </div>
   );
@@ -46,26 +46,26 @@ export function PaymentMethodsScreen() {
         <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
           {/* Primary card */}
-          <div className="rounded-[22px] p-5 relative overflow-hidden"
+          <div className="rounded-2xl p-5 relative overflow-hidden"
                style={{ background: 'linear-gradient(135deg,#1B1E25,#0E1014)', minHeight: 178 }}>
             <div style={{ position:'absolute', top:-40, right:-30, width:160, height:160, borderRadius:'50%',
                           background:'radial-gradient(circle,rgba(204,20,0,.25),transparent 70%)' }} />
             <div className="flex items-center justify-between relative">
-              <span className="text-[13px] font-medium tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>VISA</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+              <span className="text-[0.8125rem] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>VISA</span>
+              <span className="text-[0.6875rem] font-semibold px-2.5 py-1 rounded-full"
                     style={{ background: 'rgba(255,255,255,.12)', color: '#fff' }}>Principal</span>
             </div>
-            <p className="text-[19px] font-semibold tracking-[2px] text-white mt-7 relative tabular">
+            <p className="text-[1.25rem] font-semibold tracking-[2px] text-white mt-7 relative tabular">
               ••••  ••••  ••••  4242
             </p>
             <div className="flex items-end justify-between mt-5 relative">
               <div>
-                <p className="text-[9px] tracking-widest" style={{ color: 'rgba(255,255,255,.5)' }}>TITULAR</p>
-                <p className="text-[12.5px] font-medium text-white mt-0.5">João Silva</p>
+                <p className="text-[0.6875rem]" style={{ color: 'rgba(255,255,255,.5)' }}>TITULAR</p>
+                <p className="text-[0.75rem] font-medium text-white mt-0.5">João Silva</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] tracking-widest" style={{ color: 'rgba(255,255,255,.5)' }}>VALIDADE</p>
-                <p className="text-[12.5px] font-medium text-white mt-0.5">08/27</p>
+                <p className="text-[0.6875rem]" style={{ color: 'rgba(255,255,255,.5)' }}>VALIDADE</p>
+                <p className="text-[0.75rem] font-medium text-white mt-0.5">08/27</p>
               </div>
             </div>
           </div>
@@ -76,22 +76,22 @@ export function PaymentMethodsScreen() {
             <CardGroup>
               <div className="flex items-center gap-3.5 px-4 py-3.5" style={{ borderBottom: `1px solid ${C.borderSoft}` }}>
                 <div className="w-10 h-7 rounded-[6px] flex items-center justify-center flex-none"
-                     style={{ background: '#EAF1FB' }}>
-                  <span className="text-[9px] font-medium" style={{ color: C.info }}>MC</span>
+                     style={{ background: 'var(--blue-soft)' }}>
+                  <span className="text-[0.6875rem] font-medium" style={{ color: C.info }}>MC</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[13.5px] font-semibold" style={{ color: C.text }}>Mastercard •••• 8888</p>
-                  <p className="text-[11px]" style={{ color: C.subtle }}>Vence 03/26</p>
+                  <p className="text-[0.8125rem] font-semibold" style={{ color: C.text }}>Mastercard •••• 8888</p>
+                  <p className="text-[0.6875rem]" style={{ color: C.subtle }}>Vence 03/26</p>
                 </div>
               </div>
               <div className="flex items-center gap-3.5 px-4 py-3.5">
                 <div className="w-10 h-7 rounded-[6px] flex items-center justify-center flex-none"
                      style={{ background: C.greenBg }}>
-                  <span className="text-[12px] font-medium" style={{ color: C.greenDk }}>Pix</span>
+                  <span className="text-[0.75rem] font-medium" style={{ color: C.greenDk }}>Pix</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[13.5px] font-semibold" style={{ color: C.text }}>Pix</p>
-                  <p className="text-[11px]" style={{ color: C.subtle }}>Pagamento instantâneo</p>
+                  <p className="text-[0.8125rem] font-semibold" style={{ color: C.text }}>Pix</p>
+                  <p className="text-[0.6875rem]" style={{ color: C.subtle }}>Pagamento instantâneo</p>
                 </div>
                 <Check size={18} color={C.green} />
               </div>
@@ -99,7 +99,7 @@ export function PaymentMethodsScreen() {
           </div>
 
           <button onClick={() => setShowAdd(true)}
-            className="w-full flex items-center justify-center gap-2 py-[14px] rounded-[22px] font-medium text-[14px]"
+            className="w-full flex items-center justify-center gap-2 py-[14px] rounded-2xl font-medium text-[0.9375rem]"
             style={{ border: `1.5px dashed ${C.border}`, color: C.brand }}>
             <Plus size={18} /> Adicionar cartão
           </button>

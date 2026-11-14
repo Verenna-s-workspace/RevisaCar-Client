@@ -1,89 +1,122 @@
-/* Sistema tipográfico do RevisaCar (mesmo do app da oficina): DM Sans (UI),
-   DM Mono (dados técnicos — placa, km, valores) e Fredoka (logo). */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..700&family=DM+Mono:wght@400;500&family=Fredoka:wght@500;600;700&display=swap');
+/* Tipografia no estilo Apple: fonte do sistema (San Francisco nos aparelhos
+   Apple) para a interface; DM Mono só para dados técnicos (placa, km) e
+   Fredoka só no logo. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fredoka:wght@500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
-   DESIGN TOKENS — RevisaCar Customer App
+   TOKENS — cores semânticas com par claro/escuro (HIG)
+   Contraste do texto secundário ≥ 4,5:1 nos dois modos.
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* Brand — unificada com o app da oficina (#CC1400 "ferrari") */
-  --brand:       #CC1400;
-  --brand-dark:  #A01000;
-  --brand-deep:  #740C00;
-  --brand-light: #E01500;
-  --brand-glow:  rgba(204, 20, 0, 0.14);
-  --brand-tint:  rgba(204, 20, 0, 0.06);
+  color-scheme: light dark;
 
-  /* Backgrounds — creme quente (visual "vidro") */
-  --bg:          #F3F1EE;
-  --bg-alt:      #ECE8E2;
-  --surface:     #FFFFFF;
-  --surface-2:   #F7F6F3;
-  --surface-3:   #EFEDE8;
+  /* Fundo agrupado + cards sólidos */
+  --bg:        #F2F2F7;
+  --card:      #FFFFFF;
+  --card-2:    #F2F2F7;
+  --fill:      rgba(118, 118, 128, 0.12);
+  --fill-2:    rgba(118, 118, 128, 0.08);
+  --sep:       rgba(60, 60, 67, 0.16);
+  --material:  rgba(249, 249, 249, 0.80);
+  --seg-active: #FFFFFF;
 
-  /* Borders */
-  --border:      #E2DFD8;
-  --border-md:   #C7C3BA;
-  --border-hi:   #A8AEB6;
+  /* Texto */
+  --text:      #1D1D1F;
+  --text-2:    #636366;   /* 5,4:1 no fundo */
+  --text-3:    #6E6E73;   /* 4,5:1 no fundo */
 
-  /* Text */
-  --text:        #14161A;
-  --text-2:      #23272F;
-  --text-3:      #3a3d44;
-  --muted:       #6B7078;
-  --subtle:      #9AA0A8;
-  --ghost:       #B6BAC0;
+  /* Ação (marca) e estados semânticos */
+  --tint:      #CC1400;
+  --tint-fill: #CC1400;   /* fundo de botão com texto branco */
+  --tint-soft: rgba(204, 20, 0, 0.10);
+  --red:       #D70015;
+  --red-soft:  rgba(215, 0, 21, 0.10);
+  --orange:    #C93400;
+  --orange-soft: rgba(255, 149, 0, 0.16);
+  --green:     #1E7F35;
+  --green-soft: rgba(52, 199, 89, 0.16);
+  --blue:      #0062CC;
+  --blue-soft: rgba(0, 122, 255, 0.12);
 
-  /* Semantic */
-  --ok:          #16803C;
-  --ok-mid:      #22C55E;
-  --ok-bg:       rgba(22, 128, 60, 0.07);
-  --ok-border:   rgba(22, 128, 60, 0.20);
+  /* Nomes antigos → tokens novos (compatibilidade) */
+  --brand: var(--tint); --brand-dark: #A31000; --brand-deep: #740C00; --brand-light: #E01500;
+  --brand-glow: rgba(204, 20, 0, 0.18); --brand-tint: var(--tint-soft);
+  --bg-alt: var(--card-2); --surface: var(--card); --surface-2: var(--card-2); --surface-3: var(--fill);
+  --border: var(--sep); --border-md: var(--sep); --border-hi: var(--text-3);
+  --text-3-legacy: var(--text-2); --muted: var(--text-2); --subtle: var(--text-3); --ghost: var(--text-3);
+  --ok: var(--green); --ok-mid: var(--green); --ok-bg: var(--green-soft); --ok-border: var(--green-soft);
+  --warn: var(--orange); --warn-mid: var(--orange); --warn-bg: var(--orange-soft); --warn-border: var(--orange-soft);
+  --crit: var(--red); --crit-bg: var(--red-soft); --crit-border: var(--red-soft);
+  --info: var(--blue); --info-bg: var(--blue-soft); --info-border: var(--blue-soft);
 
-  --warn:        #92400E;
-  --warn-mid:    #F59E0B;
-  --warn-bg:     rgba(245, 158, 11, 0.08);
-  --warn-border: rgba(245, 158, 11, 0.22);
+  /* Raios contínuos */
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-2xl: 28px; --r-full: 9999px;
 
-  --crit:        #CC1400;
-  --crit-bg:     rgba(204, 20, 0, 0.06);
-  --crit-border: rgba(204, 20, 0, 0.20);
+  /* Sombras: só no que flutua */
+  --sh-float: 0 0 0 0.5px rgba(0,0,0,0.08), 0 8px 28px rgba(0,0,0,0.12);
+  --sh-brand: 0 1px 2px rgba(204,20,0,0.2);
 
-  --info:        #1D4ED8;
-  --info-bg:     rgba(29, 78, 216, 0.06);
-  --info-border: rgba(29, 78, 216, 0.18);
-
-  /* Radius */
-  --r-xs:   4px;
-  --r-sm:   8px;
-  --r-md:   12px;
-  --r-lg:   16px;
-  --r-xl:   22px;
-  --r-2xl:  28px;
-  --r-full: 9999px;
-
-  /* Shadows */
-  --sh-xs:  0 1px 2px rgba(0,0,0,0.06);
-  --sh-sm:  0 1px 6px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --sh-md:  0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --sh-lg:  0 8px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
-  --sh-xl:  0 16px 48px rgba(0,0,0,0.13), 0 8px 16px rgba(0,0,0,0.06);
-  --sh-brand: 0 4px 20px rgba(204,20,0,0.30), 0 2px 6px rgba(204,20,0,0.15);
-
-  /* Typography */
-  --font:         'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading: 'DM Sans', 'Segoe UI', sans-serif;
-  --font-mono:    'DM Mono', 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
-  --font-logo:    'Fredoka', 'DM Sans', cursive;
+  /* Fontes */
+  --font:         -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-heading: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono:    'DM Mono', ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-logo:    'Fredoka', -apple-system, system-ui, sans-serif;
 
   /* Layout */
-  --nav-h:     88px; /* menu flutuante + margem */
-  --topbar-h:  60px;
+  --nav-h:     calc(50px + env(safe-area-inset-bottom, 0px));
+  --topbar-h:  44px;
   --max-w:     430px;
 }
+
+/* Modo escuro (automático pelo sistema) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #000000;
+    --card:      #1C1C1E;
+    --card-2:    #2C2C2E;
+    --fill:      rgba(118, 118, 128, 0.24);
+    --fill-2:    rgba(118, 118, 128, 0.16);
+    --sep:       rgba(84, 84, 88, 0.65);
+    --material:  rgba(22, 22, 24, 0.78);
+    --seg-active: #636366;
+    --text:      #F5F5F7;
+    --text-2:    #AEAEB2;
+    --text-3:    #98989D;
+    --tint:      #FF453A;
+    --tint-fill: #D70015;
+    --tint-soft: rgba(255, 69, 58, 0.18);
+    --red:       #FF453A;
+    --red-soft:  rgba(255, 69, 58, 0.18);
+    --orange:    #FF9F0A;
+    --orange-soft: rgba(255, 159, 10, 0.18);
+    --green:     #30D158;
+    --green-soft: rgba(48, 209, 88, 0.18);
+    --blue:      #0A84FF;
+    --blue-soft: rgba(10, 132, 255, 0.2);
+    --brand-dark: #FF6961;
+    --sh-float: 0 0 0 0.5px rgba(255,255,255,0.1), 0 8px 28px rgba(0,0,0,0.5);
+  }
+}
+
+/* Aumentar contraste: superfícies sólidas e separadores visíveis */
+@media (prefers-contrast: more) {
+  :root { --sep: rgba(60, 60, 67, 0.45); --text-2: #3A3A3C; --text-3: #48484A; --material: var(--card); }
+}
+
+/* ─── Escala de tipos (Apple) em rem: acompanha o tamanho de texto do aparelho ── */
+.t-large    { font-size: 2.125rem; line-height: 1.2;  font-weight: 700; letter-spacing: -0.022em; }
+.t-title1   { font-size: 1.75rem;  line-height: 1.22; font-weight: 700; letter-spacing: -0.02em; }
+.t-title2   { font-size: 1.375rem; line-height: 1.27; font-weight: 700; letter-spacing: -0.016em; }
+.t-title3   { font-size: 1.25rem;  line-height: 1.25; font-weight: 600; letter-spacing: -0.012em; }
+.t-headline { font-size: 1.0625rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.008em; }
+.t-body     { font-size: 1.0625rem; line-height: 1.3; letter-spacing: -0.008em; }
+.t-callout  { font-size: 1rem;     line-height: 1.32; }
+.t-subhead  { font-size: 0.9375rem; line-height: 1.33; }
+.t-footnote { font-size: 0.8125rem; line-height: 1.38; }
+.t-caption  { font-size: 0.75rem;  line-height: 1.33; }
 
 /* ─── Base ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -97,11 +130,7 @@ html {
 body {
   font-family: var(--font);
   /* Fundo creme com um calor suave embaixo (como a referência). */
-  background:
-    radial-gradient(120% 55% at 50% 110%, rgba(250, 214, 196, 0.55) 0%, rgba(250, 214, 196, 0) 60%),
-    radial-gradient(80% 40% at 100% 0%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%),
-    var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -199,33 +228,37 @@ html { overflow-x: hidden; }
 .press:active { transform: scale(0.975); transition: transform 0.08s; }
 
 
-/* ─── Visual "vidro" ────────────────────────────────────── */
-.glass {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 2px rgba(40, 28, 16, 0.04), 0 10px 30px rgba(120, 80, 40, 0.06);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+/* ─── Superfícies ───────────────────────────────────────── */
+/* Conteúdo: card SÓLIDO (o vidro fica só no que flutua). O nome .glass ficou
+   por compatibilidade com as telas. */
+.glass { background: var(--card); }
+/* Material translúcido: barras, cabeçalhos, folhas e menus que flutuam. */
+.material {
+  background: var(--material);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
 }
-.chip {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 1);
-  box-shadow: 0 1px 2px rgba(40, 28, 16, 0.05), 0 4px 12px rgba(120, 80, 40, 0.05);
-  color: var(--text);
-  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
+@media (prefers-reduced-transparency: reduce) {
+  .material { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
-.chip:hover { background: #fff; }
-.chip:active { transform: scale(0.96); }
-.chip-active { background: var(--brand); color: #fff; border-color: var(--brand); }
-.chip-active:hover { background: var(--brand-dark); }
-
-/* Botão central elevado do menu flutuante */
-.nav-raised {
-  background: radial-gradient(circle at 35% 30%, #F0442F 0%, #CC1400 55%, #A31000 100%);
-  box-shadow: 0 10px 24px rgba(204, 20, 0, 0.35), 0 0 0 6px rgba(255, 255, 255, 0.85);
-  color: #fff;
-}
+/* Botão "preenchido cinza" (estilo iOS) */
+.chip { background: var(--fill); color: var(--text); transition: transform 0.1s ease, background 0.15s ease; }
+.chip:hover { background: var(--fill-2); }
+.chip:active { transform: scale(0.97); background: var(--sep); }
+.chip-active, .chip.chip-active { background: var(--tint-fill); color: #fff; }
+.chip-active:active { filter: brightness(0.92); }
+/* Destaque do item tocado (linhas de lista) — aparece no toque, não ao soltar */
+.press-row { transition: background 0.12s ease; }
+.press-row:active { background: var(--fill); }
+.press-card { transition: transform 0.12s ease; }
+.press-card:active { transform: scale(0.98); }
+/* Botão de destaque cheio (antes "elevado") */
+.nav-raised { background: var(--tint-fill); color: #fff; }
+/* Efeito de borda de rolagem: o cabeçalho só ganha linha quando há conteúdo por baixo */
+.scroll-edge { box-shadow: 0 0.5px 0 var(--sep); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+.capitalize-first::first-letter { text-transform: uppercase; }

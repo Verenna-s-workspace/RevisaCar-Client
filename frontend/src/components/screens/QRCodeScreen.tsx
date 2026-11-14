@@ -14,7 +14,7 @@ function QRCanvas({ value, size = 168 }: { value: string; size?: number }) {
   useEffect(() => {
     if (ref.current && value) {
       QRCodeLib.toCanvas(ref.current, value, {
-        width: size, margin: 1, color: { dark: '#14161A', light: '#ffffff' },
+        width: size, margin: 1, color: { dark: 'var(--text)', light: 'var(--card)' },
       }).catch(() => {});
     }
   }, [value, size]);
@@ -62,43 +62,43 @@ export function QRCodeScreen() {
         right={<ShieldCheck size={20} color={C.muted} strokeWidth={1.8} />} />
     }>
       <div className="px-4 pt-3 pb-8 flex flex-col gap-4">
-        <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>
+        <p className="text-[0.8125rem] leading-relaxed" style={{ color: C.muted }}>
           Apresente na oficina para um atendimento rápido e seguro.
         </p>
 
         {isLoading || !vehicle ? (
-          <Skeleton className="h-[420px] rounded-[24px]" />
+          <Skeleton className="h-[420px] rounded-2xl" />
         ) : (
           <>
             {/* Pass card */}
-            <div className="rounded-[24px] p-6 relative overflow-hidden"
+            <div className="rounded-2xl p-6 relative overflow-hidden"
                  style={{ background: 'linear-gradient(165deg,#23272F,#14161A 70%)' }}>
               <div style={{ position:'absolute', top:-50, right:-40, width:180, height:180, borderRadius:'50%',
                             background:'radial-gradient(circle,rgba(204,20,0,.18),transparent 70%)' }} />
 
               {/* Header */}
               <div className="flex items-center justify-between relative">
-                <span className="text-[13px] font-medium tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>
+                <span className="text-[0.8125rem] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>
                   REVISA<span style={{ color: C.brand }}>CAR</span>
                 </span>
-                <span className="text-[10px] font-medium tracking-widest px-2.5 py-1 rounded-full"
+                <span className="text-[0.6875rem] font-medium px-2.5 py-1 rounded-full"
                       style={{ background: 'rgba(255,255,255,.1)', color: '#fff' }}>PASSE</span>
               </div>
 
               {/* Vehicle */}
               <div className="mt-4 relative">
-                <p className="text-[22px] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>
+                <p className="text-[1.375rem] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>
                   {vehicle.brand} {vehicle.model}
                 </p>
-                <p className="text-[13px] mt-0.5 tracking-[1px]" style={{ color: '#9AA0A8' }}>{vehicle.plate}</p>
+                <p className="text-[0.8125rem] mt-0.5 tracking-[1px]" style={{ color: 'var(--text-3)' }}>{vehicle.plate}</p>
               </div>
 
               {/* QR */}
               <div className="flex justify-center my-5 relative">
-                <div className="p-3 rounded-[22px] bg-white">
+                <div className="p-3 rounded-2xl bg-surface">
                   {qrValue ? <QRCanvas value={qrValue} /> : (
                     <div className="w-[168px] h-[168px] rounded-full flex items-center justify-center" style={{ background: '#F4F4F4' }}>
-                      <p className="text-[12px]" style={{ color: C.subtle }}>Gerando...</p>
+                      <p className="text-[0.75rem]" style={{ color: C.subtle }}>Gerando...</p>
                     </div>
                   )}
                 </div>
@@ -112,8 +112,8 @@ export function QRCodeScreen() {
                   { l: 'STATUS', v: 'Ativo', c: C.green },
                 ].map(s => (
                   <div key={s.l} className="flex-1">
-                    <p className="text-[9px] font-medium tracking-widest" style={{ color: '#6B7078' }}>{s.l}</p>
-                    <p className="text-[13px] font-medium mt-0.5 capitalize" style={{ color: s.c }}>{s.v}</p>
+                    <p className="text-[0.6875rem] font-medium" style={{ color: 'var(--text-2)' }}>{s.l}</p>
+                    <p className="text-[0.8125rem] font-medium mt-0.5 capitalize" style={{ color: s.c }}>{s.v}</p>
                   </div>
                 ))}
               </div>
@@ -122,7 +122,7 @@ export function QRCodeScreen() {
             {/* Trust footer */}
             <div className="flex items-center justify-center gap-1.5">
               <ShieldCheck size={14} color={C.green} />
-              <p className="text-[11.5px] font-medium" style={{ color: C.subtle }}>
+              <p className="text-[0.75rem] font-medium" style={{ color: C.subtle }}>
                 Seguro · Privado · Validado pela RevisaCar
               </p>
             </div>
@@ -130,12 +130,12 @@ export function QRCodeScreen() {
             {/* Actions */}
             <div className="flex gap-3 mt-1">
               <button onClick={() => refresh()} disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-full text-[13.5px] font-semibold disabled:opacity-60"
+                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-full text-[0.8125rem] font-semibold disabled:opacity-60"
                 style={{ border: `1.5px solid ${C.border}`, color: C.text }}>
                 <RefreshCw size={16} className={isPending ? 'animate-spin' : ''} /> Renovar
               </button>
               <button onClick={share}
-                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-full text-white text-[13.5px] font-semibold"
+                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-full text-white text-[0.8125rem] font-semibold"
                 style={{ background: C.brand }}>
                 <Share2 size={16} /> Compartilhar
               </button>

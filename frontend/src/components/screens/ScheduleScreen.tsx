@@ -23,7 +23,7 @@ const STEP_LABELS = ['Serviço', 'Data', 'Horário', 'Confirmar'];
 
 function StepProgress({ current }: { current: number }) {
   return (
-    <div className="glass mx-4 mt-1 rounded-[24px] flex items-center px-4 py-3.5">
+    <div className="glass mx-4 mt-1 rounded-2xl flex items-center px-4 py-3.5">
       {STEP_LABELS.map((label, i) => {
         const num  = i + 1;
         const done = num < current;
@@ -35,7 +35,7 @@ function StepProgress({ current }: { current: number }) {
                 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all z-10',
                 done   ? 'bg-brand text-white'                     :
                 active ? 'nav-raised !shadow-[0_4px_12px_rgba(204,20,0,0.3)]' :
-                         'bg-white text-text-subtle'
+                         'bg-surface text-text-subtle'
               )}>
                 {done ? <Check size={13} strokeWidth={3} /> : num}
               </div>
@@ -75,7 +75,7 @@ function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id
   if (isLoading) return null;
   if (vehicles.length === 0) {
     return (
-      <div className="glass mx-4 mt-4 rounded-[22px] px-4 py-3 flex items-center gap-3">
+      <div className="glass mx-4 mt-4 rounded-2xl px-4 py-3 flex items-center gap-3">
         <Car size={17} className="text-brand" />
         <p className="flex-1 text-sm text-text">Cadastre um veículo para agendar.</p>
         <button onClick={() => navigate('/veiculos/novo')} className="text-xs font-medium text-brand hover:underline">Adicionar</button>
@@ -85,9 +85,9 @@ function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id
   const active = vehicles.find(v => v.id === selected) ?? vehicles[0];
 
   return (
-    <div className="glass mx-4 mt-4 rounded-[22px] overflow-hidden">
+    <div className="glass mx-4 mt-4 rounded-2xl overflow-hidden">
       <div className="px-4 py-3 flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+        <div className="w-10 h-10 bg-surface rounded-full flex items-center justify-center">
           <Car size={17} className="text-brand" />
         </div>
         <div className="flex-1 min-w-0">
@@ -103,7 +103,7 @@ function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id
       </div>
       {aberto && vehicles.filter(v => v.id !== active.id).map(v => (
         <button key={v.id} onClick={() => { onSelect(v.id); setAberto(false); }}
-          className="w-full text-left px-4 py-3 border-t border-black/5 hover:bg-white/70 transition-colors">
+          className="w-full text-left px-4 py-3 border-t border-black/5 hover:bg-fill transition-colors">
           <p className="font-semibold text-sm text-text">{v.brand} {v.model} {v.year}</p>
           <p className="text-xs text-text-muted">{v.plate}</p>
         </button>
@@ -130,12 +130,12 @@ function OficinaPicker({ oficinas, selected, onSelect }: {
   }
   return (
     <div className="mx-4 mt-3">
-      <p className="text-[13px] font-medium text-text-muted mb-2 px-1">Oficina</p>
+      <p className="text-[0.8125rem] font-medium text-text-muted mb-2 px-1">Oficina</p>
       <div className="flex flex-wrap gap-2">
         {oficinas.map(o => (
           <button key={o.oficina_doc} onClick={() => onSelect(o.oficina_doc)} aria-pressed={selected === o.oficina_doc}
             className={clsx('px-3.5 py-2 rounded-full text-sm font-semibold border-[1.5px] transition-all',
-              selected === o.oficina_doc ? 'border-brand bg-crit-bg text-brand' : 'border-border bg-white text-text')}>
+              selected === o.oficina_doc ? 'border-brand bg-crit-bg text-brand' : 'border-border bg-surface text-text')}>
             {o.nome || 'Oficina'}
           </button>
         ))}
@@ -147,8 +147,8 @@ function OficinaPicker({ oficinas, selected, onSelect }: {
 function SemOficina() {
   const navigate = useNavigate();
   return (
-    <div className="glass mx-4 mt-6 rounded-[24px] p-6 text-center">
-      <div className="w-14 h-14 mx-auto rounded-full bg-white flex items-center justify-center">
+    <div className="glass mx-4 mt-6 rounded-2xl p-6 text-center">
+      <div className="w-14 h-14 mx-auto rounded-full bg-surface flex items-center justify-center">
         <Store size={26} className="text-brand" />
       </div>
       <p className="font-medium text-base text-text mt-3">Escolha sua oficina primeiro</p>
@@ -178,7 +178,7 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
   const precisaDescrever = selected === 'outro' && descricao.trim().length < 3;
   return (
     <div className="px-4 py-4 flex flex-col gap-3">
-      <p className="text-[13px] font-medium text-text-muted px-1">
+      <p className="text-[0.8125rem] font-medium text-text-muted px-1">
         Selecione o serviço
       </p>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -190,15 +190,15 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
             whileTap={{ scale: 0.98 }}
             onClick={() => onSelect(id)}
             className={clsx(
-              'flex items-center gap-3.5 p-4 rounded-[22px] text-left transition-all duration-150',
-              sel ? 'bg-white shadow-[0_0_0_1.5px_var(--brand),0_10px_24px_rgba(204,20,0,0.10)]' : 'glass hover:bg-white'
+              'flex items-center gap-3.5 p-4 rounded-2xl text-left transition-all duration-150',
+              sel ? 'bg-surface shadow-[0_0_0_1.5px_var(--brand),0_10px_24px_rgba(204,20,0,0.10)]' : 'glass hover:bg-fill'
             )}
           >
-            <div className={clsx('w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0', sel ? 'nav-raised !shadow-none' : 'bg-white', !sel && ic)}>
+            <div className={clsx('w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0', sel ? 'nav-raised !shadow-none' : 'bg-surface', !sel && ic)}>
               <Icon size={21} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-[14.5px] text-text leading-tight">{name}</p>
+              <p className="font-medium text-[0.9375rem] text-text leading-tight">{name}</p>
               <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{desc}</p>
             </div>
             <div className={clsx(
@@ -218,7 +218,7 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
           </label>
           <textarea id="descricao-servico" value={descricao} onChange={e => onDescricao(e.target.value)} rows={3}
             maxLength={500} placeholder={selected === 'outro' ? 'Ex.: barulho na suspensão dianteira' : 'Ex.: luz de injeção acesa'}
-            className="w-full px-4 py-3 rounded-2xl border border-white bg-white/85 text-sm text-text outline-none focus:border-brand resize-none" />
+            className="w-full px-4 py-3 rounded-2xl border border-white bg-surface text-sm text-text outline-none focus:border-brand resize-none" />
         </div>
       )}
       <Button fullWidth size="lg" disabled={!selected || precisaDescrever} onClick={onNext} className="mt-1">
@@ -257,7 +257,7 @@ function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <div className="glass rounded-[24px] overflow-hidden">
+      <div className="glass rounded-2xl overflow-hidden">
         {/* Month nav */}
         <div className="flex items-center justify-between px-4 py-4">
           <button
@@ -280,7 +280,7 @@ function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
         {/* Weekday headers */}
         <div className="grid grid-cols-7 px-3 pt-3 pb-1">
           {WEEKDAYS_SHORT.map(d => (
-            <div key={d} className="text-center text-2xs font-medium text-text-subtle uppercase py-1">{d}</div>
+            <div key={d} className="text-center text-2xs font-medium text-text-subtle py-1">{d}</div>
           ))}
         </div>
 
@@ -303,9 +303,9 @@ function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
                   disabled={!isAvail}
                   onClick={() => onSelect(dateStr)}
                   className={clsx(
-                    'w-full aspect-square rounded-full text-[13px] transition-all duration-100 flex items-center justify-center',
+                    'w-full aspect-square rounded-full text-[0.8125rem] transition-all duration-100 flex items-center justify-center',
                     isSel    ? 'nav-raised !shadow-[0_6px_14px_rgba(204,20,0,0.3)] font-medium' :
-                    isAvail  ? 'text-text bg-white/70 hover:bg-white font-medium' :
+                    isAvail  ? 'text-text bg-surface hover:bg-fill font-medium' :
                                'text-text-ghost cursor-not-allowed',
                     isToday && !isSel && 'ring-2 ring-inset ring-brand/20'
                   )}
@@ -358,13 +358,13 @@ function Step3({ oficinaDoc, date, selected, onSelect, onNext, onBack }: {
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
       {/* Date display */}
-      <div className="glass rounded-[22px] px-4 py-3">
-        <p className="text-2xs font-medium text-text-subtle uppercase tracking-widest mb-0.5">Data</p>
+      <div className="glass rounded-2xl px-4 py-3">
+        <p className="text-2xs font-medium text-text-subtle mb-0.5">Data</p>
         <p className="font-medium text-sm text-text capitalize">{dateLabel}</p>
       </div>
 
       <div>
-        <p className="text-[13px] font-medium text-text-muted mb-3 px-1">
+        <p className="text-[0.8125rem] font-medium text-text-muted mb-3 px-1">
           Horários disponíveis
         </p>
         {isLoading ? (
@@ -444,7 +444,7 @@ function Step4({ vehicleId, serviceType, descricao, oficinaNome, date, timeSlot,
       </div>
 
       {/* Summary card */}
-      <div className="glass rounded-[24px] overflow-hidden">
+      <div className="glass rounded-2xl overflow-hidden">
         {rows.map(({ l, v }) => (
           <div key={l} className="flex items-center justify-between px-4 py-3.5 border-b border-black/5 last:border-0">
             <span className="text-sm text-text-muted">{l}</span>
@@ -462,7 +462,7 @@ function Step4({ vehicleId, serviceType, descricao, oficinaNome, date, timeSlot,
       </div>
 
       {/* Info banner */}
-      <div className="glass flex items-start gap-3 rounded-[22px] p-4">
+      <div className="glass flex items-start gap-3 rounded-2xl p-4">
         <div className="w-1.5 flex-shrink-0 mt-0.5">
           <div className="w-1.5 h-1.5 rounded-full bg-info" />
         </div>
@@ -540,7 +540,7 @@ export function ScheduleScreen() {
   };
 
   return (
-    <MainLayout topbar={<Topbar title="Agendar Manutenção" showBack />}>
+    <MainLayout topbar={<Topbar title="Agendar" subtitle="Escolha o serviço, o dia e o horário" />}>
       <StepProgress current={step} />
       {carregandoOficinas ? (
         <div className="flex justify-center py-10"><Spinner className="text-brand" /></div>

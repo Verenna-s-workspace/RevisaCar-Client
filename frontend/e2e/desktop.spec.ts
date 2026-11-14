@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-// Versão desktop (≥ 1024px): menu de ícones no topo no lugar do menu flutuante e modais centrados.
+// Versão desktop (≥ 1024px): barra lateral com rótulos no lugar da barra de abas e modais centrados.
 test.use({ viewport: { width: 1440, height: 900 }, isMobile: false, hasTouch: false });
 
-test('menu do topo navega e o menu flutuante some', async ({ page }) => {
+test('barra lateral navega e a barra de abas some', async ({ page }) => {
   await page.goto('/');
   const menu = page.getByRole('navigation', { name: 'Menu principal' });
-  await expect(menu).toHaveCount(1); // só o do topo fica visível
+  await expect(menu).toHaveCount(1); // só a barra lateral fica visível
   await menu.getByRole('link', { name: 'Orçamentos' }).click();
   await expect(page).toHaveURL(/\/orcamentos$/);
   await expect(page.getByRole('heading', { name: 'Orçamentos' })).toBeVisible();
@@ -21,10 +21,12 @@ test('painel mostra saúde, manutenções e custo', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Custo de manutenção' })).toBeVisible();
 });
 
-test('menu da conta tem Sair', async ({ page }) => {
+test('barra lateral tem grupos com rótulos e Sair', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Conta' }).click();
-  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible();
+  const lateral = page.locator('aside');
+  await expect(lateral.getByText('Oficina', { exact: true })).toBeVisible();
+  await expect(lateral.getByRole('link', { name: 'Minhas oficinas' })).toBeVisible();
+  await expect(lateral.getByRole('button', { name: 'Sair da conta' })).toBeVisible();
 });
 
 test('modal centrado fecha com Esc', async ({ page }) => {

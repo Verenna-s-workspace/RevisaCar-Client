@@ -1,19 +1,26 @@
-import { type ReactNode, useEffect, useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { NavLink, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
+import { motion, useAnimationControls, useDragControls, useMotionValue, animate, type PanInfo } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Home, Car, ChevronLeft, FileText, User, WifiOff, Bell, Store,
-  Receipt, FolderOpen, QrCode, Wrench, Settings, LogOut,
+  Car, ChevronLeft, FileText, User, WifiOff, Bell, Store, Receipt, FolderOpen, QrCode, Wrench,
+  Settings, LogOut, CalendarPlus, Loader2,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../store/auth';
 import { dashboardApi } from '../../services/api';
 
-/* ─── Breakpoint desktop ────────────────────────────────── */
-// Abaixo de 1024px o app é o PWA de celular de sempre; acima, ganha sidebar,
-// cabeçalho largo e modais centrados (mesma linguagem do app da oficina).
+/* ═══════════════════════════════════════════════════════════
+   Layout no estilo Apple (HIG)
+   - Celular: barra de abas com rótulos; título grande que encolhe para o
+     cabeçalho translúcido; telas empilhadas (entram da direita, voltam pela
+     esquerda); deslizar da borda esquerda volta; puxar para atualizar.
+   - Computador/iPad: barra lateral com rótulos e grupos.
+   - Folhas arrastáveis com projeção de momento; modal centrado no desktop.
+   ═══════════════════════════════════════════════════════════ */
+
 const DESKTOP_QUERY = '(min-width: 1024px)';
+const REDUZIR = '(prefers-reduced-motion: reduce)';
 
 export function useIsDesktop() {
   const [desktop, setDesktop] = useState(
@@ -29,7 +36,18 @@ export function useIsDesktop() {
   return desktop;
 }
 
-/* ─── Offline banner ────────────────────────────── */
+const reduzMovimento = () => typeof window !== 'undefined' && !!window.matchMedia?.(REDUZIR).matches;
+
+/** Molas da Apple: sem quique por padrão; quique leve só depois de um arremesso. */
+const MOLA = { type: 'spring' as const, bounce: 0, duration: 0.38 };
+const MOLA_ARREMESSO = { type: 'spring' as const, bounce: 0.18, duration: 0.4 };
+
+/** Projeção de momento (mesma função do "Designing Fluid Interfaces"). */
+function projetar(velocidade: number, desaceleracao = 0.998) {
+  return ((velocidade / 1000) * desaceleracao) / (1 - desaceleracao);
+}
+
+/* ─── Offline ───────────────────────────────────────────── */
 function OfflineBanner() {
   const [offline, setOffline] = useState(typeof navigator !== 'undefined' && !navigator.onLine);
   useEffect(() => {
@@ -41,17 +59,14 @@ function OfflineBanner() {
   }, []);
   if (!offline) return null;
   return (
-    <div className="flex items-center justify-center gap-2 py-2 text-[12px] font-semibold text-white"
-         style={{ background: '#14161A' }}>
+    <div role="status" className="flex items-center justify-center gap-2 py-2 text-[0.8125rem] font-medium"
+         style={{ background: 'var(--text)', color: 'var(--card)' }}>
       <WifiOff size={14} /> Sem conexão · seu passe continua disponível offline
     </div>
   );
 }
 
-/* ─── Design tokens ─────────────────────────────────────── */
-const BRAND = '#CC1400';
-
-/* ─── Notificações não lidas (mesmo cache do Início) ────── */
+/* ─── Utilidades de identidade ──────────────────────────── */
 function useNaoLidas() {
   const { data } = useQuery({
     queryKey: ['dashboard'],
@@ -67,9 +82,9 @@ const iniciais = (nome?: string) =>
 export function Logo({ compact }: { compact?: boolean }) {
   return (
     <span className="flex items-center gap-2">
-      <img src="/logo.svg" alt="" width={28} height={28} className="flex-none" />
+      <img src="/logo.svg" alt="" width={26} height={26} className="flex-none" />
       {!compact && (
-        <span className="text-[20px] leading-none font-semibold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text)' }}>
+        <span className="text-[1.25rem] leading-none font-semibold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text)' }}>
           RevisaCar
         </span>
       )}
@@ -77,102 +92,123 @@ export function Logo({ compact }: { compact?: boolean }) {
   );
 }
 
-export function Avatar() {
+export function Avatar({ size = 32 }: { size?: number }) {
   const navigate = useNavigate();
   const { session } = useAuthStore();
   return (
-    <button onClick={() => navigate('/perfil')} aria-label="Meu perfil" title="Meu perfil"
-      className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-semibold text-white flex-none"
-      style={{ background: 'linear-gradient(140deg, #E2483B, #A31000)', boxShadow: '0 0 0 3px rgba(255,255,255,0.9)' }}>
+    <button onClick={() => navigate('/perfil')} aria-label="Minha conta" title="Minha conta"
+      className="rounded-full flex items-center justify-center font-semibold text-white flex-none"
+      style={{ width: size, height: size, fontSize: size * 0.4, background: 'linear-gradient(160deg, #8E8E93, #636366)' }}>
       {iniciais(session?.name)}
     </button>
   );
 }
 
-/* ─── Topbar (cabeçalho das páginas) ────────────────────── */
+/** Sino de notificações (cabeçalho), com ponto quando há não lidas. */
+export function SinoNotificacoes() {
+  const navigate = useNavigate();
+  const n = useNaoLidas();
+  return (
+    <button onClick={() => navigate('/notificacoes')} aria-label={n ? `Notificações (${n} não lidas)` : 'Notificações'}
+      className="relative w-11 h-11 flex items-center justify-center rounded-full" style={{ color: 'var(--tint)' }}>
+      <Bell size={21} strokeWidth={1.9} />
+      {n > 0 && <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full" style={{ background: 'var(--red)', boxShadow: '0 0 0 2px var(--bg)' }} />}
+    </button>
+  );
+}
+
+/* ─── Cabeçalho com título grande (Large Title) ─────────── */
 interface TopbarProps {
   title?: string;
   showBack?: boolean;
   onBack?: () => void;
   right?: ReactNode;
+  /** Texto do botão voltar (padrão: "Voltar"). */
+  backLabel?: string;
+  /** Linha de apoio abaixo do título grande. */
+  subtitle?: ReactNode;
 }
 
-// Páginas que já estão no menu do topo: no desktop não precisam de "voltar".
-const RAIZES_DESKTOP = new Set(['/', '/veiculo', '/historico', '/manutencoes', '/orcamentos', '/oficinas',
+// Páginas que já estão nas abas/barra lateral: no computador não precisam de "voltar".
+const RAIZES = new Set(['/', '/veiculo', '/historico', '/manutencoes', '/orcamentos', '/oficinas',
   '/documentos', '/qr', '/qr-code', '/notificacoes', '/ajustes', '/perfil', '/agendar']);
 
-export function Topbar({ title, showBack, onBack, right }: TopbarProps) {
+export function Topbar({ title, showBack, onBack, right, backLabel = 'Voltar', subtitle }: TopbarProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const raiz = RAIZES_DESKTOP.has(pathname);
+  const raiz = RAIZES.has(pathname);
+  const sentinela = useRef<HTMLDivElement>(null);
+  const [compacto, setCompacto] = useState(false);
+
+  // Quando o título grande sai de vista, ele aparece pequeno no cabeçalho.
+  useEffect(() => {
+    const el = sentinela.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setCompacto(!e.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
-    <header
-      className="sticky top-0 z-40 flex items-center gap-3 px-4 h-[var(--topbar-h)]
-                 bg-[rgba(243,241,238,0.82)] backdrop-blur-xl
-                 lg:static lg:bg-transparent lg:backdrop-blur-0 lg:h-auto lg:px-4 lg:pt-6 lg:pb-3"
-      style={{ fontFamily: 'var(--font)' }}
-    >
-      {showBack && (
-        <button
-          aria-label="Voltar"
-          onClick={onBack || (() => navigate(-1))}
-          className={clsx('chip w-10 h-10 rounded-full flex items-center justify-center flex-none', raiz && 'lg:hidden')}
-          style={{ color: BRAND }}
-        >
-          <ChevronLeft size={20} strokeWidth={2.2} />
-        </button>
-      )}
-      <h1 className="flex-1 min-w-0 truncate text-[18px] font-medium lg:text-[28px] lg:font-normal"
-          style={{ color: 'var(--text)' }}>
-        {title}
-      </h1>
-      {right && <div className="flex-none flex items-center gap-2">{right}</div>}
-    </header>
+    <>
+      <header
+        className={clsx('sticky top-0 z-40 flex items-center h-[var(--topbar-h)] px-2 lg:px-4 transition-shadow',
+          compacto ? 'material scroll-edge' : 'bg-transparent')}
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', boxSizing: 'content-box' }}
+      >
+        <div className="flex-1 min-w-0 flex">
+          {showBack && (
+            <button aria-label="Voltar" onClick={onBack || (() => navigate(-1))}
+              className={clsx('flex items-center h-11 pr-2 -ml-0.5 text-[1.0625rem] rounded-lg active:opacity-50', raiz && 'lg:hidden')}
+              style={{ color: 'var(--tint)' }}>
+              <ChevronLeft size={26} strokeWidth={2.2} className="-mr-0.5" />
+              <span className="truncate max-w-[110px]">{backLabel}</span>
+            </button>
+          )}
+        </div>
+        <span aria-hidden className={clsx('t-headline truncate max-w-[50%] text-center transition-opacity duration-200', compacto ? 'opacity-100' : 'opacity-0')}
+              style={{ color: 'var(--text)' }}>{title}</span>
+        <div className="flex-1 min-w-0 flex justify-end items-center gap-1">{right}</div>
+      </header>
+      <div className="px-4 pt-1 pb-3">
+        <h1 className="t-large" style={{ color: 'var(--text)' }}>{title}</h1>
+        {subtitle && <div className="t-subhead mt-1" style={{ color: 'var(--text-2)' }}>{subtitle}</div>}
+        <div ref={sentinela} className="h-px" />
+      </div>
+    </>
   );
 }
 
-/* ─── Menu flutuante (celular) ──────────────────────────── */
-// Cinco botões redondos numa pílula de vidro; o da página atual sobe e fica vermelho.
-const NAV = [
-  { to: '/veiculo',      icon: Car,      label: 'Veículos' },
-  { to: '/manutencoes',  icon: Wrench,   label: 'Manutenções' },
-  { to: '/',             icon: Home,     label: 'Início' },
-  { to: '/notificacoes', icon: Bell,     label: 'Notificações' },
-  { to: '/historico',    icon: FileText, label: 'Serviços' },
+/* ─── Barra de abas (celular) ───────────────────────────── */
+const ABAS = [
+  { to: '/',            icon: Car,          label: 'Meu carro',  ativoEm: ['/', '/veiculo', '/veiculos', '/saude', '/qr'] },
+  { to: '/manutencoes', icon: Wrench,       label: 'Manutenção', ativoEm: ['/manutencoes'] },
+  { to: '/agendar',     icon: CalendarPlus, label: 'Agendar',    ativoEm: ['/agendar'] },
+  { to: '/historico',   icon: FileText,     label: 'Serviços',   ativoEm: ['/historico', '/servico', '/garantia', '/orcamentos'] },
+  { to: '/perfil',      icon: User,         label: 'Conta',      ativoEm: ['/perfil', '/ajustes', '/seguranca', '/privacidade', '/preferencias',
+    '/oficinas', '/documentos', '/notificacoes', '/ajuda', '/termos', '/politica', '/excluir-conta'] },
 ];
 
-const ativo = (pathname: string, to: string) =>
-  to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`) || (to === '/veiculo' && pathname.startsWith('/veiculos'));
+const casa = (pathname: string, prefixos: string[]) =>
+  prefixos.some(p => (p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)));
 
 export function BottomNav() {
-  const location = useLocation();
+  const { pathname } = useLocation();
   const naoLidas = useNaoLidas();
-
   return (
-    <nav
-      aria-label="Menu principal"
-      className="fixed left-1/2 -translate-x-1/2 z-50 lg:hidden"
-      style={{ bottom: 'calc(14px + env(safe-area-inset-bottom, 0px))' }}
-    >
-      <div className="glass rounded-full flex items-center gap-2 px-2.5 py-2">
-        {NAV.map(({ to, icon: Icon, label }) => {
-          const active = ativo(location.pathname, to);
+    <nav aria-label="Menu principal" className="material fixed bottom-0 inset-x-0 z-50 lg:hidden"
+         style={{ boxShadow: '0 -0.5px 0 var(--sep)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="max-w-[430px] mx-auto grid grid-cols-5 h-[50px]">
+        {ABAS.map(({ to, icon: Icon, label, ativoEm }) => {
+          const ativo = casa(pathname, ativoEm);
           return (
-            <NavLink
-              key={to}
-              to={to}
-              aria-label={label}
-              title={label}
-              aria-current={active ? 'page' : undefined}
-              className={clsx(
-                'relative rounded-full flex items-center justify-center transition-all duration-200',
-                active ? 'nav-raised w-[58px] h-[58px] -translate-y-4' : 'chip w-12 h-12',
-              )}
-            >
-              <Icon size={active ? 22 : 19} strokeWidth={active ? 2.1 : 1.7} color={active ? '#fff' : '#3A3D44'} />
-              {to === '/notificacoes' && naoLidas > 0 && !active && (
-                <span className="absolute top-2.5 right-3 w-2 h-2 rounded-full" style={{ background: BRAND, boxShadow: '0 0 0 2px #fff' }} />
+            <NavLink key={to} to={to} aria-current={ativo ? 'page' : undefined}
+              className="relative flex flex-col items-center justify-center gap-[2px] active:opacity-60"
+              style={{ color: ativo ? 'var(--tint)' : 'var(--text-3)' }}>
+              <Icon size={23} strokeWidth={ativo ? 2.2 : 1.8} />
+              <span className="text-[0.625rem] font-medium leading-none">{label}</span>
+              {to === '/perfil' && naoLidas > 0 && (
+                <span className="absolute top-1.5 left-1/2 ml-2 w-2 h-2 rounded-full" style={{ background: 'var(--red)' }} />
               )}
             </NavLink>
           );
@@ -182,158 +218,199 @@ export function BottomNav() {
   );
 }
 
-/* ─── Menu no topo (desktop) ────────────────────────────── */
-const NAV_TOPO = [
-  { to: '/',            icon: Home,       label: 'Início' },
-  { to: '/veiculo',     icon: Car,        label: 'Veículos' },
-  { to: '/manutencoes', icon: Wrench,     label: 'Manutenções' },
-  { to: '/historico',   icon: FileText,   label: 'Serviços' },
-  { to: '/orcamentos',  icon: Receipt,    label: 'Orçamentos' },
-  { to: '/documentos',  icon: FolderOpen, label: 'Documentos' },
-  { to: '/oficinas',    icon: Store,      label: 'Oficinas' },
+/* ─── Barra lateral (computador/iPad) ───────────────────── */
+const GRUPOS: { titulo: string; itens: { to: string; icon: typeof Car; label: string }[] }[] = [
+  { titulo: '', itens: [
+    { to: '/',            icon: Car,          label: 'Meu carro' },
+    { to: '/manutencoes', icon: Wrench,       label: 'Manutenção' },
+    { to: '/agendar',     icon: CalendarPlus, label: 'Agendar' },
+    { to: '/historico',   icon: FileText,     label: 'Serviços' },
+  ] },
+  { titulo: 'Oficina', itens: [
+    { to: '/orcamentos', icon: Receipt, label: 'Orçamentos' },
+    { to: '/oficinas',   icon: Store,   label: 'Minhas oficinas' },
+  ] },
+  { titulo: 'Carteira', itens: [
+    { to: '/veiculo',    icon: Car,        label: 'Veículos' },
+    { to: '/documentos', icon: FolderOpen, label: 'Documentos' },
+    { to: '/qr',         icon: QrCode,     label: 'QR do veículo' },
+  ] },
 ];
 
-export function TopNav() {
-  const navigate = useNavigate();
+function ItemLateral({ to, icon: Icon, label, badge }: { to: string; icon: typeof Car; label: string; badge?: number }) {
   const { pathname } = useLocation();
+  const ativo = to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`);
+  return (
+    <NavLink to={to} aria-current={ativo ? 'page' : undefined}
+      className="flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[0.9375rem] press-row"
+      style={ativo ? { background: 'var(--tint-soft)', color: 'var(--tint)', fontWeight: 600 } : { color: 'var(--text)' }}>
+      <Icon size={18} strokeWidth={ativo ? 2.2 : 1.8} style={{ color: 'var(--tint)' }} />
+      <span className="flex-1 truncate">{label}</span>
+      {!!badge && <span className="t-caption font-semibold px-1.5 rounded-full text-white" style={{ background: 'var(--red)' }}>{badge}</span>}
+    </NavLink>
+  );
+}
+
+export function Sidebar() {
+  const navigate = useNavigate();
+  const { session, clearSession } = useAuthStore();
   const naoLidas = useNaoLidas();
-  const { clearSession } = useAuthStore();
-  const [menu, setMenu] = useState(false);
-
   return (
-    <header className="hidden lg:flex items-center gap-6 h-[76px] px-8 flex-none">
-      <button onClick={() => navigate('/')} aria-label="Início" className="flex-none"><Logo /></button>
-
-      <nav aria-label="Menu principal" className="flex-1 flex justify-center">
-        <div className="glass rounded-full flex items-center gap-1 p-1.5">
-          {NAV_TOPO.map(({ to, icon: Icon, label }) => {
-            const active = ativo(pathname, to);
-            return (
-              <NavLink key={to} to={to} title={label} aria-current={active ? 'page' : undefined}
-                className={clsx('group flex items-center gap-2 h-10 rounded-full transition-all',
-                  active ? 'px-4 text-white' : 'w-10 justify-center hover:bg-white')}
-                style={active ? { background: BRAND } : { color: '#3A3D44' }}>
-                <Icon size={18} strokeWidth={active ? 2.1 : 1.8} />
-                <span className={clsx('text-[13px] font-medium', !active && 'sr-only')}>{label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
+    <aside className="material hidden lg:flex w-[260px] flex-none h-[100dvh] sticky top-0 flex-col overflow-y-auto"
+           style={{ boxShadow: '0.5px 0 0 var(--sep)' }}>
+      <div className="px-5 pt-6 pb-4"><Logo /></div>
+      <nav aria-label="Menu principal" className="flex-1 px-3 flex flex-col gap-5">
+        {GRUPOS.map(g => (
+          <div key={g.titulo || 'principal'} className="flex flex-col gap-0.5">
+            {g.titulo && <p className="t-footnote font-semibold px-2.5 mb-1" style={{ color: 'var(--text-3)' }}>{g.titulo}</p>}
+            {g.itens.map(i => <ItemLateral key={i.to} {...i} />)}
+          </div>
+        ))}
       </nav>
-
-      <div className="flex items-center gap-2.5 flex-none relative">
-        <button onClick={() => navigate('/notificacoes')} aria-label={naoLidas ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
-          className="chip relative w-10 h-10 rounded-full flex items-center justify-center">
-          <Bell size={18} strokeWidth={1.8} />
-          {naoLidas > 0 && <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full" style={{ background: BRAND, boxShadow: '0 0 0 2px #fff' }} />}
-        </button>
-        <button onClick={() => setMenu(m => !m)} aria-label="Conta" aria-expanded={menu}
-          className="w-10 h-10 rounded-full"><span className="pointer-events-none"><AvatarEstatico /></span></button>
-        {menu && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} />
-            <div className="glass absolute right-0 top-12 z-50 w-52 rounded-2xl p-1.5 flex flex-col">
-              {[
-                { icon: User, label: 'Meu perfil', to: '/perfil' },
-                { icon: Settings, label: 'Ajustes', to: '/ajustes' },
-                { icon: QrCode, label: 'QR do veículo', to: '/qr' },
-              ].map(i => (
-                <button key={i.to} onClick={() => { setMenu(false); navigate(i.to); }}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] text-left hover:bg-white">
-                  <i.icon size={16} color="#7A7F87" /> {i.label}
-                </button>
-              ))}
-              <button onClick={() => { setMenu(false); clearSession(); navigate('/login', { replace: true }); }}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] text-left hover:bg-white" style={{ color: BRAND }}>
-                <LogOut size={16} /> Sair
-              </button>
-            </div>
-          </>
-        )}
+      <div className="px-3 pb-4 pt-3 flex flex-col gap-0.5" style={{ boxShadow: '0 -0.5px 0 var(--sep)' }}>
+        <ItemLateral to="/notificacoes" icon={Bell} label="Notificações" badge={naoLidas} />
+        <ItemLateral to="/ajustes" icon={Settings} label="Ajustes" />
+        <div className="flex items-center gap-2.5 px-2.5 pt-3">
+          <Avatar size={32} />
+          <button onClick={() => navigate('/perfil')} className="flex-1 min-w-0 text-left">
+            <p className="text-[0.875rem] font-semibold truncate" style={{ color: 'var(--text)' }}>{session?.name || 'Minha conta'}</p>
+            <p className="t-caption truncate" style={{ color: 'var(--text-3)' }}>{session?.email}</p>
+          </button>
+          <button onClick={() => { clearSession(); navigate('/login', { replace: true }); }} aria-label="Sair da conta" title="Sair"
+            className="w-9 h-9 rounded-lg flex items-center justify-center press-row" style={{ color: 'var(--text-2)' }}>
+            <LogOut size={17} />
+          </button>
+        </div>
       </div>
-    </header>
+    </aside>
   );
 }
 
-function AvatarEstatico() {
-  const { session } = useAuthStore();
-  return (
-    <span className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-semibold text-white"
-          style={{ background: 'linear-gradient(140deg, #E2483B, #A31000)', boxShadow: '0 0 0 3px rgba(255,255,255,0.9)' }}>
-      {iniciais(session?.name)}
-    </span>
-  );
-}
-
-/* ─── Main Layout ───────────────────────────────────────── */
-const pageVariants = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const } },
-  exit:    { opacity: 0, y: -4, transition: { duration: 0.14 } },
-};
-
+/* ─── Layout principal ──────────────────────────────────── */
 /**
- * `width` só vale no desktop: "narrow" (formulários, configurações) ou "wide"
- * (listas em grade, painel). No celular o conteúdo ocupa a tela toda.
- * No desktop o cabeçalho da página fica dentro da coluna de conteúdo.
+ * `width` só vale no computador: "narrow" (formulários) ou "wide" (painéis/listas).
+ * O cabeçalho da página fica dentro da área que rola (título grande encolhe).
  */
 export function MainLayout({ children, topbar, showNav = true, width = 'narrow' }: {
   children: ReactNode; topbar?: ReactNode; showNav?: boolean; width?: 'narrow' | 'wide';
 }) {
-  const location = useLocation();
+  const { pathname } = useLocation();
+  const tipo = useNavigationType(); // POP = voltar
+  const navigate = useNavigate();
   const desktop = useIsDesktop();
-  const largura = width === 'wide' ? 'lg:max-w-[1200px]' : 'lg:max-w-[780px]';
+  const qc = useQueryClient();
+  const mainRef = useRef<HTMLElement>(null);
+  const x = useMotionValue(0);
+  const drag = useDragControls();
+  const largura = width === 'wide' ? 'lg:max-w-[1100px]' : 'lg:max-w-[720px]';
+
+  // Pilha de navegação: nova tela entra da direita; ao voltar, da esquerda. Sem esperar a anterior sair.
+  const entrada = reduzMovimento() ? { opacity: 0 } : tipo === 'POP' ? { x: -60, opacity: 0.6 } : { x: 80, opacity: 0.6 };
+
+  // Deslizar da borda esquerda para voltar (só celular, só se houver para onde voltar).
+  const podeVoltar = !desktop && !RAIZES.has(pathname) && typeof window !== 'undefined' && window.history.length > 1;
+  const comecarBorda = (e: React.PointerEvent) => {
+    if (podeVoltar && e.pointerType !== 'mouse' && e.clientX < 22) drag.start(e);
+  };
+  const soltar = (_: unknown, info: PanInfo) => {
+    const larguraTela = window.innerWidth;
+    const destino = info.offset.x + projetar(info.velocity.x);
+    if (destino > larguraTela * 0.45) {
+      animate(x, larguraTela, { ...MOLA, velocity: info.velocity.x }).then(() => { navigate(-1); x.set(0); });
+    } else {
+      animate(x, 0, { ...MOLA_ARREMESSO, velocity: info.velocity.x });
+    }
+  };
+
+  // Puxar para atualizar (quando a lista está no topo).
+  const [puxar, setPuxar] = useState(0);
+  const [atualizando, setAtualizando] = useState(false);
+  const inicioY = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    inicioY.current = mainRef.current && mainRef.current.scrollTop <= 0 ? e.touches[0].clientY : null;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (inicioY.current == null || atualizando) return;
+    const dy = e.touches[0].clientY - inicioY.current;
+    // resistência elástica: quanto mais puxa, menos acompanha
+    setPuxar(dy > 0 ? (dy * 0.55 * 300) / (300 + 0.55 * dy) : 0);
+  };
+  const onTouchEnd = useCallback(async () => {
+    if (inicioY.current == null) return;
+    inicioY.current = null;
+    if (puxar > 64) {
+      setAtualizando(true);
+      setPuxar(48);
+      await qc.refetchQueries({ type: 'active' });
+      setAtualizando(false);
+    }
+    setPuxar(0);
+  }, [puxar, qc]);
 
   return (
-    <div className="h-[100dvh] flex flex-col w-full max-w-[430px] mx-auto relative overflow-hidden lg:max-w-none lg:mx-0">
-      <TopNav />
-      <OfflineBanner />
-      {!desktop && topbar}
-      <AnimatePresence mode="wait">
+    <div className="h-[100dvh] flex w-full relative overflow-hidden" style={{ background: 'var(--bg)' }}>
+      <Sidebar />
+      <div className="flex-1 min-w-0 flex flex-col h-full">
+        <OfflineBanner />
         <motion.main
-          key={location.pathname}
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className={clsx('flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:pb-12', showNav ? 'pb-safe' : 'pb-8')}
+          ref={mainRef}
+          key={pathname}
+          initial={entrada}
+          animate={{ x: 0, opacity: 1 }}
+          transition={MOLA}
+          style={{ x }}
+          drag={podeVoltar ? 'x' : false}
+          dragListener={false}
+          dragControls={drag}
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={{ left: 0, right: 1 }}
+          dragMomentum={false}
+          onDragEnd={soltar}
+          onPointerDown={comecarBorda}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          className={clsx('flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full max-w-[430px] mx-auto lg:max-w-none',
+            showNav ? 'pb-[calc(var(--nav-h)+24px)] lg:pb-12' : 'pb-10')}
         >
-          <div className={clsx('w-full lg:mx-auto lg:px-4', largura)}>
-            {desktop && topbar}
+          {(puxar > 0 || atualizando) && (
+            <div className="flex justify-center items-end overflow-hidden" style={{ height: puxar }} aria-live="polite">
+              <Loader2 size={20} className={clsx('mb-2', atualizando && 'animate-spin')}
+                style={{ color: 'var(--text-3)', transform: atualizando ? undefined : `rotate(${puxar * 4}deg)`, opacity: Math.min(1, puxar / 64) }} />
+              {atualizando && <span className="sr-only">Atualizando</span>}
+            </div>
+          )}
+          <div className={clsx('w-full lg:mx-auto lg:px-6 lg:pt-4', largura)}>
+            {topbar}
             {children}
           </div>
         </motion.main>
-      </AnimatePresence>
+      </div>
       {showNav && <BottomNav />}
     </div>
   );
 }
 
-/* ─── Auth Layout ───────────────────────────────────────── */
-// Desktop: painel da marca à esquerda e o formulário à direita.
+/* ─── Login (computador: painel da marca + formulário) ──── */
 export function BrandPanel() {
   return (
     <div className="hidden lg:flex flex-1 flex-col justify-between p-12 text-white relative overflow-hidden"
-         style={{ background: 'linear-gradient(150deg, #CC1400 0%, #8F0E00 70%, #5E0900 100%)' }}>
-      <div aria-hidden className="absolute -right-24 -bottom-24 w-[420px] h-[420px] rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
-      <div aria-hidden className="absolute -left-16 top-1/3 w-[220px] h-[220px] rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
+         style={{ background: 'linear-gradient(160deg, #CC1400 0%, #8F0E00 75%, #5E0900 100%)' }}>
       <div className="flex items-center gap-3 relative">
-        <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center">
+        <div className="w-11 h-11 rounded-[12px] flex items-center justify-center" style={{ background: '#fff' }}>
           <img src="/logo.svg" alt="" width={30} height={30} />
         </div>
-        <span className="text-[24px] font-semibold" style={{ fontFamily: 'var(--font-logo)' }}>RevisaCar</span>
+        <span className="text-[1.375rem] font-semibold" style={{ fontFamily: 'var(--font-logo)' }}>RevisaCar</span>
       </div>
-      <div className="relative max-w-[440px]">
-        <h2 className="text-[34px] leading-tight font-extrabold" style={{ fontFamily: 'var(--font-heading)' }}>
-          Seu carro em dia, sem planilha nem papelada.
-        </h2>
-        <ul className="mt-6 flex flex-col gap-3 text-[15px]" style={{ color: 'rgba(255,255,255,0.88)' }}>
-          <li>• Agende com a sua oficina em poucos cliques</li>
-          <li>• Receba os orçamentos com cada item detalhado</li>
-          <li>• Histórico, lembretes e documentos do veículo num só lugar</li>
+      <div className="relative max-w-[460px]">
+        <h2 className="t-large" style={{ fontSize: '2.75rem' }}>Seu carro em dia, sem planilha nem papelada.</h2>
+        <ul className="mt-6 flex flex-col gap-3 t-body" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <li>Agende com a sua oficina em poucos toques.</li>
+          <li>Receba os orçamentos com cada item detalhado.</li>
+          <li>Histórico, lembretes e documentos num só lugar.</li>
         </ul>
       </div>
-      <p className="relative text-[12px]" style={{ color: 'rgba(255,255,255,0.6)' }}>RevisaCar · Verenna Digital</p>
+      <p className="relative t-caption" style={{ color: 'rgba(255,255,255,0.7)' }}>RevisaCar · Verenna Digital</p>
     </div>
   );
 }
@@ -349,51 +426,79 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   );
 }
 
-/* ─── Bottom Sheet (celular) / Modal (desktop) ──────────── */
+/* ─── Folha (celular) / Modal (computador) ──────────────── */
+// Celular: arraste pela alça/título — acompanha o dedo 1:1 e fecha usando a
+// velocidade do gesto (projeção de momento). Mola sem quique; quique leve só
+// quando volta depois de um arremesso. Computador: modal centrado; Esc fecha.
 export function BottomSheet({ children, onClose, title }: {
   children: ReactNode; onClose: () => void; title?: string;
 }) {
   const desktop = useIsDesktop();
+  const y = useMotionValue(0);
+  const controls = useAnimationControls();
+  const dragCtl = useDragControls();
+  const painel = useRef<HTMLDivElement>(null);
+  const fechando = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const fechar = useCallback(async (velocidade = 0) => {
+    if (fechando.current) return;
+    fechando.current = true;
+    const h = painel.current?.offsetHeight ?? 600;
+    if (desktop) await controls.start({ opacity: 0, scale: 0.97, transition: { duration: 0.15 } });
+    else await animate(y, h, { ...MOLA, velocity: velocidade });
+    onCloseRef.current();
+  }, [desktop, controls, y]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') fechar(); };
     window.addEventListener('keydown', esc);
+    controls.start(desktop ? { opacity: 1, scale: 1, transition: MOLA } : { y: 0, transition: MOLA });
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', esc); };
-  }, [onClose]);
+  }, [controls, desktop, fechar]);
+
+  const soltar = (_: unknown, info: PanInfo) => {
+    const h = painel.current?.offsetHeight ?? 600;
+    const destino = info.offset.y + projetar(info.velocity.y);
+    if (destino > h * 0.4) fechar(info.velocity.y);
+    else animate(y, 0, { ...MOLA_ARREMESSO, velocity: info.velocity.y });
+  };
 
   return (
-    <div className={clsx('fixed inset-0 z-50 flex justify-center', desktop ? 'items-center p-6' : 'items-end')} onClick={onClose}>
+    <div className={clsx('fixed inset-0 z-50 flex justify-center', desktop ? 'items-center p-6' : 'items-end')}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
+        className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={() => fechar()} />
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-      />
-      <motion.div
+        ref={painel}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        initial={desktop ? { opacity: 0, scale: 0.96, y: 8 } : { y: '100%' }}
-        animate={desktop ? { opacity: 1, scale: 1, y: 0 } : { y: 0 }}
-        exit={desktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }}
-        transition={desktop ? { duration: 0.18, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', damping: 30, stiffness: 280 }}
-        onClick={e => e.stopPropagation()}
-        className={clsx(
-          'relative w-full overflow-y-auto z-10',
-          desktop ? 'max-w-[520px] max-h-[86dvh] rounded-[24px] shadow-2xl' : 'max-w-[430px] max-h-[92dvh] rounded-t-[28px]',
-        )}
-        style={{ background: '#FFFFFF' }}
+        initial={desktop ? { opacity: 0, scale: 0.97 } : { y: '100%' }}
+        animate={controls}
+        style={desktop ? undefined : { y }}
+        drag={desktop ? false : 'y'}
+        dragListener={false}
+        dragControls={dragCtl}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.04, bottom: 1 }}
+        dragMomentum={false}
+        onDragEnd={soltar}
+        className={clsx('relative w-full overflow-y-auto z-10 material',
+          desktop ? 'max-w-[520px] max-h-[86dvh] rounded-[16px]' : 'max-w-[430px] max-h-[92dvh] rounded-t-[14px]')}
       >
-        <div className={clsx('sticky top-0 pb-2 z-10', desktop ? 'pt-2 rounded-t-[24px]' : 'pt-3 rounded-t-[28px]')} style={{ background: '#FFFFFF' }}>
-          {!desktop && <div className="w-10 h-1 rounded-full mx-auto" style={{ background: 'var(--border-md)' }} />}
-          {title && (
-            <div className="px-5 pt-4 pb-1">
-              <h2 className="font-bold text-lg" style={{ color: 'var(--text)', fontFamily: 'var(--font-heading)' }}>{title}</h2>
-            </div>
-          )}
+        <div className="sticky top-0 z-10 cursor-grab active:cursor-grabbing touch-none select-none"
+             onPointerDown={(e) => { if (!desktop) dragCtl.start(e); }}>
+          {!desktop && <div className="pt-2 pb-1"><div className="w-9 h-[5px] rounded-full mx-auto" style={{ background: 'var(--text-3)', opacity: 0.4 }} /></div>}
+          <div className="flex items-center px-4 pt-2 pb-2">
+            <h2 className="t-headline flex-1" style={{ color: 'var(--text)' }}>{title}</h2>
+            <button onClick={() => fechar()} aria-label="Fechar"
+              className="w-[30px] h-[30px] rounded-full flex items-center justify-center chip t-footnote font-bold"
+              style={{ color: 'var(--text-2)' }}>✕</button>
+          </div>
         </div>
-        <div className={clsx('px-5', desktop ? 'pb-6' : 'pb-10')}>
+        <div className={clsx('px-4', desktop ? 'pb-6' : 'pb-[calc(24px+env(safe-area-inset-bottom,0px))]')}>
           {children}
         </div>
       </motion.div>

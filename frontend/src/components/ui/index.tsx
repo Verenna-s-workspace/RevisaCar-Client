@@ -22,7 +22,7 @@ export function Badge({ variant = 'neutral', children, className }: {
 }) {
   return (
     <span className={clsx(
-      'inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-2xs font-bold tracking-wide border whitespace-nowrap',
+      'inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-2xs font-bold border whitespace-nowrap',
       BADGE[variant], className
     )}>
       {children}
@@ -80,18 +80,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BTN_V: Record<string, string> = {
-  primary: 'bg-brand text-white hover:bg-brand-dark shadow-[0_8px_20px_rgba(204,20,0,0.22)] active:bg-brand-deep disabled:shadow-none',
+  primary: 'bg-[var(--tint-fill)] text-white active:brightness-90',
   ghost:   'chip text-text-2',
   danger:  'bg-crit-bg text-crit border border-crit-border hover:bg-crit/10',
   success: 'bg-ok text-white hover:brightness-110',
   outline: 'bg-transparent text-brand border-2 border-brand hover:bg-crit-bg',
-  subtle:  'bg-transparent text-text-3 hover:bg-surface-3 hover:text-text-2',
+  subtle:  'bg-transparent text-text-3 hover:bg-fill-3 hover:text-text-2',
 };
 const BTN_S: Record<string, string> = {
   xs: 'px-3 py-1.5 text-xs rounded-full gap-1.5',
   sm: 'px-4 py-2 text-sm rounded-full gap-2',
-  md: 'px-5 h-11 text-[15px] rounded-full gap-2',
-  lg: 'px-6 h-[52px] text-[15px] rounded-full gap-2 font-medium',
+  md: 'px-5 h-11 t-body rounded-[12px] gap-2',
+  lg: 'px-6 h-[50px] t-headline rounded-[14px] gap-2',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
@@ -131,7 +131,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-[12.5px] font-medium text-text-muted px-1">
+        <label htmlFor={inputId} className="text-[0.75rem] font-medium text-text-muted px-1">
           {label}
         </label>
       )}
@@ -145,12 +145,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           ref={ref}
           id={inputId}
           className={clsx(
-            'w-full border rounded-2xl font-sans text-[14px] text-text bg-white/85 transition-all duration-150',
+            'w-full border rounded-[10px] font-sans t-body text-text bg-surface transition-all duration-150 min-h-[44px]',
             'placeholder:text-text-ghost outline-none',
             prefix ? 'pl-10 pr-4 py-3' : suffix ? 'pl-4 pr-10 py-3' : 'px-4 py-3',
             error
               ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]'
-              : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
+              : 'border-transparent focus:border-[var(--tint)]',
             className
           )}
           {...rest}
@@ -181,12 +181,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   const selectId = id || `s-${label?.toLowerCase().replace(/\s+/g,'-')}`;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label htmlFor={selectId} className="text-[12.5px] font-medium text-text-muted px-1">{label}</label>}
+      {label && <label htmlFor={selectId} className="text-[0.75rem] font-medium text-text-muted px-1">{label}</label>}
       <select
         ref={ref} id={selectId}
         className={clsx(
-          'w-full px-4 py-3 border rounded-2xl font-sans text-[14px] text-text bg-white/85 outline-none transition-all',
-          error ? 'border-crit' : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
+          'w-full px-4 py-3 border border-transparent rounded-[10px] font-sans t-body text-text bg-surface outline-none transition-all',
+          error ? 'border-crit' : 'border-transparent focus:border-[var(--tint)]',
           className
         )}
         {...rest}
@@ -209,12 +209,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ label,
   const taId = id || `ta-${label?.toLowerCase().replace(/\s+/g,'-')}`;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label htmlFor={taId} className="text-[12.5px] font-medium text-text-muted px-1">{label}</label>}
+      {label && <label htmlFor={taId} className="text-[0.75rem] font-medium text-text-muted px-1">{label}</label>}
       <textarea
         ref={ref} id={taId} rows={3}
         className={clsx(
-          'w-full px-4 py-3 border rounded-2xl font-sans text-[14px] text-text bg-white/85 outline-none resize-none transition-all',
-          error ? 'border-crit' : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.12)]',
+          'w-full px-4 py-3 border border-transparent rounded-[10px] font-sans t-body text-text bg-surface outline-none resize-none transition-all',
+          error ? 'border-crit' : 'border-transparent focus:border-[var(--tint)]',
           className
         )}
         {...rest}
@@ -350,7 +350,7 @@ export function Divider({ className, label }: { className?: string; label?: stri
    ═══════════════════════════════════════════════ */
 export function PlateBadge({ plate }: { plate: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-3 border border-border-md rounded-lg text-xs font-bold text-text-2 tracking-widest tabular font-mono">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-3 border border-border-md rounded-lg text-xs font-bold text-text-2 tabular font-mono">
       <span className="text-blue-600">🔵</span>{plate}
     </span>
   );
@@ -398,20 +398,19 @@ export function FilterChips<T extends string>({
   value: T;
   onChange: (v: T) => void;
 }) {
+  // Controle segmentado do iOS
   return (
-    <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-0.5">
-      {options.map(opt => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={clsx(
-            'flex-shrink-0 px-4 h-10 rounded-full text-[13px] font-medium transition-all duration-150 font-sans',
-            value === opt.value ? 'chip chip-active' : 'chip text-text-2'
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
+    <div role="tablist" className="flex p-[2px] rounded-[9px] w-full" style={{ background: 'var(--fill)' }}>
+      {options.map(opt => {
+        const ativo = value === opt.value;
+        return (
+          <button key={opt.value} role="tab" aria-selected={ativo} onClick={() => onChange(opt.value)}
+            className="flex-1 h-8 rounded-[7px] t-footnote font-semibold transition-all"
+            style={ativo ? { background: 'var(--seg-active)', color: 'var(--text)', boxShadow: '0 3px 8px rgba(0,0,0,0.12)' } : { color: 'var(--text)' }}>
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
