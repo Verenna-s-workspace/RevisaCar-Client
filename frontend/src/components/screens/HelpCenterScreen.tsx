@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, MessageCircle, Phone, Mail } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Search, ChevronDown, MessageCircle, Mail } from 'lucide-react';
 import { MainLayout, Topbar } from '../layout';
 import { C, FONT_HEAD, SectionLabel, CardGroup } from '../ui/pro';
 import { SHOWCASE } from '../../config/features';
 
+// E-mail de suporte (configurável no build). Telefone/WhatsApp entram quando existirem.
+const SUPPORT_EMAIL = (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) || 'contato@revisacar.com';
+
 const FAQ = [
-  { q: 'Como agendar uma manutenção?', a: 'Na tela inicial, toque em "Agendar", escolha o serviço, a data e o horário disponível. A oficina confirma em até 24h.' },
-  { q: 'O que é a Saúde do Veículo?', a: 'É uma pontuação de 0 a 100 calculada a partir dos sistemas monitorados (óleo, freios, pneus, bateria) e da sua quilometragem.' },
-  { q: 'Como funciona o Passe do Veículo (QR)?', a: 'Apresente o QR Code na oficina para um atendimento rápido. Ele contém os dados do seu veículo de forma segura e validada.' },
-  { q: 'Posso recusar um orçamento?', a: 'Sim. Em "Orçamentos", abra os detalhes e toque em "Recusar". A oficina é notificada automaticamente.' },
-  { q: 'Como ganho pontos no Clube?', a: 'Você acumula pontos a cada serviço concluído e ao indicar amigos. Troque por serviços grátis no RevisaCar Clube.' },
+  { q: 'Como entro na minha oficina?', a: 'Peça o convite à oficina (QR Code ou link). Abra o link, ou vá em Perfil → Minhas oficinas → "Tenho um convite" e cole o código. Ao entrar, você autoriza a oficina a ver seus dados para atender você.' },
+  { q: 'Como agendar uma manutenção?', a: 'Toque em "Agendar", escolha o serviço, a data e um dos horários que a oficina abriu. A oficina confirma o pedido e você é avisado aqui no app.' },
+  { q: 'Onde vejo os orçamentos?', a: 'Em "Orçamentos" aparecem os orçamentos que suas oficinas enviaram, com todos os itens. Para aprovar ou recusar, use o link que a oficina mandou para você ou fale direto com ela.' },
+  { q: 'O que é a Saúde do Veículo?', a: 'É uma nota de 0 a 100 calculada a partir dos lembretes de manutenção do veículo: quanto mais serviços atrasados ou perto do prazo, menor a nota.' },
+  { q: 'Como funciona o QR Code do veículo?', a: 'Mostre o QR Code na oficina para ela identificar o veículo rapidamente. Ele mostra só marca, modelo, ano, placa e cor — nada dos seus dados pessoais — e vale por 24 horas.' },
+  { q: 'Como baixo ou apago meus dados?', a: 'Em Perfil → Privacidade você baixa um arquivo com todos os seus dados. Para apagar, use "Excluir minha conta".' },
 ];
 
 function FaqItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean; onToggle: () => void }) {
@@ -50,12 +53,12 @@ export function HelpCenterScreen() {
         </div>
 
         {/* Contact */}
-        <div className={`grid gap-3 ${SHOWCASE ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className={`grid gap-3 ${SHOWCASE ? 'grid-cols-2' : 'grid-cols-1'}`}>
           {[
             // Chat com a oficina ainda não tem backend → só em modo showcase.
             ...(SHOWCASE ? [{ icon: MessageCircle, label: 'Chat', bg: C.redBg, ic: C.brand, act: () => navigate('/chat') }] : []),
-            { icon: Phone, label: 'Telefone', bg: C.greenBg, ic: C.greenDk, act: () => toast('0800 123 4567', { icon: '📞' }) },
-            { icon: Mail, label: 'E-mail', bg: C.infoBg, ic: C.info, act: () => toast('ajuda@revisacar.com', { icon: '✉️' }) },
+            { icon: Mail, label: 'Enviar e-mail', bg: C.infoBg, ic: C.info,
+              act: () => { window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Ajuda — app RevisaCar')}`; } },
           ].map(c => (
             <button key={c.label} onClick={c.act}
               className="flex flex-col items-center gap-2 py-4 rounded-[14px]"

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { dashboardApi } from '../../services/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { vehiclesApi } from '../../services/api';
+import { useVehicleHealth } from '../../hooks/useVehicleHealth';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
 
@@ -15,12 +16,7 @@ const BORDER = '#E2DFD8';
 const GREEN  = '#18B26B';
 const YELLOW = '#F4A724';
 
-const SYSTEMS = [
-  { key: 'oleo',    label: 'Óleo',     score: 65, detail: 'Trocar em breve' },
-  { key: 'freios',  label: 'Freios',   score: 90, detail: 'Ótimo estado'    },
-  { key: 'pneus',   label: 'Pneus',    score: 77, detail: 'Bom estado'      },
-  { key: 'bateria', label: 'Bateria',  score: 82, detail: 'Bom estado'      },
-];
+const detalhe = (s: number) => (s >= 80 ? 'Em dia' : s >= 60 ? 'Perto do prazo' : 'Atrasado');
 
 function scoreColor(s: number) {
   return s >= 80 ? GREEN : s >= 60 ? YELLOW : BRAND;
@@ -49,7 +45,7 @@ function BigArc({ score }: { score: number }) {
       </svg>
       <p className="text-[11px] font-bold tracking-widest" style={{ color: SUBTLE }}>SAÚDE DO VEÍCULO</p>
       <p className="text-[12px] mt-1.5 text-center px-8" style={{ color: MUTED }}>
-        Baseado em {SYSTEMS.length} sistemas monitorados e na sua quilometragem atual.
+        Calculada a partir dos lembretes de manutenção do veículo.
       </p>
     </div>
   );
@@ -84,40 +80,46 @@ function SystemRow({ label, score, detail }: { label: string; score: number; det
 /* ─── Vehicle Health Screen ─────────────────────────────── */
 export function VehicleHealthScreen() {
   const navigate = useNavigate();
-  const { data: dash, isLoading } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => dashboardApi.get().then(r => r.data),
-    staleTime: 30_000,
+  const [params] = useSearchParams();
+  const { data: vehicles = [], isLoading: carregandoVeiculos } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: () => vehiclesApi.list().then(r => r.data),
   });
-
-  const score = dash?.health_score ?? 86;
+  // Veículo da URL (?veiculo=) ou o principal.
+  const vehicleId = params.get('veiculo') || vehicles.find(v => v.is_active)?.id || vehicles[0]?.id;
+  const veiculo = vehicles.find(v => v.id === vehicleId);
+  const { data: health, isLoading: carregandoSaude, isError } = useVehicleHealth(vehicleId);
+  const isLoading = carregandoVeiculos || (!!vehicleId && carregandoSaude);
 
   return (
-    <MainLayout showNav={false} topbar={<Topbar title="Saúde do veículo" showBack />}>
+    <MainLayout showNav={false} topbar={<Topbar title={veiculo ? `Saúde · ${veiculo.model}` : 'Saúde do veículo'} showBack />}>
       <div className="px-4 pb-8">
         {isLoading ? (
           <Skeleton className="h-[160px] rounded-[18px] mt-4" />
+        ) : !vehicleId ? (
+          <p className="text-[13.5px] mt-6 text-center" style={{ color: MUTED }}>Cadastre um veículo para acompanhar a saúde dele.</p>
+        ) : isError || !health ? (
+          <p className="text-[13.5px] mt-6 text-center" style={{ color: MUTED }}>Não foi possível calcular a saúde agora.</p>
         ) : (
-          <BigArc score={score} />
+          <>
+            <BigArc score={health.overall_score} />
+            <p className="text-[12px] font-bold uppercase tracking-widest mb-3 mt-2" style={{ color: SUBTLE }}>
+              Por área
+            </p>
+            <div className="grid gap-2 lg:grid-cols-2">
+              {health.categories.map(c => (
+                <SystemRow key={c.name} label={c.name} score={c.score} detail={detalhe(c.score)} />
+              ))}
+            </div>
+          </>
         )}
-
-        <p className="text-[12px] font-bold uppercase tracking-widest mb-3 mt-2" style={{ color: SUBTLE }}>
-          Sistemas
-        </p>
-
-        <div className="flex flex-col gap-2">
-          {isLoading
-            ? [0,1,2,3].map(i => <Skeleton key={i} className="h-[80px] rounded-[14px]" />)
-            : SYSTEMS.map(s => <SystemRow key={s.key} label={s.label} score={s.score} detail={s.detail} />)
-          }
-        </div>
 
         <button
           onClick={() => navigate('/agendar')}
-          className="w-full mt-5 py-[14px] rounded-[12px] font-bold text-[14px] text-white"
+          className="w-full mt-5 py-[14px] rounded-[12px] font-bold text-[14px] text-white lg:max-w-sm"
           style={{ background: BRAND }}
         >
-          Agendar inspeção completa
+          Agendar manutenção
         </button>
       </div>
     </MainLayout>

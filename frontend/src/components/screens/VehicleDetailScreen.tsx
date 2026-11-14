@@ -4,7 +4,8 @@ import { Car, Pencil, Activity, ClipboardList, FileText, Calendar, ChevronRight 
 import { vehiclesApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
-import { C, FONT_HEAD, healthFor, healthColor, healthLabel } from '../ui/pro';
+import { C, FONT_HEAD, healthColor, healthLabel } from '../ui/pro';
+import { useVehicleHealth } from '../../hooks/useVehicleHealth';
 
 /* ─── Spec cell ─────────────────────────────────── */
 function Spec({ label, value }: { label: string; value: string }) {
@@ -26,7 +27,8 @@ export function VehicleDetailScreen() {
     enabled: !!id,
   });
 
-  const score = healthFor(id);
+  const { data: health } = useVehicleHealth(id);
+  const score = health?.overall_score ?? 0;
   const color = healthColor(score);
 
   return (
@@ -64,7 +66,7 @@ export function VehicleDetailScreen() {
             </div>
 
             {/* Health */}
-            <button onClick={() => navigate('/saude')}
+            {health && <button onClick={() => navigate(`/saude?veiculo=${id}`)}
               className="rounded-[18px] p-4 flex items-center gap-4 active:scale-[0.99] transition-transform"
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
               <div className="relative flex-none" style={{ width: 56, height: 56 }}>
@@ -80,7 +82,7 @@ export function VehicleDetailScreen() {
                 <p className="text-[12px] mt-0.5" style={{ color }}>{healthLabel(score)} · ver detalhes</p>
               </div>
               <ChevronRight size={18} color={C.subtle} />
-            </button>
+            </button>}
 
             {/* Specs */}
             <div className="grid grid-cols-2 gap-2.5">

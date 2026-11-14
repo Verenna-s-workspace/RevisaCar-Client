@@ -4,6 +4,7 @@ import type {
   Appointment, Estimate, ServiceHistory, Notification,
   MaintenanceReminder, DashboardSummary, AuthTokens,
   VehicleHealth, VehicleQRLink, VehicleDocument, InspectionReport,
+  OficinaVinculo, OrcamentoOficina, ConviteResultado,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -95,12 +96,66 @@ export const authApi = {
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 
+/** Troca de senha / "sair de todos os aparelhos" invalidam os tokens antigos e o
+ *  backend devolve um access novo (o refresh novo vem no cookie). Guardamos o novo
+ *  access para ESTE aparelho continuar logado. */
+function guardarNovoAccess<T extends { access?: string }>(r: { data: T }) {
+  const access = r.data?.access;
+  if (access) {
+    try {
+      const raw = localStorage.getItem('customer_session');
+      if (raw) localStorage.setItem('customer_session', JSON.stringify({ ...JSON.parse(raw), access }));
+    } catch { /* sem storage: o refresh pelo cookie resolve na próxima chamada */ }
+  }
+  return r;
+}
+
 export const profileApi = {
   get: () => apiClient.get<CustomerProfile>('/customer/me'),
   update: (data: Partial<CustomerProfile>) => apiClient.patch<CustomerProfile>('/customer/me', data),
   changePassword: (data: { old_password: string; new_password: string; new_password_confirm: string }) =>
-    apiClient.post('/customer/me/change-password', data),
+    apiClient.post<{ detail: string; access?: string }>('/customer/me/change-password', data).then(guardarNovoAccess),
 };
+
+// ── Conta (sessões e LGPD) ────────────────────────────────────────────────────
+
+export const accountApi = {
+  /** Encerra todas as outras sessões (pede a senha). Este aparelho segue logado. */
+  logoutAll: (password: string) =>
+    apiClient.post<{ detail: string; access?: string }>('/customer/me/logout-all', { password }).then(guardarNovoAccess),
+  /** Exclui a conta (LGPD). Irreversível. */
+  delete: (password: string) => apiClient.post<{ detail: string }>('/customer/me/delete', { password }),
+  /** Todos os dados do cliente em JSON (portabilidade). */
+  exportData: () => apiClient.get<Blob>('/customer/me/export', { responseType: 'blob' }),
+};
+
+// ── Oficinas (carteira) ───────────────────────────────────────────────────────
+
+export const oficinasApi = {
+  list: () => apiClient.get<OficinaVinculo[]>('/customer/oficinas'),
+  /** Entra na carteira da oficina com o código do convite (QR/link que ela entrega). */
+  usarConvite: (codigo: string) => apiClient.post<ConviteResultado>('/customer/oficinas/convite', { codigo }),
+};
+
+// ── Orçamentos enviados pelas oficinas (somente leitura) ──────────────────────
+
+export const orcamentosApi = {
+  list: (status?: string) =>
+    apiClient.get<OrcamentoOficina[]>('/customer/orcamentos', { params: status ? { status } : {} }),
+  get: (id: string) => apiClient.get<OrcamentoOficina>(`/customer/orcamentos/${id}`),
+};
+
+/** Salva um Blob como arquivo no aparelho do usuário. */
+export function baixarArquivo(blob: Blob, nome: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nome;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -137,18 +192,23 @@ export const appointmentsApi = {
   get: (id: string) => apiClient.get<Appointment>(`/customer/appointments/${id}`),
   create: (data: {
     vehicle_id: string; service_type: string; service_description?: string;
-    date: string; time_slot: string; notes?: string;
+    date: string; time_slot: string; notes?: string; oficina_doc?: string;
   }) => apiClient.post<Appointment>('/customer/appointments', data),
   cancel: (id: string) => apiClient.delete(`/customer/appointments/${id}`),
 };
 
 // ── Availability ──────────────────────────────────────────────────────────────
 
+// Com oficina_doc: horários gerais + os daquela oficina.
 export const availabilityApi = {
-  getDays: (year: number, month: number) =>
-    apiClient.get<{ year: number; month: number; available_dates: string[] }>('/customer/availability', { params: { year, month } }),
-  getTimes: (date: string) =>
-    apiClient.get<{ date: string; times: string[] }>('/customer/availability/times', { params: { date } }),
+  getDays: (year: number, month: number, oficinaDoc?: string) =>
+    apiClient.get<{ year: number; month: number; available_dates: string[] }>('/customer/availability', {
+      params: { year, month, ...(oficinaDoc ? { oficina_doc: oficinaDoc } : {}) },
+    }),
+  getTimes: (date: string, oficinaDoc?: string) =>
+    apiClient.get<{ date: string; times: string[] }>('/customer/availability/times', {
+      params: { date, ...(oficinaDoc ? { oficina_doc: oficinaDoc } : {}) },
+    }),
 };
 
 // ── Estimates ─────────────────────────────────────────────────────────────────
@@ -222,6 +282,9 @@ export const documentsApi = {
     apiClient.get<VehicleDocument[]>('/customer/documents', { params: vehicleId ? { vehicle_id: vehicleId } : {} }),
   upload: (data: FormData) => apiClient.post<VehicleDocument>('/customer/documents', data, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60_000,
   }),
+  /** Baixa o arquivo pela API (confere o dono); devolve o Blob. */
+  download: (id: string) => apiClient.get<Blob>(`/customer/documents/${id}/arquivo`, { responseType: 'blob', timeout: 60_000 }),
   delete: (id: string) => apiClient.delete(`/customer/documents/${id}`),
 };

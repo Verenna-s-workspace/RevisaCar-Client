@@ -1,24 +1,25 @@
-import { useState } from 'react';
-import { Wrench, FileText, CalendarCheck, Tag, Smartphone, Mail, MessageSquare } from 'lucide-react';
+import { Smartphone, Wrench, FileText, CalendarCheck } from 'lucide-react';
 import { MainLayout, Topbar } from '../layout';
-import { SectionLabel, CardGroup, ToggleRow } from '../ui/pro';
+import { C, SectionLabel, CardGroup, ToggleRow } from '../ui/pro';
 import { usePush } from '../../hooks/usePush';
 
-export function NotificationPreferencesScreen() {
-  const [p, setP] = useState({
-    manutencao: true, orcamentos: true, agendamentos: true, promocoes: false,
-    email: true, sms: false,
-  });
-  const t = (k: keyof typeof p) => setP(s => ({ ...s, [k]: !s[k] }));
+// Só há um ajuste real hoje: o push neste aparelho. Os avisos em si (agendamento,
+// orçamento, lembrete) sempre aparecem em Notificações dentro do app.
+const AVISOS = [
+  { icon: CalendarCheck, label: 'Agendamentos', desc: 'Quando a oficina confirmar ou mudar um horário' },
+  { icon: FileText, label: 'Orçamentos', desc: 'Quando uma oficina enviar um orçamento' },
+  { icon: Wrench, label: 'Lembretes de manutenção', desc: 'Quando um serviço estiver perto do prazo' },
+];
 
-  // Push real: inscreve/cancela no service worker + backend (Web Push).
+export function NotificationPreferencesScreen() {
   const push = usePush();
   const pushDesc = !push.available
-    ? 'Indisponível neste dispositivo'
-    : push.subscribed ? 'Ativado neste dispositivo' : 'Receba avisos mesmo com o app fechado';
+    ? 'Indisponível neste navegador ou aparelho'
+    : push.subscribed ? 'Ativado neste aparelho' : 'Receba os avisos mesmo com o app fechado';
   const togglePush = () => {
     if (push.busy || !push.available) return;
-    push.subscribed ? push.unsubscribe() : push.subscribe();
+    if (push.subscribed) push.unsubscribe();
+    else push.subscribe();
   };
 
   return (
@@ -26,27 +27,32 @@ export function NotificationPreferencesScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
         <div>
-          <SectionLabel>O que você recebe</SectionLabel>
+          <SectionLabel>Neste aparelho</SectionLabel>
           <CardGroup>
-            <ToggleRow icon={<Wrench size={18} />} label="Lembretes de manutenção"
-                       desc="Avisos quando um serviço estiver próximo" on={p.manutencao} onChange={() => t('manutencao')} />
-            <ToggleRow icon={<FileText size={18} />} label="Orçamentos"
-                       desc="Quando a oficina enviar um orçamento" on={p.orcamentos} onChange={() => t('orcamentos')} />
-            <ToggleRow icon={<CalendarCheck size={18} />} label="Agendamentos"
-                       desc="Confirmações e mudanças de horário" on={p.agendamentos} onChange={() => t('agendamentos')} />
-            <ToggleRow icon={<Tag size={18} />} label="Promoções e novidades"
-                       desc="Ofertas das oficinas parceiras" on={p.promocoes} onChange={() => t('promocoes')} last />
+            <ToggleRow icon={<Smartphone size={18} />} label="Notificações push" desc={pushDesc}
+                       on={push.subscribed} onChange={togglePush} last />
           </CardGroup>
         </div>
 
         <div>
-          <SectionLabel>Como você recebe</SectionLabel>
+          <SectionLabel>Você é avisado sobre</SectionLabel>
           <CardGroup>
-            <ToggleRow icon={<Smartphone size={18} />} label="Push" desc={pushDesc}
-                       on={push.subscribed} onChange={togglePush} />
-            <ToggleRow icon={<Mail size={18} />} label="E-mail" on={p.email} onChange={() => t('email')} />
-            <ToggleRow icon={<MessageSquare size={18} />} label="SMS" on={p.sms} onChange={() => t('sms')} last />
+            {AVISOS.map((a, i) => (
+              <div key={a.label} className="flex items-center gap-3.5 px-4 py-3.5"
+                   style={{ borderBottom: i === AVISOS.length - 1 ? 'none' : `1px solid ${C.borderSoft}` }}>
+                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: C.bg }}>
+                  <a.icon size={18} color={C.muted} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-semibold" style={{ color: C.text }}>{a.label}</p>
+                  <p className="text-[11.5px]" style={{ color: C.muted }}>{a.desc}</p>
+                </div>
+              </div>
+            ))}
           </CardGroup>
+          <p className="text-[11.5px] mt-2 px-1" style={{ color: C.subtle }}>
+            Todos os avisos também ficam na tela Notificações.
+          </p>
         </div>
 
       </div>

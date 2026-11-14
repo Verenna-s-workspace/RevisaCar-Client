@@ -21,25 +21,6 @@ function QRCanvas({ value, size = 168 }: { value: string; size?: number }) {
   return <canvas ref={ref} className="rounded-[8px]" />;
 }
 
-/* ─── Wallet button ─────────────────────────────── */
-function WalletBtn({ brand }: { brand: 'apple' | 'google' }) {
-  return (
-    <button
-      onClick={() => toast(`Adicionando à ${brand === 'apple' ? 'Apple' : 'Google'} Wallet`, { icon: '👛' })}
-      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-[12px]"
-      style={{ background: '#14161A' }}>
-      {brand === 'apple' ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M16 13c0-3 2.3-4.3 2.4-4.4-1.3-1.9-3.3-2.2-4-2.2-1.7-.2-3.3 1-4.2 1-.8 0-2.2-1-3.6-1-1.9 0-3.6 1.1-4.5 2.8-2 3.4-.5 8.4 1.4 11.1.9 1.3 2 2.8 3.4 2.8 1.4-.1 1.9-.9 3.5-.9 1.7 0 2.1.9 3.5.9 1.5 0 2.4-1.3 3.3-2.7.6-.9 1-1.8 1.3-2.8-3.4-1.3-3.4-3.7-3.4-3.9z"/></svg>
-      ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 11v2.8h3.9c-.2 1-1.5 2.9-3.9 2.9a4.3 4.3 0 010-8.6c1.2 0 2.1.5 2.6 1l1.9-1.9A7 7 0 1012 19c4 0 6.7-2.8 6.7-6.8 0-.5 0-.8-.1-1.2z"/></svg>
-      )}
-      <span className="text-[12.5px] font-semibold text-white">
-        {brand === 'apple' ? 'Apple Wallet' : 'Google Wallet'}
-      </span>
-    </button>
-  );
-}
-
 /* ─── Passe do veículo ──────────────────────────── */
 export function QRCodeScreen() {
   const qc = useQueryClient();
@@ -136,12 +117,6 @@ export function QRCodeScreen() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Wallet buttons */}
-            <div className="flex gap-3">
-              <WalletBtn brand="apple" />
-              <WalletBtn brand="google" />
             </div>
 
             {/* Trust footer */}

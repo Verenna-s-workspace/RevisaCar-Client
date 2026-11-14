@@ -4,12 +4,13 @@ import { Plus, Car, ChevronRight } from 'lucide-react';
 import { vehiclesApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
-import { C, FONT_HEAD, HealthRing, healthFor } from '../ui/pro';
+import { C, FONT_HEAD, HealthRing } from '../ui/pro';
+import { useVehicleHealth } from '../../hooks/useVehicleHealth';
 import type { Vehicle } from '../../types';
 
 /* ─── Vehicle row ───────────────────────────────── */
 function VehicleRow({ v, onClick }: { v: Vehicle; onClick: () => void }) {
-  const score = healthFor(v.id);
+  const { data: health } = useVehicleHealth(v.id);
   return (
     <button onClick={onClick}
       className="w-full flex items-center gap-3.5 p-4 rounded-[16px] active:scale-[0.99] transition-transform"
@@ -31,7 +32,7 @@ function VehicleRow({ v, onClick }: { v: Vehicle; onClick: () => void }) {
           {v.plate} · {v.fuel_type} · {v.mileage?.toLocaleString('pt-BR')} km
         </p>
       </div>
-      <HealthRing score={score} />
+      {health && <HealthRing score={health.overall_score} />}
       <ChevronRight size={18} color={C.subtle} className="flex-none" />
     </button>
   );

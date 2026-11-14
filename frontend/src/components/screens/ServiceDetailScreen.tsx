@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, ClipboardCheck, ShieldCheck, Download, MapPin } from 'lucide-react';
+import { Check, ClipboardCheck, ShieldCheck, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import toast from 'react-hot-toast';
 import { historyApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
@@ -107,14 +106,6 @@ export function ServiceDetailScreen() {
                   <span className="text-[18px]" style={{ color: C.subtle }}>›</span>
                 </button>
               )}
-              <button onClick={() => toast.success('Baixando nota fiscal...')}
-                className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left active:bg-black/[0.02]">
-                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: C.bg }}>
-                  <Download size={18} color={C.muted} />
-                </div>
-                <span className="flex-1 text-[14px] font-semibold" style={{ color: C.text }}>Baixar nota fiscal</span>
-                <span className="text-[18px]" style={{ color: C.subtle }}>›</span>
-              </button>
             </div>
           </>
         )}

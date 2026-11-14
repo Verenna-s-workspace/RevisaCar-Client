@@ -6,8 +6,7 @@
  */
 import type {
   Vehicle, CustomerProfile, DashboardSummary, ServiceHistory,
-  Notification, VehicleHealth, VehicleDocument, InspectionReport,
-} from '../types';
+  Notification, VehicleHealth, VehicleDocument, InspectionReport, OficinaVinculo, OrcamentoOficina } from '../types';
 
 // ── Estimates ──────────────────────────────────────────────────────────────────
 export const mockEstimate = {
@@ -271,7 +270,36 @@ export const mockPlateDb: Record<string, { brand: string; model: string; year: n
 
 // ── Documents ────────────────────────────────────────────────────────────────────
 export const mockDocuments: VehicleDocument[] = [
-  { id: 'd1', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'crlv', title: 'CRLV 2026', file_url: '', file_name: 'crlv-2026.pdf', file_size_kb: 420, expiry_date: '2026-12-31', created_at: '2026-01-10T00:00:00Z' },
-  { id: 'd2', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'seguro', title: 'Seguro Porto 2026', file_url: '', file_name: 'seguro-porto.pdf', file_size_kb: 890, expiry_date: '2027-01-15', created_at: '2026-01-15T00:00:00Z' },
-  { id: 'd3', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'nota_fiscal', title: 'NF Troca de Óleo', file_url: '', file_name: 'nf-oleo-abr24.pdf', file_size_kb: 150, created_at: '2024-04-12T00:00:00Z' },
+  { id: 'd1', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'crlv', title: 'CRLV 2026', file_url: '/customer/documents/d1/arquivo', has_file: true, file_name: 'crlv-2026.pdf', file_size_kb: 420, expiry_date: '2026-12-31', created_at: '2026-01-10T00:00:00Z' },
+  { id: 'd2', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'seguro', title: 'Seguro Porto 2026', file_url: '/customer/documents/d2/arquivo', has_file: true, file_name: 'seguro-porto.pdf', file_size_kb: 890, expiry_date: '2027-01-15', created_at: '2026-01-15T00:00:00Z' },
+  { id: 'd3', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', type: 'nota_fiscal', title: 'NF Troca de Óleo', file_url: '', has_file: false, file_name: '', file_size_kb: 150, created_at: '2024-04-12T00:00:00Z' },
+];
+
+// ── Oficinas (carteira) e orçamentos enviados por elas ───────────────────────
+export const MOCK_CONVITE = '7d1c2a3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+
+export const mockOficinaStore: { oficinas: OficinaVinculo[] } = {
+  oficinas: [
+    { oficina_doc: '11222333000181', nome: 'Auto Center Paulista', desde: '2026-03-02T12:00:00Z' },
+  ],
+};
+
+export const mockOrcamentos: OrcamentoOficina[] = [
+  {
+    id: 'o1', oficina: { oficina_doc: '11222333000181', nome: 'Auto Center Paulista' }, os_num: '1042',
+    vehicle_label: 'Uno — ABC1D23', versao: 1, status: 'enviado',
+    validade_ate: new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10),
+    observacoes: 'Pastilhas no limite. Discos ainda bons.', total: 486.9,
+    enviado_em: new Date(Date.now() - 864e5).toISOString(), aprovado_em: null, recusado_em: null, motivo_recusa: null,
+    itens: [
+      { tipo: 'peca', descricao: 'Pastilha de freio dianteira', marca: 'Cobreq', quantidade: 1, preco_unitario: 186.9, subtotal: 186.9 },
+      { tipo: 'servico', descricao: 'Troca de pastilhas', marca: null, quantidade: 1, preco_unitario: 300, subtotal: 300 },
+    ],
+  },
+  {
+    id: 'o2', oficina: { oficina_doc: '11222333000181', nome: 'Auto Center Paulista' }, os_num: '0981',
+    vehicle_label: 'Uno — ABC1D23', versao: 2, status: 'aprovado', validade_ate: null, observacoes: '', total: 220,
+    enviado_em: '2026-02-10T12:00:00Z', aprovado_em: '2026-02-11T12:00:00Z', recusado_em: null, motivo_recusa: null,
+    itens: [{ tipo: 'servico', descricao: 'Troca de óleo e filtro', marca: null, quantidade: 1, preco_unitario: 220, subtotal: 220 }],
+  },
 ];

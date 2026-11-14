@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   addMonths, subMonths, startOfMonth, getDaysInMonth,
@@ -8,11 +8,12 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ChevronLeft, ChevronRight, Check, Car,
-  Wrench, RotateCcw, Gauge, Wind, Plus, Zap
+  Wrench, RotateCcw, Gauge, Wind, Plus, Zap, Store
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { vehiclesApi, availabilityApi, appointmentsApi } from '../../services/api';
+import { vehiclesApi, availabilityApi, appointmentsApi, oficinasApi } from '../../services/api';
+import type { OficinaVinculo } from '../../types';
 import { Button, Spinner } from '../ui';
 import { MainLayout, Topbar } from '../layout';
 import { clsx } from 'clsx';
@@ -60,7 +61,9 @@ function StepProgress({ current }: { current: number }) {
 
 /* ─── Vehicle Picker ────────────────────────────────────── */
 function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id: string) => void }) {
-  const { data: vehicles = [] } = useQuery({
+  const navigate = useNavigate();
+  const [aberto, setAberto] = useState(false);
+  const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ['vehicles'],
     queryFn: () => vehiclesApi.list().then(r => r.data),
   });
@@ -69,23 +72,90 @@ function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id
       onSelect(vehicles.find(v => v.is_active)?.id || vehicles[0].id);
   }, [vehicles, selected, onSelect]);
 
+  if (isLoading) return null;
+  if (vehicles.length === 0) {
+    return (
+      <div className="mx-4 mt-4 bg-white border border-border rounded-xl px-4 py-3 flex items-center gap-3 shadow-xs">
+        <Car size={17} className="text-brand" />
+        <p className="flex-1 text-sm text-text">Cadastre um veículo para agendar.</p>
+        <button onClick={() => navigate('/veiculos/novo')} className="text-xs font-bold text-brand hover:underline">Adicionar</button>
+      </div>
+    );
+  }
   const active = vehicles.find(v => v.id === selected) ?? vehicles[0];
-  if (!active) return null;
 
   return (
-    <div className="mx-4 mt-4 bg-white border border-border rounded-xl px-4 py-3 flex items-center gap-3 shadow-xs">
-      <div className="w-9 h-9 bg-crit-bg rounded-xl flex items-center justify-center">
-        <Car size={17} className="text-brand" />
+    <div className="mx-4 mt-4 bg-white border border-border rounded-xl shadow-xs overflow-hidden">
+      <div className="px-4 py-3 flex items-center gap-3">
+        <div className="w-9 h-9 bg-crit-bg rounded-xl flex items-center justify-center">
+          <Car size={17} className="text-brand" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm text-text leading-tight truncate">
+            {active.brand} {active.model} {active.year}
+          </p>
+          <p className="text-xs text-text-muted">{active.plate} · {active.mileage?.toLocaleString('pt-BR')} km</p>
+        </div>
+        {vehicles.length > 1 && (
+          <button onClick={() => setAberto(a => !a)} aria-expanded={aberto}
+            className="text-xs font-bold text-brand hover:underline">{aberto ? 'Fechar' : 'Trocar'}</button>
+        )}
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm text-text leading-tight truncate">
-          {active.brand} {active.model} {active.year}
-        </p>
-        <p className="text-xs text-text-muted">{active.plate} · {active.mileage?.toLocaleString('pt-BR')} km</p>
+      {aberto && vehicles.filter(v => v.id !== active.id).map(v => (
+        <button key={v.id} onClick={() => { onSelect(v.id); setAberto(false); }}
+          className="w-full text-left px-4 py-3 border-t border-border hover:bg-surface-3 transition-colors">
+          <p className="font-semibold text-sm text-text">{v.brand} {v.model} {v.year}</p>
+          <p className="text-xs text-text-muted">{v.plate}</p>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Oficina Picker ────────────────────────────────────── */
+// O pedido vai para uma oficina em que o cliente entrou (convite). Com uma só,
+// ela é escolhida sozinha; com várias, o cliente escolhe.
+function OficinaPicker({ oficinas, selected, onSelect }: {
+  oficinas: OficinaVinculo[]; selected: string; onSelect: (doc: string) => void;
+}) {
+  if (oficinas.length <= 1) {
+    const o = oficinas[0];
+    return o ? (
+      <div className="mx-4 mt-3 px-4 py-2.5 rounded-xl bg-surface-3 flex items-center gap-2 text-sm">
+        <Store size={15} className="text-brand" />
+        <span className="text-text-muted">Oficina:</span>
+        <span className="font-bold text-text truncate">{o.nome || 'Sua oficina'}</span>
       </div>
-      {vehicles.length > 1 && (
-        <button className="text-xs font-bold text-brand hover:underline">Trocar</button>
-      )}
+    ) : null;
+  }
+  return (
+    <div className="mx-4 mt-3">
+      <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-0.5">Oficina</p>
+      <div className="flex flex-wrap gap-2">
+        {oficinas.map(o => (
+          <button key={o.oficina_doc} onClick={() => onSelect(o.oficina_doc)} aria-pressed={selected === o.oficina_doc}
+            className={clsx('px-3.5 py-2 rounded-full text-sm font-semibold border-[1.5px] transition-all',
+              selected === o.oficina_doc ? 'border-brand bg-crit-bg text-brand' : 'border-border bg-white text-text')}>
+            {o.nome || 'Oficina'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SemOficina() {
+  const navigate = useNavigate();
+  return (
+    <div className="mx-4 mt-6 bg-white border border-border rounded-2xl p-5 text-center shadow-xs">
+      <div className="w-14 h-14 mx-auto rounded-2xl bg-crit-bg flex items-center justify-center">
+        <Store size={26} className="text-brand" />
+      </div>
+      <p className="font-bold text-base text-text mt-3">Escolha sua oficina primeiro</p>
+      <p className="text-sm text-text-muted mt-1 leading-relaxed">
+        Para agendar, entre na sua oficina com o convite (QR ou link) que ela fornece.
+      </p>
+      <Button fullWidth size="lg" className="mt-4" onClick={() => navigate('/oficinas')}>Tenho um convite</Button>
     </div>
   );
 }
@@ -101,9 +171,11 @@ const SERVICES = [
   { id: 'outro',       name: 'Outro serviço',                  desc: 'Descreva o que seu veículo precisa',          icon: Plus,     bg: 'bg-surface-3',   ic: 'text-text-muted' },
 ];
 
-function Step1({ selected, onSelect, onNext }: {
+function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
   selected: string; onSelect: (id: string) => void; onNext: () => void;
+  descricao: string; onDescricao: (v: string) => void;
 }) {
+  const precisaDescrever = selected === 'outro' && descricao.trim().length < 3;
   return (
     <div className="px-4 py-4 flex flex-col gap-3">
       <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-0.5">
@@ -137,7 +209,17 @@ function Step1({ selected, onSelect, onNext }: {
           </motion.button>
         );
       })}
-      <Button fullWidth size="lg" disabled={!selected} onClick={onNext} className="mt-1">
+      {selected && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="descricao-servico" className="text-xs font-semibold text-text-muted px-0.5">
+            {selected === 'outro' ? 'O que seu veículo precisa?' : 'Observações para a oficina (opcional)'}
+          </label>
+          <textarea id="descricao-servico" value={descricao} onChange={e => onDescricao(e.target.value)} rows={3}
+            maxLength={500} placeholder={selected === 'outro' ? 'Ex.: barulho na suspensão dianteira' : 'Ex.: luz de injeção acesa'}
+            className="w-full px-4 py-3 rounded-xl border-[1.5px] border-border bg-white text-sm text-text outline-none focus:border-brand resize-none" />
+        </div>
+      )}
+      <Button fullWidth size="lg" disabled={!selected || precisaDescrever} onClick={onNext} className="mt-1">
         Próximo: Escolher Data <ChevronRight size={17} />
       </Button>
     </div>
@@ -149,15 +231,15 @@ const WEEKDAYS_SHORT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-function Step2({ selected, onSelect, onNext, onBack }: {
-  selected: string; onSelect: (d: string) => void; onNext: () => void; onBack: () => void;
+function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
+  oficinaDoc: string; selected: string; onSelect: (d: string) => void; onNext: () => void; onBack: () => void;
 }) {
   const [view, setView] = useState(new Date());
   const y = view.getFullYear(), m = view.getMonth();
 
   const { data: avail, isLoading } = useQuery({
-    queryKey: ['availability', y, m + 1],
-    queryFn: () => availabilityApi.getDays(y, m + 1).then(r => r.data.available_dates),
+    queryKey: ['availability', oficinaDoc, y, m + 1],
+    queryFn: () => availabilityApi.getDays(y, m + 1, oficinaDoc || undefined).then(r => r.data.available_dates),
     staleTime: 60_000,
   });
 
@@ -253,18 +335,20 @@ function Step2({ selected, onSelect, onNext, onBack }: {
 }
 
 /* ─── Time Slots ────────────────────────────────────────── */
-const ALL_TIMES = ['08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+// A API devolve "HH:MM:SS"; mostramos e enviamos "HH:MM". Só aparecem os horários
+// que a oficina abriu (antes era uma lista fixa que nunca batia com a API).
+const hhmm = (t: string) => t.slice(0, 5);
 
-function Step3({ date, selected, onSelect, onNext, onBack }: {
-  date: string; selected: string; onSelect: (t: string) => void; onNext: () => void; onBack: () => void;
+function Step3({ oficinaDoc, date, selected, onSelect, onNext, onBack }: {
+  oficinaDoc: string; date: string; selected: string; onSelect: (t: string) => void; onNext: () => void; onBack: () => void;
 }) {
   const { data, isLoading } = useQuery({
-    queryKey: ['availability-times', date],
-    queryFn: () => availabilityApi.getTimes(date).then(r => r.data),
+    queryKey: ['availability-times', oficinaDoc, date],
+    queryFn: () => availabilityApi.getTimes(date, oficinaDoc || undefined).then(r => r.data),
     enabled: !!date,
   });
 
-  const avail = new Set(data?.times || []);
+  const horarios = Array.from(new Set((data?.times || []).map(hhmm))).sort();
   const dateLabel = date
     ? format(new Date(date + 'T00:00:00'), "EEEE, d 'de' MMMM", { locale: ptBR })
     : '';
@@ -283,21 +367,20 @@ function Step3({ date, selected, onSelect, onNext, onBack }: {
         </p>
         {isLoading ? (
           <div className="flex justify-center py-8"><Spinner className="text-brand" /></div>
+        ) : horarios.length === 0 ? (
+          <p className="text-sm text-text-muted px-0.5">Não há horários livres neste dia. Volte e escolha outra data.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {ALL_TIMES.map(slot => {
-              const isAvail = avail.has(slot);
-              const isSel   = selected === slot;
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {horarios.map(slot => {
+              const isSel = selected === slot;
               return (
                 <button
                   key={slot}
-                  disabled={!isAvail}
                   onClick={() => onSelect(slot)}
+                  aria-pressed={isSel}
                   className={clsx(
                     'py-3.5 rounded-xl text-sm font-semibold border-[1.5px] transition-all duration-100 tabular',
-                    isSel   ? 'bg-crit-bg border-brand text-brand shadow-sm' :
-                    isAvail ? 'bg-white border-border hover:border-border-md text-text' :
-                              'bg-surface-3 border-border text-text-ghost cursor-not-allowed line-through'
+                    isSel ? 'bg-crit-bg border-brand text-brand shadow-sm' : 'bg-white border-border hover:border-border-md text-text'
                   )}
                 >
                   {slot}
@@ -317,8 +400,8 @@ function Step3({ date, selected, onSelect, onNext, onBack }: {
 }
 
 /* ─── Confirm ───────────────────────────────────────────── */
-function Step4({ vehicleId, serviceType, date, timeSlot, onBack, onConfirm, loading }: {
-  vehicleId: string; serviceType: string; date: string; timeSlot: string;
+function Step4({ vehicleId, serviceType, descricao, oficinaNome, date, timeSlot, onBack, onConfirm, loading }: {
+  vehicleId: string; serviceType: string; descricao: string; oficinaNome: string; date: string; timeSlot: string;
   onBack: () => void; onConfirm: () => void; loading: boolean;
 }) {
   const { data: vehicles = [] } = useQuery({
@@ -334,9 +417,10 @@ function Step4({ vehicleId, serviceType, date, timeSlot, onBack, onConfirm, load
   const rows = [
     { l: 'Veículo',  v: vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : '—' },
     { l: 'Serviço',  v: serviceName },
+    ...(descricao.trim() ? [{ l: 'Detalhes', v: descricao.trim() }] : []),
     { l: 'Data',     v: <span className="capitalize tabular">{dateLabel}</span> },
     { l: 'Horário',  v: <span className="tabular">{timeSlot}</span> },
-    { l: 'Oficina',  v: 'RevisaCar — Unidade Centro' },
+    { l: 'Oficina',  v: oficinaNome || '—' },
   ];
 
   return (
@@ -381,8 +465,8 @@ function Step4({ vehicleId, serviceType, date, timeSlot, onBack, onConfirm, load
           <div className="w-1.5 h-1.5 rounded-full bg-info" />
         </div>
         <p className="text-xs text-info leading-relaxed">
-          O mecânico receberá sua solicitação e confirmará o agendamento em até <strong>24 horas</strong>.
-          Você será notificado pelo app.
+          A oficina recebe o seu pedido e confirma o horário. Você é avisado aqui no app
+          quando ela responder.
         </p>
       </div>
 
@@ -398,23 +482,47 @@ function Step4({ vehicleId, serviceType, date, timeSlot, onBack, onConfirm, load
 export function ScheduleScreen() {
   const navigate  = useNavigate();
   const qc        = useQueryClient();
+  const [params]  = useSearchParams();
   const [step, setStep]         = useState<1|2|3|4>(1);
   const [vehicleId, setVehicleId] = useState('');
   const [service, setService]   = useState('');
+  const [descricao, setDescricao] = useState('');
   const [date, setDate]         = useState('');
   const [time, setTime]         = useState('');
+  const [oficinaDoc, setOficinaDoc] = useState(params.get('oficina') || '');
+
+  const { data: oficinas = [], isLoading: carregandoOficinas } = useQuery({
+    queryKey: ['oficinas'],
+    queryFn: () => oficinasApi.list().then(r => r.data),
+    staleTime: 60_000,
+  });
+  // Uma oficina só: escolhida sozinha. Oficina da URL que não é do cliente: ignorada.
+  useEffect(() => {
+    if (!oficinas.length) return;
+    if (!oficinas.some(o => o.oficina_doc === oficinaDoc)) {
+      setOficinaDoc(oficinas.length === 1 ? oficinas[0].oficina_doc : '');
+    }
+  }, [oficinas, oficinaDoc]);
+  const oficina = oficinas.find(o => o.oficina_doc === oficinaDoc);
+  // Trocar de oficina muda a agenda: data e horário escolhidos deixam de valer.
+  const escolherOficina = (doc: string) => { setOficinaDoc(doc); setDate(''); setTime(''); if (step > 1) setStep(1); };
 
   const { mutate: create, isPending } = useMutation({
     mutationFn: () => appointmentsApi.create({
       vehicle_id: vehicleId, service_type: service,
-      date, time_slot: time,
+      service_description: descricao.trim() || undefined,
+      date, time_slot: time, oficina_doc: oficinaDoc,
     }),
     onSuccess: () => {
       toast.success('Agendamento enviado! Aguarde a confirmação.');
       qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['appointments'] });
       navigate('/');
     },
-    onError: (err: any) => toast.error(err.response?.data?.detail || 'Erro ao agendar'),
+    onError: (err: any) => {
+      const d = err.response?.data;
+      toast.error(d?.detail || d?.oficina_doc || (d && Object.values(d).flat()[0]) || 'Não foi possível agendar');
+    },
   });
 
   const slideVariants = {
@@ -432,8 +540,18 @@ export function ScheduleScreen() {
   return (
     <MainLayout topbar={<Topbar title="Agendar Manutenção" showBack />}>
       <StepProgress current={step} />
+      {carregandoOficinas ? (
+        <div className="flex justify-center py-10"><Spinner className="text-brand" /></div>
+      ) : oficinas.length === 0 ? (
+        <SemOficina />
+      ) : (
+      <>
       <VehiclePicker selected={vehicleId} onSelect={setVehicleId} />
+      <OficinaPicker oficinas={oficinas} selected={oficinaDoc} onSelect={escolherOficina} />
 
+      {!oficinaDoc ? (
+        <p className="mx-4 mt-4 text-sm text-text-muted">Escolha a oficina para ver os horários.</p>
+      ) : (
       <AnimatePresence mode="wait" custom={dir}>
         <motion.div
           key={step}
@@ -444,17 +562,24 @@ export function ScheduleScreen() {
           exit="exit"
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          {step === 1 && <Step1 selected={service} onSelect={setService} onNext={() => goTo(2)} />}
-          {step === 2 && <Step2 selected={date} onSelect={setDate} onNext={() => goTo(3)} onBack={() => goTo(1,-1)} />}
-          {step === 3 && <Step3 date={date} selected={time} onSelect={setTime} onNext={() => goTo(4)} onBack={() => goTo(2,-1)} />}
+          {step === 1 && <Step1 selected={service} onSelect={setService} onNext={() => goTo(2)}
+                                descricao={descricao} onDescricao={setDescricao} />}
+          {step === 2 && <Step2 oficinaDoc={oficinaDoc} selected={date} onSelect={(d) => { setDate(d); setTime(''); }}
+                                onNext={() => goTo(3)} onBack={() => goTo(1,-1)} />}
+          {step === 3 && <Step3 oficinaDoc={oficinaDoc} date={date} selected={time} onSelect={setTime}
+                                onNext={() => goTo(4)} onBack={() => goTo(2,-1)} />}
           {step === 4 && (
             <Step4
-              vehicleId={vehicleId} serviceType={service} date={date} timeSlot={time}
-              onBack={() => goTo(3,-1)} onConfirm={() => create()} loading={isPending}
+              vehicleId={vehicleId} serviceType={service} descricao={descricao} oficinaNome={oficina?.nome ?? ''}
+              date={date} timeSlot={time}
+              onBack={() => goTo(3,-1)} onConfirm={() => create()} loading={isPending || !vehicleId}
             />
           )}
         </motion.div>
       </AnimatePresence>
+      )}
+      </>
+      )}
     </MainLayout>
   );
 }

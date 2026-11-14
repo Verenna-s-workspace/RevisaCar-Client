@@ -11,6 +11,13 @@ const ROUTES = [
   '/documentos',
   '/gastos',
   '/preferencias',
+  '/oficinas',
+  '/agendar',
+  '/seguranca',
+  '/privacidade',
+  '/excluir-conta',
+  '/ajuda',
+  '/saude',
 ];
 
 for (const route of ROUTES) {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { Bell, ChevronRight, Calendar, FileText, QrCode, MapPin, ArrowRight } from 'lucide-react';
+import { Bell, ChevronRight, Calendar, FileText, QrCode, Store, ArrowRight, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardApi, healthApi } from '../../services/api';
+import { dashboardApi, healthApi, oficinasApi } from '../../services/api';
 import { MainLayout } from '../layout';
 import { Skeleton } from '../ui';
 import { useAuthStore } from '../../store/auth';
@@ -62,14 +62,14 @@ const ACTIONS = [
   { icon: Calendar, label: 'Agendar',    to: '/agendar'    },
   { icon: FileText, label: 'Orçamentos', to: '/orcamentos' },
   { icon: QrCode,   label: 'QR Code',    to: '/qr'         },
-  { icon: MapPin,   label: 'Oficinas',   to: '/historico'  },
+  { icon: Store,    label: 'Oficinas',   to: '/oficinas'   },
 ];
 
 /* ─── Dashboard ─────────────────────────────────────────── */
 export function DashboardScreen() {
   const navigate  = useNavigate();
   const { session } = useAuthStore();
-  const firstName = session?.name?.split(' ')[0] ?? 'Dev';
+  const firstName = session?.name?.split(' ')[0] ?? '';
 
   const { data: dash, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -89,7 +89,20 @@ export function DashboardScreen() {
     staleTime: 30_000,
   });
 
-  const health = healthData?.overall_score ?? dash?.health_score ?? 100;
+  const health = healthData?.overall_score ?? dash?.health_score ?? null;
+
+  const { data: oficinas } = useQuery({
+    queryKey: ['oficinas'],
+    queryFn: () => oficinasApi.list().then(r => r.data),
+    staleTime: 60_000,
+  });
+
+  // Próxima ação REAL: o próximo agendamento; senão, o lembrete mais urgente.
+  const proximoAgendamento = dash?.upcoming_appointments?.[0];
+  const ORDEM_URGENCIA: Record<string, number> = { urgente: 0, atencao: 1, ok: 2 };
+  const lembrete = [...(dash?.all_reminders ?? [])]
+    .sort((a, b) => (ORDEM_URGENCIA[a.urgency] ?? 3) - (ORDEM_URGENCIA[b.urgency] ?? 3))[0];
+  const dataCurta = (iso?: string) => (iso ? format(new Date(iso.length === 10 ? `${iso}T00:00:00` : iso), 'dd/MM', { locale: ptBR }) : null);
   const systems = (healthData?.categories ?? []).slice(0, 3).map(c => ({ label: c.name, score: c.score }));
 
   return (
@@ -99,14 +112,14 @@ export function DashboardScreen() {
         <div>
           <p className="text-[11px] font-medium" style={{ color: SUBTLE }}>Bem-vindo de volta</p>
           <p className="text-[16px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
-            Olá, {firstName}
+            Olá{firstName ? `, ${firstName}` : ''}
           </p>
         </div>
         <button aria-label="Notificações" onClick={() => navigate('/notificacoes')}
                 className="relative w-10 h-10 flex items-center justify-center rounded-xl"
                 style={{ background: CARD, border: `1px solid ${BORDER}` }}>
           <Bell size={19} color={TEXT} strokeWidth={1.8} />
-          {(dash?.unread_notifications_count ?? 1) > 0 && (
+          {(dash?.unread_notifications_count ?? 0) > 0 && (
             <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full" style={{ background: BRAND }} />
           )}
         </button>
@@ -132,12 +145,12 @@ export function DashboardScreen() {
                 <ChevronRight size={18} color={SUBTLE} />
               </button>
             </div>
-            <button onClick={() => navigate('/saude')} className="flex items-center gap-3 w-full text-left">
+            {health !== null && <button onClick={() => navigate(`/saude?veiculo=${vehicle.id}`)} className="flex items-center gap-3 w-full text-left">
               <HealthArc score={health} />
               <div className="flex-1 flex flex-col gap-2">
                 {systems.map(s => <SystemPill key={s.label} {...s} />)}
               </div>
-            </button>
+            </button>}
           </div>
         ) : (
           <button onClick={() => navigate('/veiculos')}
@@ -147,24 +160,62 @@ export function DashboardScreen() {
           </button>
         )}
 
-        {/* Próxima ação */}
+        {/* Sem oficina: sem ela não dá para agendar nem receber orçamentos */}
+        {oficinas && oficinas.length === 0 && (
+          <button onClick={() => navigate('/oficinas')}
+            className="rounded-[14px] p-4 flex items-center gap-3 text-left"
+            style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: '#FDEAEC' }}>
+              <Store size={17} color={BRAND} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold" style={{ color: TEXT }}>Entre na sua oficina</p>
+              <p className="text-[11.5px] mt-0.5" style={{ color: MUTED }}>Use o convite dela para agendar e receber orçamentos.</p>
+            </div>
+            <ChevronRight size={18} color={SUBTLE} />
+          </button>
+        )}
+
+        {/* Próxima ação (dados reais) */}
+        {(proximoAgendamento || lembrete) && (
         <div className="rounded-[14px] p-4 flex items-center gap-3"
              style={{ background: '#FDEAEC', border: `1px solid rgba(204,20,0,.12)` }}>
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
                style={{ background: BRAND }}>
-            <Calendar size={17} color="#fff" />
+            {proximoAgendamento ? <Calendar size={17} color="#fff" /> : <Wrench size={17} color="#fff" />}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: BRAND }}>Próxima ação</p>
-            <p className="text-[13px] font-bold mt-0.5" style={{ color: TEXT }}>Troca de óleo</p>
-            <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>Em 1.200 km · vence 15/05</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: BRAND }}>
+              {proximoAgendamento ? 'Próximo agendamento' : 'Próxima manutenção'}
+            </p>
+            {proximoAgendamento ? (
+              <>
+                <p className="text-[13px] font-bold mt-0.5 truncate" style={{ color: TEXT }}>{proximoAgendamento.service_type}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
+                  {dataCurta(proximoAgendamento.date)} às {proximoAgendamento.time_slot?.slice(0, 5)}
+                  {' · '}{proximoAgendamento.status === 'confirmado' ? 'confirmado' : 'aguardando a oficina'}
+                </p>
+              </>
+            ) : lembrete && (
+              <>
+                <p className="text-[13px] font-bold mt-0.5 truncate" style={{ color: TEXT }}>{lembrete.service_name}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
+                  {[lembrete.km_remaining != null ? `Em ${lembrete.km_remaining.toLocaleString('pt-BR')} km` : null,
+                    lembrete.next_service_date ? `vence ${dataCurta(lembrete.next_service_date)}` : null]
+                    .filter(Boolean).join(' · ') || lembrete.vehicle_label}
+                </p>
+              </>
+            )}
           </div>
-          <button onClick={() => navigate('/agendar')}
-                  className="text-[12px] font-bold px-3 py-1.5 rounded-[8px] whitespace-nowrap"
-                  style={{ background: BRAND, color: '#fff' }}>
-            Agendar
-          </button>
+          {!proximoAgendamento && (
+            <button onClick={() => navigate('/agendar')}
+                    className="text-[12px] font-bold px-3 py-1.5 rounded-[8px] whitespace-nowrap"
+                    style={{ background: BRAND, color: '#fff' }}>
+              Agendar
+            </button>
+          )}
         </div>
+        )}
 
         {/* Quick actions — paleta restrita, um único acento (marca) */}
         <div className="grid grid-cols-4 gap-2.5">

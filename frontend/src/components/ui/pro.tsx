@@ -28,10 +28,7 @@ export const C = {
 export const FONT_HEAD = "var(--font-heading)";
 
 /* ─── Vehicle health helpers ────────────────────── */
-const HEALTH_MAP: Record<string, number> = { v1: 86, v2: 68, v3: 78 };
-export function healthFor(id?: string) {
-  return id && HEALTH_MAP[id] != null ? HEALTH_MAP[id] : 82;
-}
+// A nota vem do backend (hooks/useVehicleHealth); aqui só cor e rótulo.
 export function healthColor(score: number) {
   return score >= 80 ? C.green : score >= 60 ? '#F4A724' : C.brand;
 }
@@ -141,11 +138,13 @@ export function ToggleRow({ icon, iconBg, iconColor, label, desc, on, onChange, 
 }
 
 /* ─── Primary / Outline buttons ─────────────────── */
-export function PrimaryBtn({ children, onClick, danger, disabled }: {
+export function PrimaryBtn({ children, onClick, danger, disabled, type = 'button' }: {
   children: ReactNode; onClick?: () => void; danger?: boolean; disabled?: boolean;
+  type?: 'button' | 'submit';
 }) {
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
       className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white transition-all active:scale-[0.98] disabled:opacity-50"
@@ -156,13 +155,15 @@ export function PrimaryBtn({ children, onClick, danger, disabled }: {
   );
 }
 
-export function OutlineBtn({ children, onClick, danger }: {
-  children: ReactNode; onClick?: () => void; danger?: boolean;
+export function OutlineBtn({ children, onClick, danger, disabled }: {
+  children: ReactNode; onClick?: () => void; danger?: boolean; disabled?: boolean;
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="w-full py-[15px] rounded-[14px] font-bold text-[15px] transition-all active:scale-[0.98]"
+      disabled={disabled}
+      className="w-full py-[15px] rounded-[14px] font-bold text-[15px] transition-all active:scale-[0.98] disabled:opacity-50"
       style={{
         background: 'transparent',
         border: `1.5px solid ${danger ? C.brand : C.border}`,

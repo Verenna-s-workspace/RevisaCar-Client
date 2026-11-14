@@ -1,19 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { ShieldCheck, Check } from 'lucide-react';
+import { ShieldCheck, Info } from 'lucide-react';
 import { differenceInDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import toast from 'react-hot-toast';
 import { historyApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
-import { C, FONT_HEAD, PrimaryBtn } from '../ui/pro';
-
-const COVERED = [
-  'Defeito em peças trocadas',
-  'Mão de obra do serviço',
-  'Revisão gratuita em 30 dias',
-];
+import { C, FONT_HEAD } from '../ui/pro';
 
 export function WarrantyScreen() {
   const { id } = useParams();
@@ -43,7 +36,7 @@ export function WarrantyScreen() {
               </div>
               <p className="text-[17px] font-bold text-white mt-4 relative" style={{ fontFamily: FONT_HEAD }}>{s.service_type}</p>
               <p className="text-[12.5px] mt-1 relative" style={{ color: 'rgba(255,255,255,.8)' }}>
-                Cobertura {active ? 'ativa' : 'expirada'} · peças e mão de obra
+                Garantia {active ? 'ativa' : 'expirada'}{s.workshop_name ? ` · ${s.workshop_name}` : ''}
               </p>
 
               <div className="flex items-center justify-center gap-6 mt-5 relative">
@@ -61,24 +54,15 @@ export function WarrantyScreen() {
               </div>
             </div>
 
-            {/* Covered */}
-            <div className="rounded-[18px] p-5" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-              <p className="text-[12px] font-bold uppercase tracking-wide mb-3" style={{ color: C.subtle }}>O que está coberto</p>
-              <div className="flex flex-col gap-3">
-                {COVERED.map(c => (
-                  <div key={c} className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-none" style={{ background: C.greenBg }}>
-                      <Check size={12} color={C.greenDk} strokeWidth={3} />
-                    </div>
-                    <span className="text-[13.5px]" style={{ color: C.text2 }}>{c}</span>
-                  </div>
-                ))}
-              </div>
+            {/* O que a garantia cobre é definido pela oficina — o app não inventa regras. */}
+            <div className="rounded-[18px] p-5 flex gap-3" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+              <Info size={18} color={C.muted} className="flex-none mt-0.5" />
+              <p className="text-[13px] leading-relaxed" style={{ color: C.text2 }}>
+                {active
+                  ? `Se notar algum problema relacionado a este serviço, procure ${s.workshop_name || 'a oficina'} e mostre esta tela. As condições da garantia são as combinadas com a oficina.`
+                  : 'O prazo desta garantia terminou. Fale com a oficina se tiver dúvidas sobre o serviço.'}
+              </p>
             </div>
-
-            <PrimaryBtn onClick={() => toast.success('Solicitação de garantia enviada à oficina')}>
-              Acionar garantia
-            </PrimaryBtn>
           </>
         )}
       </div>
