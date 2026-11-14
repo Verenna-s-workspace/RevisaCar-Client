@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+  # Todo PR (inclusive os empilhados, cuja base não é a main).
   pull_request:
-    branches: [main]
 
 jobs:
   backend:
