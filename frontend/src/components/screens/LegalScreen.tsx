@@ -47,7 +47,7 @@ export function LegalScreen() {
         <p className="text-[12px]" style={{ color: C.subtle }}>{doc.updated}</p>
         {doc.sections.map(s => (
           <div key={s.h}>
-            <h2 className="text-[14px] font-bold mb-1.5" style={{ color: C.text, fontFamily: FONT_HEAD }}>{s.h}</h2>
+            <h2 className="text-[14px] font-medium mb-1.5" style={{ color: C.text, fontFamily: FONT_HEAD }}>{s.h}</h2>
             <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>{s.b}</p>
           </div>
         ))}

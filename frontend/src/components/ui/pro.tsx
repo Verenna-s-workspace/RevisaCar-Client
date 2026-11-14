@@ -56,8 +56,8 @@ export function HealthRing({ score, size = 46 }: { score: number; size?: number 
 /* ─── Section label ─────────────────────────────── */
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5 mt-1"
-       style={{ color: C.subtle }}>
+    <p className="text-[13px] font-medium mb-2.5 mt-1 px-1"
+       style={{ color: C.muted }}>
       {children}
     </p>
   );
@@ -66,7 +66,7 @@ export function SectionLabel({ children }: { children: ReactNode }) {
 /* ─── Card group (rounded container for rows) ───── */
 export function CardGroup({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[16px] overflow-hidden" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+    <div className="glass rounded-[24px] overflow-hidden">
       {children}
     </div>
   );
@@ -80,16 +80,16 @@ export function MenuRow({ icon, iconBg, iconColor, label, value, danger, last, o
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left active:bg-black/[0.02] transition-colors"
+      className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left hover:bg-white/60 active:bg-white/80 transition-colors"
       style={{ borderBottom: last ? 'none' : `1px solid ${C.borderSoft}` }}
     >
       {icon && (
-        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
-             style={{ background: iconBg ?? C.bg, color: iconColor ?? C.muted }}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-none"
+             style={{ background: iconBg ?? 'rgba(255,255,255,0.95)', color: iconColor ?? C.muted, boxShadow: '0 1px 3px rgba(40,28,16,0.06)' }}>
           {icon}
         </div>
       )}
-      <span className="flex-1 text-[14px] font-semibold" style={{ color: danger ? C.brand : C.text }}>
+      <span className="flex-1 text-[14.5px] font-medium" style={{ color: danger ? C.brand : C.text }}>
         {label}
       </span>
       {value && <span className="text-[13px]" style={{ color: C.subtle }}>{value}</span>}
@@ -104,7 +104,9 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) 
     <button
       onClick={onChange}
       className="w-[46px] h-[27px] rounded-full flex-none transition-colors relative"
-      style={{ background: on ? C.green : '#D9D6CF' }}
+      role="switch"
+      aria-checked={on}
+      style={{ background: on ? C.brand : 'rgba(22,24,28,0.14)' }}
     >
       <span
         className="absolute top-[3px] w-[21px] h-[21px] rounded-full bg-white transition-all"
@@ -123,13 +125,13 @@ export function ToggleRow({ icon, iconBg, iconColor, label, desc, on, onChange, 
     <div className="w-full flex items-center gap-3.5 px-4 py-3.5"
          style={{ borderBottom: last ? 'none' : `1px solid ${C.borderSoft}` }}>
       {icon && (
-        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
-             style={{ background: iconBg ?? C.bg, color: iconColor ?? C.muted }}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-none"
+             style={{ background: iconBg ?? 'rgba(255,255,255,0.95)', color: iconColor ?? C.muted, boxShadow: '0 1px 3px rgba(40,28,16,0.06)' }}>
           {icon}
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-semibold" style={{ color: C.text }}>{label}</p>
+        <p className="text-[14.5px] font-medium" style={{ color: C.text }}>{label}</p>
         {desc && <p className="text-[11.5px] mt-0.5 leading-[1.35]" style={{ color: C.subtle }}>{desc}</p>}
       </div>
       <Toggle on={on} onChange={onChange} />
@@ -147,8 +149,8 @@ export function PrimaryBtn({ children, onClick, danger, disabled, type = 'button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white transition-all active:scale-[0.98] disabled:opacity-50"
-      style={{ background: C.brand, fontFamily: FONT_HEAD }}
+      className="w-full h-[52px] rounded-full font-medium text-[15px] text-white transition-all active:scale-[0.98] disabled:opacity-45 disabled:shadow-none"
+      style={{ background: C.brand, fontFamily: FONT_HEAD, boxShadow: '0 8px 20px rgba(204,20,0,0.22)' }}
     >
       {children}
     </button>
@@ -163,13 +165,8 @@ export function OutlineBtn({ children, onClick, danger, disabled }: {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full py-[15px] rounded-[14px] font-bold text-[15px] transition-all active:scale-[0.98] disabled:opacity-50"
-      style={{
-        background: 'transparent',
-        border: `1.5px solid ${danger ? C.brand : C.border}`,
-        color: danger ? C.brand : C.text,
-        fontFamily: FONT_HEAD,
-      }}
+      className="chip w-full h-[52px] rounded-full font-medium text-[15px] transition-all active:scale-[0.98] disabled:opacity-50"
+      style={{ color: danger ? C.brand : C.text, fontFamily: FONT_HEAD }}
     >
       {children}
     </button>
@@ -184,12 +181,12 @@ export function FullState({ icon, iconBg, iconColor, title, desc, primary, secon
   secondary?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex flex-col items-center text-center px-7" style={{ paddingTop: '18vh' }}>
-      <div className="w-[96px] h-[96px] rounded-full flex items-center justify-center"
-           style={{ background: iconBg ?? C.bg, color: iconColor ?? C.subtle }}>
+    <div className="flex flex-col items-center text-center px-7 max-w-[420px] mx-auto" style={{ paddingTop: '14vh' }}>
+      <div className="glass w-[96px] h-[96px] rounded-full flex items-center justify-center"
+           style={{ color: iconColor ?? C.subtle, ...(iconBg ? { background: iconBg } : {}) }}>
         {icon}
       </div>
-      <h2 className="text-[20px] font-extrabold mt-6" style={{ color: C.text, fontFamily: FONT_HEAD }}>{title}</h2>
+      <h2 className="text-[21px] font-normal mt-6" style={{ color: C.text, fontFamily: FONT_HEAD }}>{title}</h2>
       {desc && <p className="text-[13.5px] leading-relaxed mt-2" style={{ color: C.muted }}>{desc}</p>}
       {(primary || secondary) && (
         <div className="w-full flex flex-col gap-2.5 mt-7">

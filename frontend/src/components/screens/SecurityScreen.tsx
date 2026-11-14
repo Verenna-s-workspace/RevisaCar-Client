@@ -22,7 +22,7 @@ function CampoSenha({ id, label, value, onChange, autoComplete }: {
       <label htmlFor={id} className="text-[11.5px] font-semibold" style={{ color: C.muted }}>{label}</label>
       <input id={id} type="password" value={value} placeholder="••••••••" autoComplete={autoComplete}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
+        className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none"
         style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
     </div>
   );
@@ -72,7 +72,7 @@ export function SecurityScreen() {
 
           <form onSubmit={e => { e.preventDefault(); if (canSave) trocar(); }}>
             <SectionLabel>Alterar senha</SectionLabel>
-            <div className="rounded-[16px] p-4 flex flex-col gap-3.5" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+            <div className="rounded-[22px] p-4 flex flex-col gap-3.5 glass">
               <CampoSenha id="senha-atual" label="Senha atual" value={pw.atual} autoComplete="current-password"
                 onChange={v => setPw(s => ({ ...s, atual: v }))} />
               <CampoSenha id="senha-nova" label="Nova senha" value={pw.nova} autoComplete="new-password"
@@ -91,9 +91,9 @@ export function SecurityScreen() {
 
           <div>
             <SectionLabel>Aparelhos conectados</SectionLabel>
-            <div className="rounded-[16px] p-4 flex flex-col gap-3" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+            <div className="rounded-[22px] p-4 flex flex-col gap-3 glass">
               <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: C.bg }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-none" style={{ background: C.bg }}>
                   <MonitorSmartphone size={18} color={C.muted} />
                 </div>
                 <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>

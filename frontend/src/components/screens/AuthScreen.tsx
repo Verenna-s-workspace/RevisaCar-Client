@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/auth';
+import { CarIllustration } from '../visual';
 import { BrandPanel } from '../layout';
 
 /* ─── Schemas ───────────────────────────────────────────── */
@@ -34,17 +35,15 @@ type RegisterForm = z.infer<typeof registerSchema>;
 type ForgotForm   = z.infer<typeof forgotSchema>;
 type Screen = 'home' | 'login' | 'register' | 'forgot';
 
-/* ─── Verenna Logo SVG ──────────────────────────────────── */
-function VereennaLogo({ size = 56 }: { size?: number }) {
+/* ─── Marca ─────────────────────────────────────────────── */
+function MarcaRevisaCar() {
   return (
-    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="28" cy="28" r="26" stroke="white" strokeWidth="2.5"/>
-      <path d="M14 30 Q19 20 24 23 Q29 26 34 19"
-            stroke="white" strokeWidth="2.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="17" cy="38" r="4" fill="white"/>
-      <circle cx="39" cy="38" r="4" fill="white"/>
-      <path d="M21 38 L35 38" stroke="white" strokeWidth="2.5"/>
-    </svg>
+    <span className="flex items-center gap-2.5">
+      <img src="/logo.svg" alt="" width={40} height={40} />
+      <span className="text-[30px] leading-none" style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, color: 'var(--text)' }}>
+        RevisaCar
+      </span>
+    </span>
   );
 }
 
@@ -54,7 +53,7 @@ function Field({
 }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold text-text-2 tracking-wide">{label}</label>
+      <label className="text-[12.5px] font-medium text-text-muted px-1">{label}</label>
       {children}
       {error && (
         <p className="text-xs text-crit font-medium">{error}</p>
@@ -73,11 +72,11 @@ const TextInput = forwardRef<
     <div className="relative flex items-center">
       <input
         ref={ref}
-        className={`w-full px-4 py-3.5 rounded-xl border-[1.5px] text-sm font-medium text-text bg-white
+        className={`w-full px-4 py-3.5 rounded-2xl border text-[14px] text-text bg-white/90
                     outline-none transition-all placeholder:text-text-ghost font-sans
                     ${error
                       ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(204,20,0,0.1)]'
-                      : 'border-border focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.1)]'
+                      : 'border-white focus:border-brand focus:shadow-[0_0_0_3px_rgba(204,20,0,0.1)]'
                     }`}
         {...props}
       />
@@ -97,28 +96,20 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
       exit={{ opacity: 0 }}
       className="flex flex-col items-center justify-between h-full px-6 pt-20 pb-12"
     >
-      {/* Logo + brand */}
-      <div className="flex flex-col items-center gap-5">
-        <motion.div
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <VereennaLogo size={72} />
+      {/* Marca + carro */}
+      <div className="flex flex-col items-center gap-6 w-full">
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }} className="lg:hidden">
+          <MarcaRevisaCar />
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-          className="text-center"
-        >
-          <div className="text-[2.9rem] text-white leading-none mb-2"
-               style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, letterSpacing: '-0.01em' }}>
-            verenna
-          </div>
-          <p className="text-sm text-white/60 font-medium leading-relaxed max-w-[240px]">
-            Bem-vindo! Faça login para acessar as informações do seu veículo.
+        <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="w-full">
+          <CarIllustration color="Branco" className="w-full max-w-[360px] mx-auto" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}
+          className="text-center lg:hidden">
+          <h1 className="text-[26px] leading-tight font-normal" style={{ color: 'var(--text)' }}>Seu carro em dia,<br />sem papelada.</h1>
+          <p className="text-[14px] mt-2 leading-relaxed max-w-[280px] mx-auto" style={{ color: 'var(--muted)' }}>
+            Agende com a sua oficina, receba orçamentos e acompanhe a saúde do veículo.
           </p>
         </motion.div>
       </div>
@@ -132,31 +123,29 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
       >
         <button
           onClick={onLogin}
-          className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold
-                     active:scale-[0.97] transition-all shadow-lg shadow-brand/30
+          className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium
+                     active:scale-[0.97] transition-all shadow-[0_8px_20px_rgba(204,20,0,0.25)]
                      hover:bg-brand-dark"
         >
           Entrar
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-white/15" />
-          <span className="text-xs text-white/40 font-medium">ou</span>
-          <div className="flex-1 h-px bg-white/15" />
+          <div className="flex-1 h-px bg-black/10" />
+          <span className="text-xs text-text-subtle font-medium">ou</span>
+          <div className="flex-1 h-px bg-black/10" />
         </div>
 
         <button
           onClick={onRegister}
-          className="w-full py-4 bg-transparent border-2 border-white/25 rounded-2xl
-                     text-white text-base font-bold active:scale-[0.97] transition-all
-                     hover:border-white/40 hover:bg-white/5"
+          className="chip w-full h-[52px] rounded-full text-[15px] font-medium active:scale-[0.97]"
         >
           Criar conta
         </button>
 
         <button
           onClick={onForgot}
-          className="text-center text-sm text-white/50 font-medium hover:text-white/70
+          className="text-center text-sm text-text-muted font-medium hover:text-text
                      transition-colors mt-2"
         >
           Esqueci minha senha
@@ -204,16 +193,15 @@ function LoginScreen({ onBack, onSuccess, onForgot }: {
       {/* Sheet handle area */}
       <div className="flex items-center px-4 pt-4 pb-2">
         <button onClick={onBack}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white
-                     hover:bg-white/20 transition-colors">
+          className="chip w-10 h-10 flex items-center justify-center rounded-full text-brand">
           <ChevronLeft size={20} />
         </button>
       </div>
 
-      <div className="flex-1 bg-white rounded-t-[32px] px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
+      <div className="flex-1 glass rounded-t-[32px] lg:rounded-[32px] lg:mx-4 lg:mb-6 px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
         <div>
-          <h2 className="text-2xl font-bold text-text tracking-tight">Entrar</h2>
-          <p className="text-sm text-text-muted mt-1">Acesse sua conta verenna</p>
+          <h2 className="text-[26px] font-normal text-text">Entrar</h2>
+          <p className="text-sm text-text-muted mt-1">Acesse sua conta RevisaCar</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -248,7 +236,7 @@ function LoginScreen({ onBack, onSuccess, onForgot }: {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+            className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium mt-2
                        disabled:opacity-50 active:scale-[0.97] transition-all
                        hover:bg-brand-dark shadow-md shadow-brand/20"
           >
@@ -295,15 +283,14 @@ function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: 
     >
       <div className="flex items-center px-4 pt-4 pb-2">
         <button onClick={onBack}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white
-                     hover:bg-white/20 transition-colors">
+          className="chip w-10 h-10 flex items-center justify-center rounded-full text-brand">
           <ChevronLeft size={20} />
         </button>
       </div>
 
-      <div className="flex-1 bg-white rounded-t-[32px] px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
+      <div className="flex-1 glass rounded-t-[32px] lg:rounded-[32px] lg:mx-4 lg:mb-6 px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
         <div>
-          <h2 className="text-2xl font-bold text-text tracking-tight">Criar conta</h2>
+          <h2 className="text-[26px] font-normal text-text">Criar conta</h2>
           <p className="text-sm text-text-muted mt-1">Crie sua conta gratuita</p>
         </div>
 
@@ -342,7 +329,7 @@ function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+            className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium mt-2
                        disabled:opacity-50 active:scale-[0.97] transition-all
                        hover:bg-brand-dark shadow-md shadow-brand/20"
           >
@@ -387,15 +374,14 @@ function ForgotScreen({ onBack }: { onBack: () => void }) {
     >
       <div className="flex items-center px-4 pt-4 pb-2">
         <button onClick={onBack}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white
-                     hover:bg-white/20 transition-colors">
+          className="chip w-10 h-10 flex items-center justify-center rounded-full text-brand">
           <ChevronLeft size={20} />
         </button>
       </div>
 
-      <div className="flex-1 bg-white rounded-t-[32px] px-6 pt-8 pb-10 flex flex-col gap-6">
+      <div className="flex-1 glass rounded-t-[32px] lg:rounded-[32px] lg:mx-4 lg:mb-6 px-6 pt-8 pb-10 flex flex-col gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-text tracking-tight">Recuperar senha</h2>
+          <h2 className="text-[26px] font-normal text-text">Recuperar senha</h2>
           <p className="text-sm text-text-muted mt-1 leading-relaxed">
             Digite seu e-mail e enviaremos as instruções para redefinir sua senha.
           </p>
@@ -410,7 +396,7 @@ function ForgotScreen({ onBack }: { onBack: () => void }) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+            className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium mt-2
                        disabled:opacity-50 active:scale-[0.97] transition-all hover:bg-brand-dark"
           >
             {isSubmitting ? 'Enviando...' : 'Enviar instruções'}
@@ -427,28 +413,11 @@ export function AuthScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex w-full" style={{ background: '#0D0D0D' }}>
+    <div className="min-h-screen flex w-full">
     {/* Desktop: painel da marca à esquerda, acesso à direita */}
     <BrandPanel />
     <div className="min-h-screen w-full max-w-[430px] mx-auto flex flex-col relative overflow-hidden lg:mx-0 lg:max-w-none lg:w-[480px] lg:flex-none"
-         style={{ background: 'linear-gradient(160deg, #1A1A1A 0%, #111111 50%, #0D0D0D 100%)' }}>
-
-      {/* Background car silhouette — decorative */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute bottom-[30%] left-0 right-0 h-64
-                        bg-[radial-gradient(ellipse_at_center,_rgba(204,20,0,0.08)_0%,_transparent_70%)]" />
-        <div className="absolute top-1/4 -right-20 w-80 h-80 rounded-full
-                        bg-white/[0.015] blur-3xl" />
-        <div className="absolute top-10 -left-10 w-52 h-52 rounded-full
-                        bg-brand/[0.06] blur-2xl" />
-        {/* Car outline decoration */}
-        <svg className="absolute bottom-[28%] left-1/2 -translate-x-1/2 opacity-[0.04]"
-             width="360" height="140" viewBox="0 0 360 140" fill="white">
-          <path d="M60 80 L80 40 Q100 20 140 18 L220 18 Q260 18 280 40 L300 80 L320 85 L320 110
-                   L280 110 L280 100 Q280 88 268 88 Q256 88 256 100 L256 110 L104 110 L104 100
-                   Q104 88 92 88 Q80 88 80 100 L80 110 L40 110 L40 85 Z"/>
-        </svg>
-      </div>
+>
 
       {/* Content */}
       <div className="relative z-10 flex flex-col h-screen">

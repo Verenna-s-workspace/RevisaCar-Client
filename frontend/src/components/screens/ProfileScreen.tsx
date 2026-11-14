@@ -10,7 +10,8 @@ import {
   HelpCircle, FileText, LogOut, Star, ChevronRight, Store,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { profileApi } from '../../services/api';
+import { profileApi, vehiclesApi, oficinasApi, documentsApi } from '../../services/api';
+import { Glass, IconCircle, V } from '../visual';
 import { useAuthStore } from '../../store/auth';
 import { MainLayout, Topbar, BottomSheet } from '../layout';
 import { Skeleton } from '../ui';
@@ -41,14 +42,14 @@ function EditSheet({ name, phone, onClose }: { name: string; phone?: string; onC
         <div className="flex flex-col gap-1.5">
           <label className="text-[11.5px] font-semibold" style={{ color: C.muted }}>Nome completo</label>
           <input {...register('name')}
-            className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
+            className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none"
             style={{ border: `1px solid ${errors.name ? C.brand : C.borderSoft}`, color: C.text, background: C.card }} />
           {errors.name && <p className="text-[11px]" style={{ color: C.brand }}>{errors.name.message}</p>}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-[11.5px] font-semibold" style={{ color: C.muted }}>Telefone</label>
           <input {...register('phone')} placeholder="(11) 99999-9999"
-            className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
+            className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none"
             style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
         </div>
         <PrimaryBtn type="submit" disabled={isPending}>{isPending ? 'Salvando...' : 'Salvar alterações'}</PrimaryBtn>
@@ -65,11 +66,7 @@ function LogoutSheet({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
         Você precisará entrar novamente para acessar a saúde do seu veículo, agendamentos e documentos.
       </p>
       <div className="flex flex-col gap-2.5">
-        <button onClick={onConfirm}
-          className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white active:scale-[0.98] transition-all"
-          style={{ background: C.brand, fontFamily: FONT_HEAD }}>
-          Sair da conta
-        </button>
+        <PrimaryBtn onClick={onConfirm}>Sair da conta</PrimaryBtn>
         <OutlineBtn onClick={onClose}>Cancelar</OutlineBtn>
       </div>
     </BottomSheet>
@@ -90,7 +87,11 @@ export function ProfileScreen() {
   });
 
   const name  = profile?.name ?? session?.name ?? '';
-  const email = profile?.email ?? session?.email ?? 'joao.silva@email.com';
+  const email = profile?.email ?? session?.email ?? '';
+  // Contagens reais para o cartão do perfil.
+  const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => vehiclesApi.list().then(r => r.data) });
+  const { data: oficinas = [] } = useQuery({ queryKey: ['oficinas'], queryFn: () => oficinasApi.list().then(r => r.data), staleTime: 60_000 });
+  const { data: docs = [] } = useQuery({ queryKey: ['documents'], queryFn: () => documentsApi.list().then(r => r.data), staleTime: 60_000 });
   const initial = name.charAt(0).toUpperCase();
 
   const doLogout = () => {
@@ -104,40 +105,52 @@ export function ProfileScreen() {
     <>
       <MainLayout topbar={
         <Topbar title="Perfil" right={
-          <button aria-label="Ajustes" onClick={() => navigate('/ajustes')}
-                  className="w-10 h-10 flex items-center justify-center">
-            <Settings size={20} color={C.text} strokeWidth={1.8} />
-          </button>
+          <IconCircle label="Ajustes" onClick={() => navigate('/ajustes')}><Settings size={18} strokeWidth={1.8} /></IconCircle>
         } />
       }>
         <div className="px-4 pt-3 pb-8 flex flex-col gap-5">
           {isLoading ? (
             <>
-              <Skeleton className="h-[80px] rounded-[16px]" />
-              <Skeleton className="h-[200px] rounded-[16px]" />
+              <Skeleton className="h-[80px] rounded-[22px]" />
+              <Skeleton className="h-[200px] rounded-[22px]" />
             </>
           ) : (
             <>
-              {/* Identity */}
-              <div className="flex items-center gap-4">
-                <div className="w-[58px] h-[58px] rounded-full flex items-center justify-center flex-none"
-                     style={{ background: C.brand }}>
-                  <span className="text-[24px] font-extrabold text-white" style={{ fontFamily: FONT_HEAD }}>{initial}</span>
+              {/* Cartão do perfil */}
+              <Glass className="p-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-[64px] h-[64px] rounded-full flex items-center justify-center flex-none"
+                       style={{ background: 'linear-gradient(140deg, #E2483B, #A31000)', boxShadow: '0 0 0 4px rgba(255,255,255,0.9), 0 8px 20px rgba(204,20,0,0.25)' }}>
+                    <span className="text-[24px] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>{initial}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[20px] font-normal truncate" style={{ color: V.text }}>{name}</p>
+                    <p className="text-[13px] mt-0.5 truncate" style={{ color: V.muted }}>{email}</p>
+                  </div>
+                  <button onClick={() => setShowEdit(true)} className="chip h-9 px-4 rounded-full text-[13px] font-medium flex-none">Editar</button>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-[18px] truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>{name}</p>
-                  <p className="text-[13px] mt-0.5 truncate" style={{ color: C.muted }}>{email}</p>
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {[
+                    { n: vehicles.length, t: 'Veículos', to: '/veiculo' },
+                    { n: oficinas.length, t: 'Oficinas', to: '/oficinas' },
+                    { n: docs.length, t: 'Documentos', to: '/documentos' },
+                  ].map(c => (
+                    <button key={c.t} onClick={() => navigate(c.to)} className="rounded-[22px] p-3 text-left" style={{ background: V.tile }}>
+                      <span className="block text-[22px] leading-none font-normal tabular" style={{ color: V.text }}>{String(c.n).padStart(2, '0')}</span>
+                      <span className="block text-[12px] mt-1.5" style={{ color: V.muted }}>{c.t}</span>
+                    </button>
+                  ))}
                 </div>
-              </div>
+              </Glass>
 
               {/* Clube badge (showcase) */}
               {SHOWCASE && (
                 <button onClick={() => navigate('/clube')}
-                  className="flex items-center gap-3 p-4 rounded-[16px]"
+                  className="flex items-center gap-3 p-4 rounded-[22px]"
                   style={{ background: 'linear-gradient(135deg,#1a0a00,#3a1200)' }}>
                   <Star size={22} color={C.gold} fill={C.gold} />
                   <div className="flex-1 text-left">
-                    <p className="text-[14px] font-bold text-white">Clube Ouro</p>
+                    <p className="text-[14px] font-medium text-white">Clube Ouro</p>
                     <p className="text-[12px]" style={{ color: 'rgba(255,255,255,.6)' }}>1.250 pontos · ver recompensas</p>
                   </div>
                   <ChevronRight size={18} color="rgba(255,255,255,.5)" />

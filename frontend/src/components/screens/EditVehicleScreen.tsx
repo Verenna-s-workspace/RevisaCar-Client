@@ -61,26 +61,26 @@ export function EditVehicleScreen() {
       <MainLayout showNav={false} topbar={<Topbar title="Editar veículo" showBack />}>
         <div className="px-4 pt-5 pb-8 flex flex-col gap-5">
           {isLoading || !v ? (
-            <Skeleton className="h-[300px] rounded-[18px]" />
+            <Skeleton className="h-[300px] rounded-[22px]" />
           ) : (
             <>
               {/* Read-only identity */}
-              <div className="rounded-[16px] p-4" style={{ background: C.bg }}>
-                <p className="text-[16px] font-bold" style={{ color: C.text, fontFamily: FONT_HEAD }}>{v.brand} {v.model} {v.year}</p>
+              <div className="rounded-[22px] p-4" style={{ background: C.bg }}>
+                <p className="text-[16px] font-medium" style={{ color: C.text, fontFamily: FONT_HEAD }}>{v.brand} {v.model} {v.year}</p>
                 <p className="text-[12.5px] mt-0.5" style={{ color: C.muted }}>Placa {v.plate} · não editável</p>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 {label('Cor')}
                 <input value={form.color} onChange={e => setForm(s => ({ ...s, color: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none" style={inputStyle} />
+                  className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none" style={inputStyle} />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 {label('Quilometragem')}
                 <input value={form.mileage} inputMode="numeric"
                   onChange={e => setForm(s => ({ ...s, mileage: e.target.value.replace(/\D/g, '') }))}
-                  className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none" style={inputStyle} />
+                  className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none" style={inputStyle} />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -119,7 +119,7 @@ export function EditVehicleScreen() {
           </p>
           <div className="flex flex-col gap-2.5">
             <button onClick={() => remove()}
-              className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white active:scale-[0.98]"
+              className="w-full py-[15px] rounded-[22px] font-medium text-[15px] text-white active:scale-[0.98]"
               style={{ background: C.brand, fontFamily: FONT_HEAD }}>Remover veículo</button>
             <OutlineBtn onClick={() => setShowDelete(false)}>Cancelar</OutlineBtn>
           </div>

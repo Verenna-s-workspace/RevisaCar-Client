@@ -44,8 +44,7 @@ export function HelpCenterScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
         {/* Search */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-[13px]"
-             style={{ background: C.card, border: `1px solid ${C.border}` }}>
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-[22px] glass">
           <Search size={18} color={C.subtle} />
           <input value={q} onChange={e => setQ(e.target.value)}
             placeholder="Buscar ajuda..."
@@ -61,9 +60,8 @@ export function HelpCenterScreen() {
               act: () => { window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Ajuda — app RevisaCar')}`; } },
           ].map(c => (
             <button key={c.label} onClick={c.act}
-              className="flex flex-col items-center gap-2 py-4 rounded-[14px]"
-              style={{ background: C.card, border: `1px solid ${C.border}` }}>
-              <div className="w-11 h-11 rounded-[12px] flex items-center justify-center" style={{ background: c.bg }}>
+              className="flex flex-col items-center gap-2 py-4 rounded-[22px] glass">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: c.bg }}>
                 <c.icon size={20} color={c.ic} />
               </div>
               <span className="text-[12px] font-semibold" style={{ color: C.text }}>{c.label}</span>

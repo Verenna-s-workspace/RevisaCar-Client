@@ -46,13 +46,13 @@ export function VehiclesScreen() {
     <MainLayout width="wide" topbar={<Topbar title="Meus veículos" />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-3">
         {isLoading ? (
-          [0,1,2].map(i => <Skeleton key={i} className="h-[76px] rounded-[16px]" />)
+          [0,1,2].map(i => <Skeleton key={i} className="h-[76px] rounded-[22px]" />)
         ) : vehicles.length === 0 ? (
           <div className="flex flex-col items-center text-center pt-20 px-6">
             <div className="w-[88px] h-[88px] rounded-full flex items-center justify-center" style={{ background: C.bg }}>
               <Car size={40} color={C.subtle} strokeWidth={1.4} />
             </div>
-            <h2 className="text-[18px] font-extrabold mt-5" style={{ color: C.text, fontFamily: FONT_HEAD }}>
+            <h2 className="text-[18px] font-medium mt-5" style={{ color: C.text, fontFamily: FONT_HEAD }}>
               Nenhum veículo ainda
             </h2>
             <p className="text-[13.5px] leading-relaxed mt-2" style={{ color: C.muted }}>
@@ -60,7 +60,7 @@ export function VehiclesScreen() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
             {vehicles.map(v => (
               <VehicleRow key={v.id} v={v} onClick={() => navigate(`/veiculo/${v.id}`)} />
             ))}

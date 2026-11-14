@@ -18,7 +18,7 @@ function QRCanvas({ value, size = 168 }: { value: string; size?: number }) {
       }).catch(() => {});
     }
   }, [value, size]);
-  return <canvas ref={ref} className="rounded-[8px]" />;
+  return <canvas ref={ref} className="rounded-full" />;
 }
 
 /* ─── Passe do veículo ──────────────────────────── */
@@ -78,16 +78,16 @@ export function QRCodeScreen() {
 
               {/* Header */}
               <div className="flex items-center justify-between relative">
-                <span className="text-[13px] font-extrabold tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>
+                <span className="text-[13px] font-medium tracking-wide text-white" style={{ fontFamily: FONT_HEAD }}>
                   REVISA<span style={{ color: C.brand }}>CAR</span>
                 </span>
-                <span className="text-[10px] font-bold tracking-widest px-2.5 py-1 rounded-full"
+                <span className="text-[10px] font-medium tracking-widest px-2.5 py-1 rounded-full"
                       style={{ background: 'rgba(255,255,255,.1)', color: '#fff' }}>PASSE</span>
               </div>
 
               {/* Vehicle */}
               <div className="mt-4 relative">
-                <p className="text-[22px] font-extrabold text-white" style={{ fontFamily: FONT_HEAD }}>
+                <p className="text-[22px] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>
                   {vehicle.brand} {vehicle.model}
                 </p>
                 <p className="text-[13px] mt-0.5 tracking-[1px]" style={{ color: '#9AA0A8' }}>{vehicle.plate}</p>
@@ -95,9 +95,9 @@ export function QRCodeScreen() {
 
               {/* QR */}
               <div className="flex justify-center my-5 relative">
-                <div className="p-3 rounded-[16px] bg-white">
+                <div className="p-3 rounded-[22px] bg-white">
                   {qrValue ? <QRCanvas value={qrValue} /> : (
-                    <div className="w-[168px] h-[168px] rounded-[8px] flex items-center justify-center" style={{ background: '#F4F4F4' }}>
+                    <div className="w-[168px] h-[168px] rounded-full flex items-center justify-center" style={{ background: '#F4F4F4' }}>
                       <p className="text-[12px]" style={{ color: C.subtle }}>Gerando...</p>
                     </div>
                   )}
@@ -112,8 +112,8 @@ export function QRCodeScreen() {
                   { l: 'STATUS', v: 'Ativo', c: C.green },
                 ].map(s => (
                   <div key={s.l} className="flex-1">
-                    <p className="text-[9px] font-bold tracking-widest" style={{ color: '#6B7078' }}>{s.l}</p>
-                    <p className="text-[13px] font-bold mt-0.5 capitalize" style={{ color: s.c }}>{s.v}</p>
+                    <p className="text-[9px] font-medium tracking-widest" style={{ color: '#6B7078' }}>{s.l}</p>
+                    <p className="text-[13px] font-medium mt-0.5 capitalize" style={{ color: s.c }}>{s.v}</p>
                   </div>
                 ))}
               </div>
@@ -130,12 +130,12 @@ export function QRCodeScreen() {
             {/* Actions */}
             <div className="flex gap-3 mt-1">
               <button onClick={() => refresh()} disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-[12px] text-[13.5px] font-semibold disabled:opacity-60"
+                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-full text-[13.5px] font-semibold disabled:opacity-60"
                 style={{ border: `1.5px solid ${C.border}`, color: C.text }}>
                 <RefreshCw size={16} className={isPending ? 'animate-spin' : ''} /> Renovar
               </button>
               <button onClick={share}
-                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-[12px] text-white text-[13.5px] font-semibold"
+                className="flex-1 flex items-center justify-center gap-2 py-[13px] rounded-full text-white text-[13.5px] font-semibold"
                 style={{ background: C.brand }}>
                 <Share2 size={16} /> Compartilhar
               </button>

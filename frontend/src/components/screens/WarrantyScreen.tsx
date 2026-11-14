@@ -24,7 +24,7 @@ export function WarrantyScreen() {
     <MainLayout showNav={false} topbar={<Topbar title="Garantia digital" showBack />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
         {isLoading || !s ? (
-          <Skeleton className="h-[280px] rounded-[18px]" />
+          <Skeleton className="h-[280px] rounded-[22px]" />
         ) : (
           <>
             {/* Hero card */}
@@ -34,7 +34,7 @@ export function WarrantyScreen() {
               <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center relative" style={{ background: 'rgba(255,255,255,.15)' }}>
                 <ShieldCheck size={32} color="#fff" />
               </div>
-              <p className="text-[17px] font-bold text-white mt-4 relative" style={{ fontFamily: FONT_HEAD }}>{s.service_type}</p>
+              <p className="text-[17px] font-medium text-white mt-4 relative" style={{ fontFamily: FONT_HEAD }}>{s.service_type}</p>
               <p className="text-[12.5px] mt-1 relative" style={{ color: 'rgba(255,255,255,.8)' }}>
                 Garantia {active ? 'ativa' : 'expirada'}{s.workshop_name ? ` · ${s.workshop_name}` : ''}
               </p>
@@ -42,20 +42,20 @@ export function WarrantyScreen() {
               <div className="flex items-center justify-center gap-6 mt-5 relative">
                 <div>
                   <p className="text-[9.5px] tracking-widest" style={{ color: 'rgba(255,255,255,.6)' }}>VÁLIDA ATÉ</p>
-                  <p className="text-[14px] font-bold text-white mt-0.5">
+                  <p className="text-[14px] font-medium text-white mt-0.5">
                     {until ? format(until, 'dd/MM/yyyy', { locale: ptBR }) : '—'}
                   </p>
                 </div>
                 <div className="w-[1px] h-8" style={{ background: 'rgba(255,255,255,.2)' }} />
                 <div>
                   <p className="text-[9.5px] tracking-widest" style={{ color: 'rgba(255,255,255,.6)' }}>RESTAM</p>
-                  <p className="text-[14px] font-bold text-white mt-0.5">{daysLeft} dias</p>
+                  <p className="text-[14px] font-medium text-white mt-0.5">{daysLeft} dias</p>
                 </div>
               </div>
             </div>
 
             {/* O que a garantia cobre é definido pela oficina — o app não inventa regras. */}
-            <div className="rounded-[18px] p-5 flex gap-3" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+            <div className="rounded-[22px] p-5 flex gap-3 glass">
               <Info size={18} color={C.muted} className="flex-none mt-0.5" />
               <p className="text-[13px] leading-relaxed" style={{ color: C.text2 }}>
                 {active

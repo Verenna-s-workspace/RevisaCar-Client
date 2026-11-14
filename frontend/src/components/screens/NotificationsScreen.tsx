@@ -22,14 +22,14 @@ function NotifRow({ n, onClick }: { n: Notification; onClick: () => void }) {
   const cfg = ICON_CFG[n.type] ?? ICON_CFG.sistema;
   return (
     <button onClick={onClick}
-      className="w-full flex items-start gap-3 p-3.5 rounded-[14px] text-left transition-colors"
+      className="w-full flex items-start gap-3 p-3.5 rounded-[22px] text-left transition-colors"
       style={{ background: n.is_read ? 'transparent' : C.card, border: `1px solid ${n.is_read ? 'transparent' : C.border}` }}>
-      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: cfg.bg }}>
+      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-none" style={{ background: cfg.bg }}>
         <cfg.Icon size={17} color={cfg.color} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-bold text-[13.5px] flex-1 truncate" style={{ color: C.text }}>{n.title}</p>
+          <p className="font-medium text-[13.5px] flex-1 truncate" style={{ color: C.text }}>{n.title}</p>
           {!n.is_read && <span className="w-2 h-2 rounded-full flex-none" style={{ background: C.brand }} />}
         </div>
         <p className="text-[12px] mt-0.5 leading-snug line-clamp-2" style={{ color: C.muted }}>{n.message}</p>
@@ -81,13 +81,13 @@ export function NotificationsScreen() {
     }>
       <div className="px-4 pt-3 pb-8">
         {isLoading ? (
-          <div className="flex flex-col gap-2">{[0,1,2,3].map(i => <Skeleton key={i} className="h-[72px] rounded-[14px]" />)}</div>
+          <div className="flex flex-col gap-2">{[0,1,2,3].map(i => <Skeleton key={i} className="h-[72px] rounded-[22px]" />)}</div>
         ) : notifs.length === 0 ? (
           <div className="flex flex-col items-center text-center pt-24 px-6">
             <div className="w-[88px] h-[88px] rounded-full flex items-center justify-center" style={{ background: C.bg }}>
               <Bell size={38} color={C.subtle} strokeWidth={1.4} />
             </div>
-            <h2 className="text-[18px] font-extrabold mt-5" style={{ color: C.text, fontFamily: FONT_HEAD }}>
+            <h2 className="text-[18px] font-medium mt-5" style={{ color: C.text, fontFamily: FONT_HEAD }}>
               Tudo tranquilo por aqui
             </h2>
             <p className="text-[13.5px] leading-relaxed mt-2" style={{ color: C.muted }}>
@@ -98,7 +98,7 @@ export function NotificationsScreen() {
           <>
             {today.length > 0 && (
               <>
-                <p className="text-[11px] font-bold uppercase tracking-widest mb-2 mt-1" style={{ color: C.subtle }}>Hoje</p>
+                <p className="text-[13px] font-medium mb-2 mt-1" style={{ color: C.subtle }}>Hoje</p>
                 <div className="flex flex-col gap-1.5 mb-5">
                   {today.map(n => <NotifRow key={n.id} n={n} onClick={() => open(n)} />)}
                 </div>
@@ -106,7 +106,7 @@ export function NotificationsScreen() {
             )}
             {older.length > 0 && (
               <>
-                <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: C.subtle }}>Anteriores</p>
+                <p className="text-[13px] font-medium mb-2" style={{ color: C.subtle }}>Anteriores</p>
                 <div className="flex flex-col gap-1.5">
                   {older.map(n => <NotifRow key={n.id} n={n} onClick={() => open(n)} />)}
                 </div>

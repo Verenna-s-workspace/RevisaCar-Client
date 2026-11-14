@@ -38,7 +38,7 @@ function OrcamentoCard({ o }: { o: OrcamentoOficina }) {
   const val = validade(o);
 
   return (
-    <article className="rounded-[16px] p-4" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+    <article className="rounded-[22px] p-4 glass">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[12px] font-semibold flex items-center gap-1.5" style={{ color: C.subtle }}>
@@ -46,22 +46,22 @@ function OrcamentoCard({ o }: { o: OrcamentoOficina }) {
             {o.os_num && <span>· OS {o.os_num}</span>}
             {o.versao > 1 && <span>· versão {o.versao}</span>}
           </p>
-          <p className="text-[14.5px] font-bold mt-0.5 truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>
+          <p className="text-[14.5px] font-medium mt-0.5 truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>
             {o.vehicle_label || 'Seu veículo'}
           </p>
         </div>
-        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-none"
+        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full flex-none"
               style={{ background: st.bg, color: st.color }}>{st.label}</span>
       </div>
 
       <div className="flex items-end justify-between mt-3 pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
         <div>
           <p className="text-[11px]" style={{ color: C.muted }}>Total</p>
-          <p className="text-[20px] font-extrabold tabular" style={{ color: C.text, fontFamily: FONT_HEAD }}>{brl(o.total)}</p>
+          <p className="text-[20px] font-medium tabular" style={{ color: C.text, fontFamily: FONT_HEAD }}>{brl(o.total)}</p>
         </div>
         <div className="text-right">
           {val && (
-            <p className="text-[11.5px] font-bold" style={{ color: val.urgent ? C.brand : C.muted }}>{val.text}</p>
+            <p className="text-[11.5px] font-medium" style={{ color: val.urgent ? C.brand : C.muted }}>{val.text}</p>
           )}
           {o.enviado_em && <p className="text-[11px]" style={{ color: C.subtle }}>Enviado em {data(o.enviado_em)}</p>}
         </div>
@@ -84,7 +84,7 @@ function OrcamentoCard({ o }: { o: OrcamentoOficina }) {
             </div>
           ))}
           {o.observacoes && (
-            <p className="text-[12.5px] mt-2 p-3 rounded-[12px]" style={{ background: C.bg, color: C.text2 }}>{o.observacoes}</p>
+            <p className="text-[12.5px] mt-2 p-3 rounded-full" style={{ background: C.bg, color: C.text2 }}>{o.observacoes}</p>
           )}
           {o.status === 'recusado' && o.motivo_recusa && (
             <p className="text-[12px] mt-2" style={{ color: C.muted }}>Motivo da recusa: {o.motivo_recusa}</p>
@@ -99,7 +99,7 @@ function OrcamentoCard({ o }: { o: OrcamentoOficina }) {
       )}
 
       <button onClick={() => setAberto(a => !a)} aria-expanded={aberto}
-        className="w-full mt-3 py-2.5 rounded-[11px] text-[13px] font-bold flex items-center justify-center gap-1.5"
+        className="w-full mt-3 py-2.5 rounded-full text-[13px] font-medium flex items-center justify-center gap-1.5"
         style={{ border: `1.5px solid ${C.border}`, color: C.text }}>
         {aberto ? 'Ocultar itens' : `Ver itens (${o.itens.length})`}
         <ChevronDown size={15} style={{ transform: aberto ? 'rotate(180deg)' : undefined, transition: 'transform .2s' }} />
@@ -131,7 +131,7 @@ export function EstimatesScreen() {
         <div className="flex gap-2 flex-wrap" role="tablist">
           {TABS.map(t => (
             <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
-              className="text-[12.5px] font-bold px-4 py-2 rounded-full transition-all"
+              className="text-[12.5px] font-medium px-4 py-2 rounded-full transition-all"
               style={tab === t.key ? { background: C.brand, color: '#fff' } : { color: C.muted, background: C.card, border: `1px solid ${C.border}` }}>
               {t.label}
             </button>
@@ -139,7 +139,7 @@ export function EstimatesScreen() {
         </div>
 
         {isLoading ? (
-          [0, 1].map(i => <Skeleton key={i} className="h-[150px] rounded-[16px]" />)
+          [0, 1].map(i => <Skeleton key={i} className="h-[150px] rounded-[22px]" />)
         ) : isError ? (
           <FullState icon={<FileText size={42} strokeWidth={1.4} />} title="Não foi possível carregar"
             desc="Verifique sua conexão e tente de novo." primary={{ label: 'Tentar de novo', onClick: () => refetch() }} />
@@ -151,7 +151,7 @@ export function EstimatesScreen() {
             secondary={{ label: 'Minhas oficinas', onClick: () => navigate('/oficinas') }}
           />
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {orcamentos.map(o => <OrcamentoCard key={o.id} o={o} />)}
           </div>
         )}

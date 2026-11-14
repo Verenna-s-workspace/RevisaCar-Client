@@ -23,7 +23,7 @@ const STEP_LABELS = ['Serviço', 'Data', 'Horário', 'Confirmar'];
 
 function StepProgress({ current }: { current: number }) {
   return (
-    <div className="flex items-center px-4 py-4 bg-white border-b border-border">
+    <div className="glass mx-4 mt-1 rounded-[24px] flex items-center px-4 py-3.5">
       {STEP_LABELS.map((label, i) => {
         const num  = i + 1;
         const done = num < current;
@@ -32,10 +32,10 @@ function StepProgress({ current }: { current: number }) {
           <div key={num} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1">
               <div className={clsx(
-                'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all z-10',
-                done   ? 'bg-brand border-brand text-white'       :
-                active ? 'bg-crit-bg border-brand text-brand'     :
-                         'bg-white border-border text-text-subtle'
+                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all z-10',
+                done   ? 'bg-brand text-white'                     :
+                active ? 'nav-raised !shadow-[0_4px_12px_rgba(204,20,0,0.3)]' :
+                         'bg-white text-text-subtle'
               )}>
                 {done ? <Check size={13} strokeWidth={3} /> : num}
               </div>
@@ -75,35 +75,35 @@ function VehiclePicker({ selected, onSelect }: { selected: string; onSelect: (id
   if (isLoading) return null;
   if (vehicles.length === 0) {
     return (
-      <div className="mx-4 mt-4 bg-white border border-border rounded-xl px-4 py-3 flex items-center gap-3 shadow-xs">
+      <div className="glass mx-4 mt-4 rounded-[22px] px-4 py-3 flex items-center gap-3">
         <Car size={17} className="text-brand" />
         <p className="flex-1 text-sm text-text">Cadastre um veículo para agendar.</p>
-        <button onClick={() => navigate('/veiculos/novo')} className="text-xs font-bold text-brand hover:underline">Adicionar</button>
+        <button onClick={() => navigate('/veiculos/novo')} className="text-xs font-medium text-brand hover:underline">Adicionar</button>
       </div>
     );
   }
   const active = vehicles.find(v => v.id === selected) ?? vehicles[0];
 
   return (
-    <div className="mx-4 mt-4 bg-white border border-border rounded-xl shadow-xs overflow-hidden">
+    <div className="glass mx-4 mt-4 rounded-[22px] overflow-hidden">
       <div className="px-4 py-3 flex items-center gap-3">
-        <div className="w-9 h-9 bg-crit-bg rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
           <Car size={17} className="text-brand" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-text leading-tight truncate">
+          <p className="font-medium text-sm text-text leading-tight truncate">
             {active.brand} {active.model} {active.year}
           </p>
           <p className="text-xs text-text-muted">{active.plate} · {active.mileage?.toLocaleString('pt-BR')} km</p>
         </div>
         {vehicles.length > 1 && (
           <button onClick={() => setAberto(a => !a)} aria-expanded={aberto}
-            className="text-xs font-bold text-brand hover:underline">{aberto ? 'Fechar' : 'Trocar'}</button>
+            className="text-xs font-medium text-brand hover:underline">{aberto ? 'Fechar' : 'Trocar'}</button>
         )}
       </div>
       {aberto && vehicles.filter(v => v.id !== active.id).map(v => (
         <button key={v.id} onClick={() => { onSelect(v.id); setAberto(false); }}
-          className="w-full text-left px-4 py-3 border-t border-border hover:bg-surface-3 transition-colors">
+          className="w-full text-left px-4 py-3 border-t border-black/5 hover:bg-white/70 transition-colors">
           <p className="font-semibold text-sm text-text">{v.brand} {v.model} {v.year}</p>
           <p className="text-xs text-text-muted">{v.plate}</p>
         </button>
@@ -121,16 +121,16 @@ function OficinaPicker({ oficinas, selected, onSelect }: {
   if (oficinas.length <= 1) {
     const o = oficinas[0];
     return o ? (
-      <div className="mx-4 mt-3 px-4 py-2.5 rounded-xl bg-surface-3 flex items-center gap-2 text-sm">
+      <div className="glass mx-4 mt-3 px-4 py-2.5 rounded-full flex items-center gap-2 text-sm">
         <Store size={15} className="text-brand" />
         <span className="text-text-muted">Oficina:</span>
-        <span className="font-bold text-text truncate">{o.nome || 'Sua oficina'}</span>
+        <span className="font-medium text-text truncate">{o.nome || 'Sua oficina'}</span>
       </div>
     ) : null;
   }
   return (
     <div className="mx-4 mt-3">
-      <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-0.5">Oficina</p>
+      <p className="text-[13px] font-medium text-text-muted mb-2 px-1">Oficina</p>
       <div className="flex flex-wrap gap-2">
         {oficinas.map(o => (
           <button key={o.oficina_doc} onClick={() => onSelect(o.oficina_doc)} aria-pressed={selected === o.oficina_doc}
@@ -147,11 +147,11 @@ function OficinaPicker({ oficinas, selected, onSelect }: {
 function SemOficina() {
   const navigate = useNavigate();
   return (
-    <div className="mx-4 mt-6 bg-white border border-border rounded-2xl p-5 text-center shadow-xs">
-      <div className="w-14 h-14 mx-auto rounded-2xl bg-crit-bg flex items-center justify-center">
+    <div className="glass mx-4 mt-6 rounded-[24px] p-6 text-center">
+      <div className="w-14 h-14 mx-auto rounded-full bg-white flex items-center justify-center">
         <Store size={26} className="text-brand" />
       </div>
-      <p className="font-bold text-base text-text mt-3">Escolha sua oficina primeiro</p>
+      <p className="font-medium text-base text-text mt-3">Escolha sua oficina primeiro</p>
       <p className="text-sm text-text-muted mt-1 leading-relaxed">
         Para agendar, entre na sua oficina com o convite (QR ou link) que ela fornece.
       </p>
@@ -178,9 +178,10 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
   const precisaDescrever = selected === 'outro' && descricao.trim().length < 3;
   return (
     <div className="px-4 py-4 flex flex-col gap-3">
-      <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-0.5">
+      <p className="text-[13px] font-medium text-text-muted px-1">
         Selecione o serviço
       </p>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {SERVICES.map(({ id, name, desc, icon: Icon, bg, ic }) => {
         const sel = selected === id;
         return (
@@ -189,15 +190,15 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
             whileTap={{ scale: 0.98 }}
             onClick={() => onSelect(id)}
             className={clsx(
-              'flex items-center gap-3.5 p-4 rounded-2xl border-[1.5px] text-left transition-all duration-150',
-              sel ? 'border-brand bg-crit-bg shadow-sm' : 'border-border bg-white hover:border-border-md'
+              'flex items-center gap-3.5 p-4 rounded-[22px] text-left transition-all duration-150',
+              sel ? 'bg-white shadow-[0_0_0_1.5px_var(--brand),0_10px_24px_rgba(204,20,0,0.10)]' : 'glass hover:bg-white'
             )}
           >
-            <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0', bg, ic)}>
+            <div className={clsx('w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0', sel ? 'nav-raised !shadow-none' : 'bg-white', !sel && ic)}>
               <Icon size={21} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm text-text leading-tight">{name}</p>
+              <p className="font-medium text-[14.5px] text-text leading-tight">{name}</p>
               <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{desc}</p>
             </div>
             <div className={clsx(
@@ -209,6 +210,7 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
           </motion.button>
         );
       })}
+      </div>
       {selected && (
         <div className="flex flex-col gap-1.5">
           <label htmlFor="descricao-servico" className="text-xs font-semibold text-text-muted px-0.5">
@@ -216,7 +218,7 @@ function Step1({ selected, onSelect, onNext, descricao, onDescricao }: {
           </label>
           <textarea id="descricao-servico" value={descricao} onChange={e => onDescricao(e.target.value)} rows={3}
             maxLength={500} placeholder={selected === 'outro' ? 'Ex.: barulho na suspensão dianteira' : 'Ex.: luz de injeção acesa'}
-            className="w-full px-4 py-3 rounded-xl border-[1.5px] border-border bg-white text-sm text-text outline-none focus:border-brand resize-none" />
+            className="w-full px-4 py-3 rounded-2xl border border-white bg-white/85 text-sm text-text outline-none focus:border-brand resize-none" />
         </div>
       )}
       <Button fullWidth size="lg" disabled={!selected || precisaDescrever} onClick={onNext} className="mt-1">
@@ -255,21 +257,21 @@ function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <div className="bg-white rounded-2xl border border-border shadow-xs overflow-hidden">
+      <div className="glass rounded-[24px] overflow-hidden">
         {/* Month nav */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+        <div className="flex items-center justify-between px-4 py-4">
           <button
             onClick={() => setView(subMonths(view, 1))}
-            className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface-3 text-text-muted transition-colors"
+            className="chip w-9 h-9 flex items-center justify-center rounded-full text-brand"
           >
             <ChevronLeft size={19} />
           </button>
-          <span className="font-bold text-sm text-text">
+          <span className="font-medium text-sm text-text">
             {MONTHS_PT[m]} {y}
           </span>
           <button
             onClick={() => setView(addMonths(view, 1))}
-            className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface-3 text-text-muted transition-colors"
+            className="chip w-9 h-9 flex items-center justify-center rounded-full text-brand"
           >
             <ChevronRight size={19} />
           </button>
@@ -278,7 +280,7 @@ function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
         {/* Weekday headers */}
         <div className="grid grid-cols-7 px-3 pt-3 pb-1">
           {WEEKDAYS_SHORT.map(d => (
-            <div key={d} className="text-center text-2xs font-bold text-text-subtle uppercase py-1">{d}</div>
+            <div key={d} className="text-center text-2xs font-medium text-text-subtle uppercase py-1">{d}</div>
           ))}
         </div>
 
@@ -301,9 +303,9 @@ function Step2({ oficinaDoc, selected, onSelect, onNext, onBack }: {
                   disabled={!isAvail}
                   onClick={() => onSelect(dateStr)}
                   className={clsx(
-                    'w-full aspect-square rounded-xl text-xs font-medium transition-all duration-100 flex items-center justify-center',
-                    isSel    ? 'bg-brand text-white font-bold shadow-sm'       :
-                    isAvail  ? 'text-text hover:bg-surface-3 font-semibold'    :
+                    'w-full aspect-square rounded-full text-[13px] transition-all duration-100 flex items-center justify-center',
+                    isSel    ? 'nav-raised !shadow-[0_6px_14px_rgba(204,20,0,0.3)] font-medium' :
+                    isAvail  ? 'text-text bg-white/70 hover:bg-white font-medium' :
                                'text-text-ghost cursor-not-allowed',
                     isToday && !isSel && 'ring-2 ring-inset ring-brand/20'
                   )}
@@ -356,13 +358,13 @@ function Step3({ oficinaDoc, date, selected, onSelect, onNext, onBack }: {
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
       {/* Date display */}
-      <div className="bg-white border border-border rounded-xl px-4 py-3 shadow-xs">
-        <p className="text-2xs font-bold text-text-subtle uppercase tracking-widest mb-0.5">Data</p>
-        <p className="font-bold text-sm text-text capitalize">{dateLabel}</p>
+      <div className="glass rounded-[22px] px-4 py-3">
+        <p className="text-2xs font-medium text-text-subtle uppercase tracking-widest mb-0.5">Data</p>
+        <p className="font-medium text-sm text-text capitalize">{dateLabel}</p>
       </div>
 
       <div>
-        <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3 px-0.5">
+        <p className="text-[13px] font-medium text-text-muted mb-3 px-1">
           Horários disponíveis
         </p>
         {isLoading ? (
@@ -379,8 +381,8 @@ function Step3({ oficinaDoc, date, selected, onSelect, onNext, onBack }: {
                   onClick={() => onSelect(slot)}
                   aria-pressed={isSel}
                   className={clsx(
-                    'py-3.5 rounded-xl text-sm font-semibold border-[1.5px] transition-all duration-100 tabular',
-                    isSel ? 'bg-crit-bg border-brand text-brand shadow-sm' : 'bg-white border-border hover:border-border-md text-text'
+                    'h-12 rounded-full text-sm font-medium transition-all duration-100 tabular',
+                    isSel ? 'chip chip-active' : 'chip text-text'
                   )}
                 >
                   {slot}
@@ -431,27 +433,27 @@ function Step4({ vehicleId, serviceType, descricao, oficinaNome, date, timeSlot,
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 22, delay: 0.05 }}
-          className="w-16 h-16 bg-ok-bg rounded-2xl flex items-center justify-center"
+          className="glass w-16 h-16 rounded-full flex items-center justify-center"
         >
           <Check size={30} className="text-ok" strokeWidth={2.5} />
         </motion.div>
         <div>
-          <p className="font-bold text-base text-text">Tudo pronto!</p>
+          <p className="font-medium text-base text-text">Tudo pronto!</p>
           <p className="text-sm text-text-muted mt-0.5">Revise os detalhes e confirme</p>
         </div>
       </div>
 
       {/* Summary card */}
-      <div className="bg-white rounded-2xl border border-border shadow-xs overflow-hidden">
+      <div className="glass rounded-[24px] overflow-hidden">
         {rows.map(({ l, v }) => (
-          <div key={l} className="flex items-center justify-between px-4 py-3.5 border-b border-border last:border-0">
+          <div key={l} className="flex items-center justify-between px-4 py-3.5 border-b border-black/5 last:border-0">
             <span className="text-sm text-text-muted">{l}</span>
-            <span className="text-sm font-bold text-text text-right max-w-[55%] leading-snug">{v}</span>
+            <span className="text-sm font-medium text-text text-right max-w-[55%] leading-snug">{v}</span>
           </div>
         ))}
         <div className="flex items-center justify-between px-4 py-3.5">
           <span className="text-sm text-text-muted">Status</span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-bold
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-medium
                            bg-warn-bg text-warn border border-warn-border">
             <span className="w-1.5 h-1.5 rounded-full bg-warn-mid" />
             Aguardando aprovação
@@ -460,7 +462,7 @@ function Step4({ vehicleId, serviceType, descricao, oficinaNome, date, timeSlot,
       </div>
 
       {/* Info banner */}
-      <div className="flex items-start gap-3 bg-info-bg border border-info-border rounded-xl p-4">
+      <div className="glass flex items-start gap-3 rounded-[22px] p-4">
         <div className="w-1.5 flex-shrink-0 mt-0.5">
           <div className="w-1.5 h-1.5 rounded-full bg-info" />
         </div>

@@ -44,7 +44,7 @@ export function ResetPasswordScreen() {
                  style={{ background: 'var(--brand-tint)' }}>
               <ShieldCheck size={26} color="var(--brand)" />
             </div>
-            <h2 className="text-2xl font-bold text-text tracking-tight">Nova senha</h2>
+            <h2 className="text-2xl font-medium text-text tracking-tight">Nova senha</h2>
             <p className="text-sm text-text-muted leading-relaxed max-w-[260px]">
               {token ? 'Escolha uma nova senha para sua conta RevisaCar.'
                      : 'Link inválido. Solicite uma nova recuperação de senha.'}
@@ -82,7 +82,7 @@ export function ResetPasswordScreen() {
               </div>
 
               <button type="submit" disabled={!valid || submitting}
-                      className="w-full py-4 bg-brand rounded-2xl text-white text-base font-bold mt-2
+                      className="w-full py-4 bg-brand rounded-2xl text-white text-base font-medium mt-2
                                  disabled:opacity-50 active:scale-[0.97] transition-all hover:bg-brand-dark">
                 {submitting ? 'Redefinindo...' : 'Redefinir senha'}
               </button>
