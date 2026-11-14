@@ -8,6 +8,7 @@ import { orcamentosApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
 import { C, FONT_HEAD, FullState } from '../ui/pro';
+import { Segmented } from '../visual';
 import type { OrcamentoOficina, OrcamentoStatus } from '../../types';
 
 // Orçamentos que as oficinas ENVIARAM para as OS do cliente (somente leitura).
@@ -38,59 +39,59 @@ function OrcamentoCard({ o }: { o: OrcamentoOficina }) {
   const val = validade(o);
 
   return (
-    <article className="rounded-[22px] p-4 glass">
+    <article className="rounded-2xl p-4 glass">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[12px] font-semibold flex items-center gap-1.5" style={{ color: C.subtle }}>
+          <p className="text-[0.75rem] font-semibold flex items-center gap-1.5" style={{ color: C.subtle }}>
             <Store size={13} /> {o.oficina.nome || 'Oficina'}
             {o.os_num && <span>· OS {o.os_num}</span>}
             {o.versao > 1 && <span>· versão {o.versao}</span>}
           </p>
-          <p className="text-[14.5px] font-medium mt-0.5 truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>
+          <p className="text-[0.9375rem] font-medium mt-0.5 truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>
             {o.vehicle_label || 'Seu veículo'}
           </p>
         </div>
-        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full flex-none"
+        <span className="text-[0.6875rem] font-medium px-2.5 py-1 rounded-full flex-none"
               style={{ background: st.bg, color: st.color }}>{st.label}</span>
       </div>
 
       <div className="flex items-end justify-between mt-3 pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
         <div>
-          <p className="text-[11px]" style={{ color: C.muted }}>Total</p>
-          <p className="text-[20px] font-medium tabular" style={{ color: C.text, fontFamily: FONT_HEAD }}>{brl(o.total)}</p>
+          <p className="text-[0.6875rem]" style={{ color: C.muted }}>Total</p>
+          <p className="text-[1.25rem] font-medium tabular" style={{ color: C.text, fontFamily: FONT_HEAD }}>{brl(o.total)}</p>
         </div>
         <div className="text-right">
           {val && (
-            <p className="text-[11.5px] font-medium" style={{ color: val.urgent ? C.brand : C.muted }}>{val.text}</p>
+            <p className="text-[0.75rem] font-medium" style={{ color: val.urgent ? C.brand : C.muted }}>{val.text}</p>
           )}
-          {o.enviado_em && <p className="text-[11px]" style={{ color: C.subtle }}>Enviado em {data(o.enviado_em)}</p>}
+          {o.enviado_em && <p className="text-[0.6875rem]" style={{ color: C.subtle }}>Enviado em {data(o.enviado_em)}</p>}
         </div>
       </div>
 
       {aberto && (
         <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
           {o.itens.length === 0 ? (
-            <p className="text-[13px]" style={{ color: C.muted }}>A oficina não detalhou os itens.</p>
+            <p className="text-[0.8125rem]" style={{ color: C.muted }}>A oficina não detalhou os itens.</p>
           ) : o.itens.map((it, i) => (
             <div key={i} className="flex justify-between gap-3 py-1.5">
               <div className="min-w-0">
-                <p className="text-[13px]" style={{ color: C.text2 }}>{it.descricao}</p>
-                <p className="text-[11px]" style={{ color: C.subtle }}>
+                <p className="text-[0.8125rem]" style={{ color: C.text2 }}>{it.descricao}</p>
+                <p className="text-[0.6875rem]" style={{ color: C.subtle }}>
                   {TIPO_ITEM[it.tipo] ?? it.tipo}{it.marca ? ` · ${it.marca}` : ''}
                   {it.quantidade !== 1 ? ` · ${it.quantidade.toLocaleString('pt-BR')} × ${brl(it.preco_unitario)}` : ''}
                 </p>
               </div>
-              <span className="text-[13px] font-semibold tabular flex-none" style={{ color: C.text }}>{brl(it.subtotal)}</span>
+              <span className="text-[0.8125rem] font-semibold tabular flex-none" style={{ color: C.text }}>{brl(it.subtotal)}</span>
             </div>
           ))}
           {o.observacoes && (
-            <p className="text-[12.5px] mt-2 p-3 rounded-full" style={{ background: C.bg, color: C.text2 }}>{o.observacoes}</p>
+            <p className="text-[0.75rem] mt-2 p-3 rounded-full" style={{ background: C.bg, color: C.text2 }}>{o.observacoes}</p>
           )}
           {o.status === 'recusado' && o.motivo_recusa && (
-            <p className="text-[12px] mt-2" style={{ color: C.muted }}>Motivo da recusa: {o.motivo_recusa}</p>
+            <p className="text-[0.75rem] mt-2" style={{ color: C.muted }}>Motivo da recusa: {o.motivo_recusa}</p>
           )}
           {o.status === 'enviado' && (
-            <p className="text-[12px] mt-3 flex gap-2 leading-snug" style={{ color: C.muted }}>
+            <p className="text-[0.75rem] mt-3 flex gap-2 leading-snug" style={{ color: C.muted }}>
               <Info size={14} className="flex-none mt-0.5" />
               Para aprovar ou recusar, use o link que a oficina enviou para você ou fale direto com ela.
             </p>
@@ -99,7 +100,7 @@ function OrcamentoCard({ o }: { o: OrcamentoOficina }) {
       )}
 
       <button onClick={() => setAberto(a => !a)} aria-expanded={aberto}
-        className="w-full mt-3 py-2.5 rounded-full text-[13px] font-medium flex items-center justify-center gap-1.5"
+        className="w-full mt-3 py-2.5 rounded-full text-[0.8125rem] font-medium flex items-center justify-center gap-1.5"
         style={{ border: `1.5px solid ${C.border}`, color: C.text }}>
         {aberto ? 'Ocultar itens' : `Ver itens (${o.itens.length})`}
         <ChevronDown size={15} style={{ transform: aberto ? 'rotate(180deg)' : undefined, transition: 'transform .2s' }} />
@@ -128,18 +129,11 @@ export function EstimatesScreen() {
   return (
     <MainLayout width="wide" showNav={false} topbar={<Topbar title="Orçamentos" showBack />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
-        <div className="flex gap-2 flex-wrap" role="tablist">
-          {TABS.map(t => (
-            <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
-              className="text-[12.5px] font-medium px-4 py-2 rounded-full transition-all"
-              style={tab === t.key ? { background: C.brand, color: '#fff' } : { color: C.muted, background: C.card, border: `1px solid ${C.border}` }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <Segmented label="Situação dos orçamentos" value={tab} onChange={setTab}
+          options={TABS.map(t => ({ value: t.key, label: t.label }))} />
 
         {isLoading ? (
-          [0, 1].map(i => <Skeleton key={i} className="h-[150px] rounded-[22px]" />)
+          [0, 1].map(i => <Skeleton key={i} className="h-[150px] rounded-2xl" />)
         ) : isError ? (
           <FullState icon={<FileText size={42} strokeWidth={1.4} />} title="Não foi possível carregar"
             desc="Verifique sua conexão e tente de novo." primary={{ label: 'Tentar de novo', onClick: () => refetch() }} />

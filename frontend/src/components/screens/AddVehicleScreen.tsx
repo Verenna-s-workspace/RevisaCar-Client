@@ -73,11 +73,11 @@ export function AddVehicleScreen() {
 
   const field = (label: string, node: React.ReactNode) => (
     <div>
-      <p className="text-[11.5px] font-semibold mb-1.5" style={{ color: C.muted }}>{label}</p>
+      <p className="text-[0.75rem] font-semibold mb-1.5" style={{ color: C.muted }}>{label}</p>
       {node}
     </div>
   );
-  const inputCls = 'w-full px-4 py-3 rounded-2xl text-[14px] font-medium outline-none';
+  const inputCls = 'w-full px-4 py-3 rounded-2xl text-[0.9375rem] font-medium outline-none';
   const inputStyle = { border: `1px solid ${C.borderSoft}`, color: C.text, background: C.bg } as const;
 
   return (
@@ -86,16 +86,16 @@ export function AddVehicleScreen() {
 
         {/* Plate input */}
         <div>
-          <p className="text-[12.5px] font-semibold mb-2" style={{ color: C.muted }}>Digite a placa</p>
+          <p className="text-[0.75rem] font-semibold mb-2" style={{ color: C.muted }}>Digite a placa</p>
           <div className="flex gap-2.5">
             <input
               value={plate}
               onChange={e => { setPlate(e.target.value.toUpperCase()); setShow(false); }}
-              placeholder="ABC1D23" maxLength={7}
-              className="flex-1 px-4 py-3.5 rounded-2xl text-[16px] font-medium tracking-[3px] text-center outline-none uppercase"
+              placeholder="ABC1D23" maxLength={7} autoCapitalize="characters" autoCorrect="off" spellCheck={false} enterKeyHint="search"
+              className="flex-1 px-4 py-3.5 rounded-2xl text-[1rem] font-medium tracking-[3px] text-center outline-none"
               style={{ border: `1.5px solid ${C.border}`, color: C.text, background: C.card, fontFamily: FONT_HEAD }} />
             <button onClick={lookup} disabled={plate.length < 6 || looking}
-              className="px-5 rounded-2xl font-medium text-[14px] text-white flex items-center gap-1.5 disabled:opacity-40"
+              className="px-5 rounded-2xl font-medium text-[0.9375rem] text-white flex items-center gap-1.5 disabled:opacity-40"
               style={{ background: C.brand }}>
               {looking ? <Loader2 size={17} className="animate-spin" /> : <Search size={17} />} Buscar
             </button>
@@ -104,13 +104,13 @@ export function AddVehicleScreen() {
 
         {/* Vehicle form (pré-preenchido pela placa, editável) */}
         {show && (
-          <div className="rounded-[22px] p-5 flex flex-col gap-3.5 animate-fade-up glass">
+          <div className="rounded-2xl p-5 flex flex-col gap-3.5 animate-fade-up glass">
             {canSave && (
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: C.greenBg }}>
                   <Check size={12} color={C.greenDk} strokeWidth={3} />
                 </div>
-                <p className="text-[12px] font-medium" style={{ color: C.greenDk }}>Confira os dados do veículo</p>
+                <p className="text-[0.75rem] font-medium" style={{ color: C.greenDk }}>Confira os dados do veículo</p>
               </div>
             )}
 

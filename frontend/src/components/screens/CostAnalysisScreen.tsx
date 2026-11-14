@@ -1,12 +1,12 @@
 import { MainLayout, Topbar } from '../layout';
 
-const TEXT   = '#14161A';
-const MUTED  = '#6B7078';
-const SUBTLE = '#9AA0A8';
-const BG     = '#F7F6F3';
-const CARD   = '#FFFFFF';
-const BORDER = '#E2DFD8';
-const GREEN  = '#18B26B';
+const TEXT   = 'var(--text)';
+const MUTED  = 'var(--text-2)';
+const SUBTLE = 'var(--text-3)';
+const BG     = 'var(--card-2)';
+const CARD   = 'var(--card)';
+const BORDER = 'var(--sep)';
+const GREEN  = 'var(--green)';
 const BRAND  = '#CC1400';
 
 const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun'];
@@ -27,24 +27,24 @@ export function CostAnalysisScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
 
         {/* Total card */}
-        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[12px] font-medium uppercase tracking-widest mb-1" style={{ color: SUBTLE }}>
+        <div className="rounded-2xl p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[0.75rem] font-medium mb-1" style={{ color: SUBTLE }}>
             Total em 2024
           </p>
-          <p className="text-[34px] font-black data-mono" style={{ color: TEXT }}>
+          <p className="text-[2.125rem] font-black data-mono" style={{ color: TEXT }}>
             R$ {TOTAL.toLocaleString('pt-BR')}
           </p>
           <div className="flex items-center gap-1.5 mt-1">
             <div className="w-2 h-2 rounded-full" style={{ background: GREEN }} />
-            <p className="text-[12px] font-medium" style={{ color: GREEN }}>
+            <p className="text-[0.75rem] font-medium" style={{ color: GREEN }}>
               12% abaixo da média
             </p>
           </div>
         </div>
 
         {/* Bar chart */}
-        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+        <div className="rounded-2xl p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[0.8125rem] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Por mês
           </p>
           <div className="flex items-end gap-2 h-[100px]">
@@ -58,7 +58,7 @@ export function CostAnalysisScreen() {
                          background: VALUES[i] ? BRAND : BORDER,
                          minHeight: 6,
                        }} />
-                  <p className="text-[10px] font-semibold" style={{ color: SUBTLE }}>{m}</p>
+                  <p className="text-[0.6875rem] font-semibold" style={{ color: SUBTLE }}>{m}</p>
                 </div>
               );
             })}
@@ -66,8 +66,8 @@ export function CostAnalysisScreen() {
         </div>
 
         {/* Categories */}
-        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+        <div className="rounded-2xl p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[0.8125rem] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Por categoria
           </p>
           <div className="flex flex-col gap-3">
@@ -76,9 +76,9 @@ export function CostAnalysisScreen() {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />
-                    <p className="text-[13px] font-semibold" style={{ color: TEXT }}>{c.label}</p>
+                    <p className="text-[0.8125rem] font-semibold" style={{ color: TEXT }}>{c.label}</p>
                   </div>
-                  <p className="text-[13px] font-medium data-mono" style={{ color: TEXT }}>
+                  <p className="text-[0.8125rem] font-medium data-mono" style={{ color: TEXT }}>
                     R$ {c.value.toLocaleString('pt-BR')}
                   </p>
                 </div>

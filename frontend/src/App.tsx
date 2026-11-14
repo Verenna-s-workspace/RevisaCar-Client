@@ -88,7 +88,7 @@ function ConvitePendente() {
 /* ─── Loader ────────────────────────────────────────────── */
 function AppLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#F7F6F3' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--card-2)' }}>
       <div className="flex flex-col items-center gap-4">
         <div className="w-14 h-14 rounded-[18px] flex items-center justify-center"
              style={{ background: '#CC1400' }}>
@@ -194,8 +194,8 @@ export default function App() {
           toastOptions={{
             duration: 3000,
             style: {
-              background: '#14161A',
-              color: '#FFFFFF',
+              background: 'var(--text)',
+              color: 'var(--card)',
               fontFamily: "'DM Sans', sans-serif",
               fontSize: '0.875rem',
               fontWeight: '600',
@@ -204,7 +204,7 @@ export default function App() {
               maxWidth: '380px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
             },
-            success: { iconTheme: { primary: '#18B26B', secondary: '#fff' } },
+            success: { iconTheme: { primary: 'var(--green)', secondary: '#fff' } },
             error:   { iconTheme: { primary: '#CC1400', secondary: '#fff' } },
           }}
         />

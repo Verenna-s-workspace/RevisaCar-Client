@@ -5,24 +5,24 @@ import { ChevronRight } from 'lucide-react';
    RevisaCar Pro — shared design tokens & primitives
    ═══════════════════════════════════════════════ */
 export const C = {
-  brand:  '#CC1400',
-  text:   '#14161A',
-  text2:  '#23272F',
-  text3:  '#3a3d44',
-  muted:  '#6B7078',
-  subtle: '#9AA0A8',
-  bg:     '#F3F1EE',
-  card:   'rgba(255,255,255,0.78)',
-  border: 'rgba(255,255,255,0.95)',
-  borderSoft: 'rgba(22,24,28,0.06)',
-  green:  '#18B26B',
-  greenDk:'#15924E',
-  greenBg:'#E9F7EF',
-  redBg:  '#FDEAEC',
-  gold:   '#C98A00',
-  goldBg: '#FFF3D6',
-  info:   '#2A6FDB',
-  infoBg: '#EAF1FB',
+  brand:  'var(--tint)',
+  text:   'var(--text)',
+  text2:  'var(--text)',
+  text3:  'var(--text-2)',
+  muted:  'var(--text-2)',
+  subtle: 'var(--text-3)',
+  bg:     'var(--card-2)',
+  card:   'var(--card)',
+  border: 'var(--sep)',
+  borderSoft: 'var(--sep)',
+  green:  'var(--green)',
+  greenDk:'var(--green)',
+  greenBg:'var(--green-soft)',
+  redBg:  'var(--red-soft)',
+  gold:   'var(--orange)',
+  goldBg: 'var(--orange-soft)',
+  info:   'var(--blue)',
+  infoBg: 'var(--blue-soft)',
 };
 
 export const FONT_HEAD = "var(--font-heading)";
@@ -30,7 +30,7 @@ export const FONT_HEAD = "var(--font-heading)";
 /* ─── Vehicle health helpers ────────────────────── */
 // A nota vem do backend (hooks/useVehicleHealth); aqui só cor e rótulo.
 export function healthColor(score: number) {
-  return score >= 80 ? C.green : score >= 60 ? '#F4A724' : C.brand;
+  return score >= 80 ? C.green : score >= 60 ? 'var(--orange)' : C.brand;
 }
 export function healthLabel(score: number) {
   return score >= 80 ? 'Bom estado' : score >= 60 ? 'Atenção' : 'Crítico';
@@ -53,94 +53,93 @@ export function HealthRing({ score, size = 46 }: { score: number; size?: number 
   );
 }
 
-/* ─── Section label ─────────────────────────────── */
+/* ─── Cabeçalho de seção (lista agrupada) ────────── */
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[13px] font-medium mb-2.5 mt-1 px-1"
-       style={{ color: C.muted }}>
+    <p className="t-footnote mb-1.5 mt-1 px-4" style={{ color: C.subtle }}>
       {children}
     </p>
   );
 }
 
-/* ─── Card group (rounded container for rows) ───── */
+/* ─── Lista agrupada (inset grouped) ───────────── */
 export function CardGroup({ children }: { children: ReactNode }) {
   return (
-    <div className="glass rounded-[24px] overflow-hidden">
+    <div className="glass rounded-xl overflow-hidden">
       {children}
     </div>
   );
 }
 
-/* ─── Menu Row ──────────────────────────────────── */
-export function MenuRow({ icon, iconBg, iconColor, label, value, danger, last, onClick }: {
+/* ─── Ícone em quadrado colorido (como nos Ajustes do iPhone) ── */
+function IconeAjustes({ children, bg }: { children: ReactNode; bg?: string }) {
+  return (
+    <div className="w-[29px] h-[29px] rounded-[7px] flex items-center justify-center flex-none text-white [&>svg]:w-[17px] [&>svg]:h-[17px]"
+         style={{ background: bg ?? 'var(--tint-fill)' }}>
+      {children}
+    </div>
+  );
+}
+
+/* ─── Linha de menu ─────────────────────────────── */
+export function MenuRow({ icon, iconBg, label, value, danger, last, onClick }: {
   icon: ReactNode; iconBg?: string; iconColor?: string;
   label: string; value?: string; danger?: boolean; last?: boolean; onClick?: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left hover:bg-white/60 active:bg-white/80 transition-colors"
-      style={{ borderBottom: last ? 'none' : `1px solid ${C.borderSoft}` }}
-    >
-      {icon && (
-        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-none"
-             style={{ background: iconBg ?? 'rgba(255,255,255,0.95)', color: iconColor ?? C.muted, boxShadow: '0 1px 3px rgba(40,28,16,0.06)' }}>
-          {icon}
-        </div>
-      )}
-      <span className="flex-1 text-[14.5px] font-medium" style={{ color: danger ? C.brand : C.text }}>
-        {label}
+    <button onClick={onClick} className="w-full flex items-center gap-3 pl-4 text-left press-row min-h-[44px]">
+      {icon && !danger && <IconeAjustes bg={iconBg && iconBg.startsWith('var(--red') ? 'var(--red)' : undefined}>{icon}</IconeAjustes>}
+      <span className="flex-1 flex items-center gap-2 py-[11px] pr-4 min-w-0"
+            style={{ boxShadow: last ? 'none' : `0 0.5px 0 ${C.border}` }}>
+        <span className={`flex-1 t-body truncate ${danger ? 'text-center' : ''}`} style={{ color: danger ? 'var(--red)' : C.text }}>
+          {label}
+        </span>
+        {value && <span className="t-body" style={{ color: C.subtle }}>{value}</span>}
+        {!danger && <ChevronRight size={17} strokeWidth={2.4} color="var(--text-3)" style={{ opacity: 0.6 }} />}
       </span>
-      {value && <span className="text-[13px]" style={{ color: C.subtle }}>{value}</span>}
-      {!danger && <ChevronRight size={18} color={C.subtle} />}
     </button>
   );
 }
 
-/* ─── Toggle ────────────────────────────────────── */
+/* ─── Interruptor (iOS) ─────────────────────────── */
 export function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
     <button
       onClick={onChange}
-      className="w-[46px] h-[27px] rounded-full flex-none transition-colors relative"
       role="switch"
       aria-checked={on}
-      style={{ background: on ? C.brand : 'rgba(22,24,28,0.14)' }}
+      className="w-[51px] h-[31px] rounded-full flex-none transition-colors duration-200 relative"
+      style={{ background: on ? 'var(--green)' : 'var(--fill)' }}
     >
       <span
-        className="absolute top-[3px] w-[21px] h-[21px] rounded-full bg-white transition-all"
-        style={{ left: on ? '22px' : '3px', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }}
+        className="absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white transition-all duration-200"
+        style={{ left: on ? '22px' : '2px', boxShadow: '0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16)' }}
       />
     </button>
   );
 }
 
-/* ─── Toggle Row ────────────────────────────────── */
-export function ToggleRow({ icon, iconBg, iconColor, label, desc, on, onChange, last }: {
+/* ─── Linha com interruptor ─────────────────────── */
+export function ToggleRow({ icon, iconBg, label, desc, on, onChange, last }: {
   icon?: ReactNode; iconBg?: string; iconColor?: string;
   label: string; desc?: string; on: boolean; onChange: () => void; last?: boolean;
 }) {
   return (
-    <div className="w-full flex items-center gap-3.5 px-4 py-3.5"
-         style={{ borderBottom: last ? 'none' : `1px solid ${C.borderSoft}` }}>
-      {icon && (
-        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-none"
-             style={{ background: iconBg ?? 'rgba(255,255,255,0.95)', color: iconColor ?? C.muted, boxShadow: '0 1px 3px rgba(40,28,16,0.06)' }}>
-          {icon}
+    <div className="w-full flex items-center gap-3 pl-4 min-h-[44px]">
+      {icon && <IconeAjustes bg={iconBg}>{icon}</IconeAjustes>}
+      <div className="flex-1 flex items-center gap-3 py-[9px] pr-4 min-w-0" style={{ boxShadow: last ? 'none' : `0 0.5px 0 ${C.border}` }}>
+        <div className="flex-1 min-w-0">
+          <p className="t-body" style={{ color: C.text }}>{label}</p>
+          {desc && <p className="t-footnote mt-0.5" style={{ color: C.subtle }}>{desc}</p>}
         </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="text-[14.5px] font-medium" style={{ color: C.text }}>{label}</p>
-        {desc && <p className="text-[11.5px] mt-0.5 leading-[1.35]" style={{ color: C.subtle }}>{desc}</p>}
+        <Toggle on={on} onChange={onChange} />
       </div>
-      <Toggle on={on} onChange={onChange} />
     </div>
   );
 }
 
-/* ─── Primary / Outline buttons ─────────────────── */
-export function PrimaryBtn({ children, onClick, danger, disabled, type = 'button' }: {
+/* ─── Botões (iOS: preenchido / cinza) ──────────── */
+export function PrimaryBtn({ children, onClick, disabled, type = 'button' }: {
   children: ReactNode; onClick?: () => void; danger?: boolean; disabled?: boolean;
   type?: 'button' | 'submit';
 }) {
@@ -149,8 +148,8 @@ export function PrimaryBtn({ children, onClick, danger, disabled, type = 'button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="w-full h-[52px] rounded-full font-medium text-[15px] text-white transition-all active:scale-[0.98] disabled:opacity-45 disabled:shadow-none"
-      style={{ background: C.brand, fontFamily: FONT_HEAD, boxShadow: '0 8px 20px rgba(204,20,0,0.22)' }}
+      className="w-full h-[50px] rounded-[14px] t-headline text-white transition active:brightness-90 disabled:opacity-40"
+      style={{ background: 'var(--tint-fill)' }}
     >
       {children}
     </button>
@@ -165,31 +164,28 @@ export function OutlineBtn({ children, onClick, danger, disabled }: {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="chip w-full h-[52px] rounded-full font-medium text-[15px] transition-all active:scale-[0.98] disabled:opacity-50"
-      style={{ color: danger ? C.brand : C.text, fontFamily: FONT_HEAD }}
+      className="chip w-full h-[50px] rounded-[14px] t-headline disabled:opacity-40"
+      style={{ color: danger ? 'var(--red)' : 'var(--tint)' }}
     >
       {children}
     </button>
   );
 }
 
-/* ─── Full-screen state (empty / error / success) ─ */
-export function FullState({ icon, iconBg, iconColor, title, desc, primary, secondary }: {
+/* ─── Estado de tela cheia (vazio / erro) ────────── */
+export function FullState({ icon, iconColor, title, desc, primary, secondary }: {
   icon: ReactNode; iconBg?: string; iconColor?: string;
   title: string; desc?: string;
   primary?: { label: string; onClick: () => void };
   secondary?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex flex-col items-center text-center px-7 max-w-[420px] mx-auto" style={{ paddingTop: '14vh' }}>
-      <div className="glass w-[96px] h-[96px] rounded-full flex items-center justify-center"
-           style={{ color: iconColor ?? C.subtle, ...(iconBg ? { background: iconBg } : {}) }}>
-        {icon}
-      </div>
-      <h2 className="text-[21px] font-normal mt-6" style={{ color: C.text, fontFamily: FONT_HEAD }}>{title}</h2>
-      {desc && <p className="text-[13.5px] leading-relaxed mt-2" style={{ color: C.muted }}>{desc}</p>}
+    <div className="flex flex-col items-center text-center px-8 max-w-[420px] mx-auto" style={{ paddingTop: '12vh' }}>
+      <div className="[&>svg]:w-14 [&>svg]:h-14" style={{ color: iconColor ?? 'var(--text-3)' }}>{icon}</div>
+      <h2 className="t-title2 mt-4" style={{ color: C.text }}>{title}</h2>
+      {desc && <p className="t-subhead mt-2" style={{ color: C.muted }}>{desc}</p>}
       {(primary || secondary) && (
-        <div className="w-full flex flex-col gap-2.5 mt-7">
+        <div className="w-full flex flex-col gap-2.5 mt-6">
           {primary && <PrimaryBtn onClick={primary.onClick}>{primary.label}</PrimaryBtn>}
           {secondary && <OutlineBtn onClick={secondary.onClick}>{secondary.label}</OutlineBtn>}
         </div>

@@ -52,7 +52,7 @@ export function EditVehicleScreen() {
   });
 
   const label = (t: string) => (
-    <label className="text-[11.5px] font-semibold" style={{ color: C.muted }}>{t}</label>
+    <label className="text-[0.75rem] font-semibold" style={{ color: C.muted }}>{t}</label>
   );
   const inputStyle = { border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card };
 
@@ -61,26 +61,26 @@ export function EditVehicleScreen() {
       <MainLayout showNav={false} topbar={<Topbar title="Editar veículo" showBack />}>
         <div className="px-4 pt-5 pb-8 flex flex-col gap-5">
           {isLoading || !v ? (
-            <Skeleton className="h-[300px] rounded-[22px]" />
+            <Skeleton className="h-[300px] rounded-2xl" />
           ) : (
             <>
               {/* Read-only identity */}
-              <div className="rounded-[22px] p-4" style={{ background: C.bg }}>
-                <p className="text-[16px] font-medium" style={{ color: C.text, fontFamily: FONT_HEAD }}>{v.brand} {v.model} {v.year}</p>
-                <p className="text-[12.5px] mt-0.5" style={{ color: C.muted }}>Placa {v.plate} · não editável</p>
+              <div className="rounded-2xl p-4" style={{ background: C.bg }}>
+                <p className="text-[1rem] font-medium" style={{ color: C.text, fontFamily: FONT_HEAD }}>{v.brand} {v.model} {v.year}</p>
+                <p className="text-[0.75rem] mt-0.5" style={{ color: C.muted }}>Placa {v.plate} · não editável</p>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 {label('Cor')}
                 <input value={form.color} onChange={e => setForm(s => ({ ...s, color: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none" style={inputStyle} />
+                  className="w-full px-4 py-3 rounded-2xl text-[0.8125rem] font-medium outline-none" style={inputStyle} />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 {label('Quilometragem')}
                 <input value={form.mileage} inputMode="numeric"
                   onChange={e => setForm(s => ({ ...s, mileage: e.target.value.replace(/\D/g, '') }))}
-                  className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none" style={inputStyle} />
+                  className="w-full px-4 py-3 rounded-2xl text-[0.8125rem] font-medium outline-none" style={inputStyle} />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -88,7 +88,7 @@ export function EditVehicleScreen() {
                 <div className="flex flex-wrap gap-2">
                   {FUELS.map(f => (
                     <button key={f} onClick={() => setForm(s => ({ ...s, fuel_type: f }))}
-                      className="px-3.5 py-2 rounded-full text-[12.5px] font-semibold capitalize transition-all"
+                      className="px-3.5 py-2 rounded-full text-[0.75rem] font-semibold capitalize transition-all"
                       style={form.fuel_type === f
                         ? { background: C.brand, color: '#fff' }
                         : { background: C.card, color: C.muted, border: `1px solid ${C.border}` }}>
@@ -103,7 +103,7 @@ export function EditVehicleScreen() {
               </PrimaryBtn></div>
 
               <button onClick={() => setShowDelete(true)}
-                className="w-full flex items-center justify-center gap-2 py-[13px] text-[13.5px] font-semibold"
+                className="w-full flex items-center justify-center gap-2 py-[13px] text-[0.8125rem] font-semibold"
                 style={{ color: C.brand }}>
                 <Trash2 size={16} /> Remover veículo
               </button>
@@ -114,12 +114,12 @@ export function EditVehicleScreen() {
 
       {showDelete && (
         <BottomSheet onClose={() => setShowDelete(false)} title="Remover veículo?">
-          <p className="text-[13.5px] leading-relaxed pt-1 pb-5" style={{ color: C.muted }}>
+          <p className="text-[0.8125rem] leading-relaxed pt-1 pb-5" style={{ color: C.muted }}>
             Todo o histórico e documentos deste veículo serão removidos. Esta ação não pode ser desfeita.
           </p>
           <div className="flex flex-col gap-2.5">
             <button onClick={() => remove()}
-              className="w-full py-[15px] rounded-[22px] font-medium text-[15px] text-white active:scale-[0.98]"
+              className="w-full py-[15px] rounded-2xl font-medium text-[0.9375rem] text-white active:scale-[0.98]"
               style={{ background: C.brand, fontFamily: FONT_HEAD }}>Remover veículo</button>
             <OutlineBtn onClick={() => setShowDelete(false)}>Cancelar</OutlineBtn>
           </div>

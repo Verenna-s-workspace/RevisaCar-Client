@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { MainLayout, Topbar } from '../layout';
 
 const BRAND  = '#CC1400';
-const TEXT   = '#14161A';
-const MUTED  = '#6B7078';
-const SUBTLE = '#9AA0A8';
-const BG     = '#F7F6F3';
-const CARD   = '#FFFFFF';
-const BORDER = '#E2DFD8';
-const GREEN  = '#18B26B';
+const TEXT   = 'var(--text)';
+const MUTED  = 'var(--text-2)';
+const SUBTLE = 'var(--text-3)';
+const BG     = 'var(--card-2)';
+const CARD   = 'var(--card)';
+const BORDER = 'var(--sep)';
+const GREEN  = 'var(--green)';
 
 const STEPS = [
   { label: 'Veículo recebido',   time: '14:02', done: true  },
@@ -27,13 +27,13 @@ export function ServiceTrackingScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
 
         {/* OS header */}
-        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+        <div className="rounded-2xl p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
           <div className="flex items-center justify-between mb-1">
-            <p className="text-[12px] font-semibold" style={{ color: SUBTLE }}>OS #1258 · HB20</p>
-            <span className="text-[11px] font-medium px-2.5 py-1 rounded-full"
-                  style={{ background: '#FFF3D6', color: '#C98A00' }}>Em andamento</span>
+            <p className="text-[0.75rem] font-semibold" style={{ color: SUBTLE }}>OS #1258 · HB20</p>
+            <span className="text-[0.6875rem] font-medium px-2.5 py-1 rounded-full"
+                  style={{ background: 'var(--orange-soft)', color: 'var(--orange)' }}>Em andamento</span>
           </div>
-          <p className="font-medium text-[16px] mb-3" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+          <p className="font-medium text-[1rem] mb-3" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Troca de óleo e filtros
           </p>
 
@@ -43,16 +43,16 @@ export function ServiceTrackingScreen() {
               <div className="h-full rounded-full transition-all duration-700"
                    style={{ width: `${progress}%`, background: GREEN }} />
             </div>
-            <span className="text-[13px] font-medium tabular" style={{ color: GREEN }}>{progress}%</span>
+            <span className="text-[0.8125rem] font-medium tabular" style={{ color: GREEN }}>{progress}%</span>
           </div>
-          <p className="text-[11.5px] mt-2" style={{ color: SUBTLE }}>
+          <p className="text-[0.75rem] mt-2" style={{ color: SUBTLE }}>
             Previsão de conclusão · <span className="font-semibold">15:30</span>
           </p>
         </div>
 
         {/* Timeline */}
-        <div className="rounded-[22px] p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <p className="text-[13px] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
+        <div className="rounded-2xl p-5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+          <p className="text-[0.8125rem] font-medium mb-4" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
             Progresso
           </p>
           <div className="flex flex-col gap-0">
@@ -77,11 +77,11 @@ export function ServiceTrackingScreen() {
                 </div>
                 {/* Content */}
                 <div className="pb-4 flex-1 flex items-start justify-between">
-                  <p className={`text-[13px] font-semibold ${step.current ? 'font-medium' : ''}`}
+                  <p className={`text-[0.8125rem] font-semibold ${step.current ? 'font-medium' : ''}`}
                      style={{ color: step.current ? TEXT : step.done ? MUTED : SUBTLE }}>
                     {step.label}
                   </p>
-                  <p className="text-[11px] font-medium ml-2" style={{ color: step.current ? BRAND : SUBTLE }}>
+                  <p className="text-[0.6875rem] font-medium ml-2" style={{ color: step.current ? BRAND : SUBTLE }}>
                     {step.time}
                   </p>
                 </div>
@@ -93,7 +93,7 @@ export function ServiceTrackingScreen() {
         {/* Chat CTA */}
         <button
           onClick={() => navigate('/chat')}
-          className="w-full flex items-center justify-center gap-2 py-[13px] rounded-full font-semibold text-[14px]"
+          className="w-full flex items-center justify-center gap-2 py-[13px] rounded-full font-semibold text-[0.9375rem]"
           style={{ background: BG, border: `1px solid ${BORDER}`, color: TEXT }}
         >
           <MessageCircle size={18} color={MUTED} />

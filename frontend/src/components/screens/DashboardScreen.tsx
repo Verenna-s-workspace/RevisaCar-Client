@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowUpRight, ChevronDown, CalendarPlus, Plus, FolderOpen, QrCode, Store, Wrench,
+  ArrowUpRight, ChevronDown, Plus, FolderOpen, QrCode, Store, Wrench, FileText,
   Calendar, ChevronRight, Gauge, ShieldCheck, Activity,
 } from 'lucide-react';
 import { format, subMonths, startOfMonth, differenceInCalendarDays } from 'date-fns';
@@ -11,7 +11,7 @@ import {
   dashboardApi, oficinasApi, vehiclesApi, historyApi, remindersApi, orcamentosApi,
 } from '../../services/api';
 import { useVehicleHealth } from '../../hooks/useVehicleHealth';
-import { MainLayout, Logo, Avatar } from '../layout';
+import { MainLayout, Topbar, Avatar, SinoNotificacoes } from '../layout';
 import { Skeleton } from '../ui';
 import { useAuthStore } from '../../store/auth';
 import {
@@ -30,7 +30,7 @@ function SeletorVeiculo({ vehicles, atual, onChange }: { vehicles: Vehicle[]; at
   return (
     <div className="relative">
       <button onClick={() => vehicles.length > 1 && setAberto(a => !a)} aria-expanded={aberto}
-        className="chip h-9 pl-4 pr-3 rounded-full flex items-center gap-2 text-[13.5px] font-medium">
+        className="chip h-9 pl-4 pr-3 rounded-full flex items-center gap-2 text-[0.8125rem] font-medium">
         {atual.brand} {atual.model}
         {vehicles.length > 1 && <ChevronDown size={15} color={V.brand} />}
       </button>
@@ -40,9 +40,9 @@ function SeletorVeiculo({ vehicles, atual, onChange }: { vehicles: Vehicle[]; at
           <div className="glass absolute left-0 top-11 z-30 min-w-[200px] rounded-2xl p-1.5">
             {vehicles.map(v => (
               <button key={v.id} onClick={() => { onChange(v.id); setAberto(false); }}
-                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white">
-                <p className="text-[13.5px] font-medium" style={{ color: V.text }}>{v.brand} {v.model}</p>
-                <p className="text-[11.5px]" style={{ color: V.subtle }}>{v.plate}</p>
+                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-fill">
+                <p className="text-[0.8125rem] font-medium" style={{ color: V.text }}>{v.brand} {v.model}</p>
+                <p className="text-[0.75rem]" style={{ color: V.subtle }}>{v.plate}</p>
               </button>
             ))}
           </div>
@@ -58,10 +58,10 @@ function CardVeiculo({ vehicles, vehicle, onChange }: { vehicles: Vehicle[]; veh
   const { data: health } = useVehicleHealth(vehicle?.id);
   if (!vehicle) {
     return (
-      <Glass className="p-6 flex flex-col items-center text-center gap-3 lg:col-span-5 lg:row-span-2">
+      <Glass className="p-6 flex flex-col items-center text-center gap-3 lg:col-span-7">
         <CarIllustration className="w-full max-w-[320px] opacity-60" />
-        <p className="text-[15px] font-medium" style={{ color: V.text }}>Cadastre seu primeiro veículo</p>
-        <button onClick={() => navigate('/veiculos/novo')} className="chip-active h-10 px-5 rounded-full text-[13px] font-medium">
+        <p className="text-[0.9375rem] font-medium" style={{ color: V.text }}>Cadastre seu primeiro veículo</p>
+        <button onClick={() => navigate('/veiculos/novo')} className="chip-active h-10 px-5 rounded-full text-[0.8125rem] font-medium">
           Adicionar veículo
         </button>
       </Glass>
@@ -70,14 +70,14 @@ function CardVeiculo({ vehicles, vehicle, onChange }: { vehicles: Vehicle[]; veh
   // Saúde geral + as duas áreas que mais precisam de atenção (dados reais do backend).
   const areas = [...(health?.categories ?? [])].sort((a, b) => a.score - b.score).slice(0, 2);
   return (
-    <Glass className="p-4 lg:p-5 flex flex-col lg:col-span-5 lg:row-span-2">
+    <Glass className="p-4 lg:p-5 flex flex-col lg:col-span-7">
       <div className="flex items-center justify-between">
         <SeletorVeiculo vehicles={vehicles} atual={vehicle} onChange={onChange} />
         <IconCircle label="Ver detalhes do veículo" onClick={() => navigate(`/veiculo/${vehicle.id}`)}>
           <ArrowUpRight size={17} color={V.brand} />
         </IconCircle>
       </div>
-      <p className="text-[12px] mt-2 px-1" style={{ color: V.subtle }}>
+      <p className="text-[0.75rem] mt-2 px-1" style={{ color: V.subtle }}>
         {vehicle.year} · <span className="data-mono">{vehicle.plate}</span> · {vehicle.mileage?.toLocaleString('pt-BR')} km
       </p>
       <div className="flex-1 flex items-center justify-center py-2">
@@ -112,10 +112,10 @@ function CardCusto({ className }: { className?: string }) {
   return (
     <Glass className={`p-5 ${className ?? ''}`}>
       <CardHeader title="Custo de manutenção" subtitle="Últimos 6 meses"
-        right={<span className="text-[15px] font-medium tabular" style={{ color: V.text }}>{brl(total)}</span>} />
+        right={<span className="text-[0.9375rem] font-medium tabular" style={{ color: V.text }}>{brl(total)}</span>} />
       <div className="mt-5">
         {total === 0
-          ? <p className="text-[13px] py-10 text-center" style={{ color: V.subtle }}>Nenhum serviço pago nos últimos 6 meses.</p>
+          ? <p className="text-[0.8125rem] py-10 text-center" style={{ color: V.subtle }}>Nenhum serviço pago nos últimos 6 meses.</p>
           : <DotBars data={meses} format={brl} height={140} />}
       </div>
     </Glass>
@@ -131,14 +131,14 @@ function CardLembretes({ lembretes, className }: { lembretes: MaintenanceReminde
         right={<IconCircle label="Ver manutenções" onClick={() => navigate('/manutencoes')}><ArrowUpRight size={16} color={V.brand} /></IconCircle>} />
       <div className="mt-4 flex flex-col gap-2">
         {lembretes.length === 0 ? (
-          <p className="text-[13px] py-6 text-center" style={{ color: V.subtle }}>Tudo em dia por aqui.</p>
+          <p className="text-[0.8125rem] py-6 text-center" style={{ color: V.subtle }}>Tudo em dia por aqui.</p>
         ) : lembretes.slice(0, 4).map(r => (
           <div key={r.id} className="flex items-center gap-3 rounded-[16px] px-3 py-2.5" style={{ background: V.tile }}>
             <span className="w-2 h-2 rounded-full flex-none"
                   style={{ background: r.urgency === 'urgente' ? V.brand : r.urgency === 'atencao' ? V.warn : V.ok }} />
             <div className="flex-1 min-w-0">
-              <p className="text-[13.5px] font-medium truncate" style={{ color: V.text }}>{r.service_name}</p>
-              <p className="text-[11.5px] truncate" style={{ color: V.subtle }}>
+              <p className="text-[0.8125rem] font-medium truncate" style={{ color: V.text }}>{r.service_name}</p>
+              <p className="text-[0.75rem] truncate" style={{ color: V.subtle }}>
                 {r.km_remaining != null
                   ? (r.km_remaining < 0 ? `Passou ${Math.abs(r.km_remaining).toLocaleString('pt-BR')} km` : `Em ${r.km_remaining.toLocaleString('pt-BR')} km`)
                   : r.next_service_date ? `Até ${format(dia(r.next_service_date), 'dd/MM')}` : r.vehicle_label}
@@ -173,160 +173,152 @@ export function DashboardScreen() {
   const proximoAgendamento = dash?.upcoming_appointments?.[0];
   const ultimo = history[0];
 
+  // A coisa mais importante agora: agendamento marcado ou manutenção mais urgente.
+  const acao = proximoAgendamento
+    ? { tipo: 'agendamento' as const, titulo: proximoAgendamento.service_type,
+        detalhe: `${format(dia(proximoAgendamento.date), "EEEE, d 'de' MMMM", { locale: ptBR })} às ${proximoAgendamento.time_slot?.slice(0, 5)}`,
+        status: proximoAgendamento.status === 'confirmado' ? 'Confirmado pela oficina' : 'Aguardando a oficina confirmar' }
+    : lembretes[0] && lembretes[0].urgency !== 'ok'
+      ? { tipo: 'manutencao' as const, titulo: lembretes[0].service_name,
+          detalhe: lembretes[0].km_remaining != null
+            ? (lembretes[0].km_remaining < 0 ? `Atrasada ${Math.abs(lembretes[0].km_remaining).toLocaleString('pt-BR')} km` : `Faltam ${lembretes[0].km_remaining.toLocaleString('pt-BR')} km`)
+            : lembretes[0].next_service_date ? `Até ${format(dia(lembretes[0].next_service_date), 'dd/MM')}` : '',
+          status: urgentes > 1 ? `E mais ${urgentes - 1} manutenção urgente` : '' }
+      : null;
+
   return (
     <MainLayout width="wide" topbar={
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-[64px] bg-[rgba(243,241,238,0.82)] backdrop-blur-xl lg:hidden">
-        <Logo />
-        <Avatar />
-      </header>
+      <Topbar title="Meu carro" subtitle={primeiroNome ? `Olá, ${primeiroNome}` : undefined}
+        right={<><SinoNotificacoes /><span className="lg:hidden pr-1"><Avatar /></span></>} />
     }>
-      <div className="px-4 pt-2 pb-6 lg:pt-6">
-        {/* Saudação + ações */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-[28px] leading-tight font-normal lg:text-[34px]" style={{ color: V.text }}>
-              Olá{primeiroNome ? `, ${primeiroNome}` : ''} <span aria-hidden>👋</span>
-            </h1>
-            <p className="text-[13.5px] mt-1" style={{ color: V.muted }}>Aqui está o resumo do seu carro.</p>
-          </div>
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 pb-1">
-            <Chip icon={<CalendarPlus size={15} />} onClick={() => navigate('/agendar')} active>Agendar</Chip>
-            <Chip icon={<Plus size={15} />} onClick={() => navigate('/veiculos/novo')}>Adicionar veículo</Chip>
-            <Chip icon={<FolderOpen size={15} />} onClick={() => navigate('/documentos')}>Documentos</Chip>
-            <Chip icon={<QrCode size={15} />} onClick={() => navigate('/qr')}>QR do veículo</Chip>
-          </div>
-        </div>
-
-        {/* Sem oficina */}
-        {oficinas && oficinas.length === 0 && (
-          <Glass as="button" onClick={() => navigate('/oficinas')} className="w-full mt-5 p-4 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-full flex items-center justify-center flex-none" style={{ background: V.brandSoft }}>
-              <Store size={18} color={V.brand} />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block text-[14px] font-medium" style={{ color: V.text }}>Entre na sua oficina</span>
-              <span className="block text-[12px] mt-0.5" style={{ color: V.muted }}>Use o convite dela para agendar e receber orçamentos.</span>
-            </span>
-            <ChevronRight size={18} color={V.subtle} />
+      <div className="px-4 pb-6 flex flex-col gap-4">
+        {/* 1. O que fazer agora */}
+        {acao && (
+          <Glass className="p-4">
+            <div className="flex items-start gap-3">
+              <span className="w-10 h-10 rounded-[10px] flex items-center justify-center flex-none text-white"
+                    style={{ background: acao.tipo === 'agendamento' ? 'var(--tint-fill)' : 'var(--red)' }}>
+                {acao.tipo === 'agendamento' ? <Calendar size={20} /> : <Wrench size={20} />}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="t-footnote font-semibold" style={{ color: acao.tipo === 'agendamento' ? V.brand : V.red }}>
+                  {acao.tipo === 'agendamento' ? 'Próximo agendamento' : 'Manutenção urgente'}
+                </p>
+                <p className="t-headline truncate" style={{ color: V.text }}>{acao.titulo}</p>
+                <p className="t-subhead capitalize-first" style={{ color: V.muted }}>{acao.detalhe}</p>
+                {acao.status && <p className="t-footnote mt-0.5" style={{ color: V.subtle }}>{acao.status}</p>}
+              </div>
+            </div>
+            {acao.tipo === 'manutencao' && (
+              <button onClick={() => navigate('/agendar')} className="mt-3 w-full h-11 rounded-[12px] t-headline text-white active:brightness-90"
+                      style={{ background: 'var(--tint-fill)' }}>
+                Agendar agora
+              </button>
+            )}
           </Glass>
         )}
 
-        {/* Grade: no celular uma coluna; no desktop, blocos (12 colunas) */}
-        <div className="mt-5 flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:gap-4 lg:auto-rows-min">
+        {/* Orçamento esperando resposta */}
+        {orcAguardando.length > 0 && (
+          <Glass as="button" onClick={() => navigate('/orcamentos')} className="w-full px-4 py-3 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-[8px] flex items-center justify-center flex-none text-white" style={{ background: 'var(--orange)' }}>
+              <FileText size={17} />
+            </span>
+            <span className="flex-1 t-body" style={{ color: V.text }}>
+              {orcAguardando.length === 1 ? '1 orçamento aguardando você' : `${orcAguardando.length} orçamentos aguardando você`}
+            </span>
+            <ChevronRight size={17} strokeWidth={2.4} color="var(--text-3)" style={{ opacity: 0.6 }} />
+          </Glass>
+        )}
+
+        {/* Sem oficina */}
+        {oficinas && oficinas.length === 0 && (
+          <Glass as="button" onClick={() => navigate('/oficinas')} className="w-full p-4 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-[8px] flex items-center justify-center flex-none text-white" style={{ background: 'var(--tint-fill)' }}>
+              <Store size={17} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block t-headline" style={{ color: V.text }}>Entre na sua oficina</span>
+              <span className="block t-footnote mt-0.5" style={{ color: V.muted }}>Use o convite dela para agendar e receber orçamentos.</span>
+            </span>
+            <ChevronRight size={17} strokeWidth={2.4} color="var(--text-3)" style={{ opacity: 0.6 }} />
+          </Glass>
+        )}
+
+        {/* Ações secundárias */}
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
+          <Chip icon={<Plus size={15} />} onClick={() => navigate('/veiculos/novo')}>Adicionar veículo</Chip>
+          <Chip icon={<FolderOpen size={15} />} onClick={() => navigate('/documentos')}>Documentos</Chip>
+          <Chip icon={<QrCode size={15} />} onClick={() => navigate('/qr')}>QR do veículo</Chip>
+        </div>
+
+        {/* 2. O carro e o resto (no computador, em blocos) */}
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:auto-rows-min">
           {isLoading ? (
-            <Skeleton className="h-[340px] rounded-[24px] lg:col-span-5 lg:row-span-2" />
+            <Skeleton className="h-[340px] rounded-2xl lg:col-span-7" />
           ) : (
             <CardVeiculo vehicles={vehicles} vehicle={vehicle} onChange={setEscolhido} />
           )}
 
-          {/* Métricas */}
-          <div className="grid grid-cols-3 gap-2 lg:col-span-7 lg:gap-4">
-            {[
-              { label: 'Veículos', valor: vehicles.length, extra: null, pct: Math.min(100, vehicles.length * 25), to: '/veiculo' },
-              { label: 'Lembretes', valor: lembretes.length, extra: urgentes ? `${urgentes} urgente${urgentes > 1 ? 's' : ''}` : null,
-                pct: lembretes.length ? 100 - (urgentes / lembretes.length) * 100 : 100, to: '/manutencoes' },
-              { label: 'Orçamentos', valor: orcAguardando.length, extra: orcAguardando.length ? 'aguardando' : null,
-                pct: orcAguardando.length ? 60 : 100, to: '/orcamentos' },
-            ].map(m => (
-              <Glass as="button" key={m.label} onClick={() => navigate(m.to)} className="p-3.5 lg:p-5 flex flex-col gap-2 min-w-0">
-                <span className="text-[12px] lg:text-[13px]" style={{ color: V.muted }}>{m.label}</span>
-                <span className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-[24px] lg:text-[30px] leading-none font-normal tabular" style={{ color: V.text }}>
-                    {String(m.valor).padStart(2, '0')}
-                  </span>
-                  {m.extra && (
-                    <span className="text-[10.5px] px-2 py-0.5 rounded-full" style={{ background: V.brandSoft, color: V.brand }}>{m.extra}</span>
-                  )}
-                </span>
-                <span className="hidden sm:block"><DotProgress pct={m.pct} color={m.extra ? V.brand : V.ok} /></span>
-              </Glass>
-            ))}
-          </div>
-
           {/* Saúde (anel) — no celular a saúde já aparece no card do carro */}
-          <Glass className="hidden lg:flex lg:col-span-3 p-5 flex-col">
+          <Glass className="hidden lg:flex lg:col-span-5 p-5 flex-col">
             <CardHeader title="Saúde" subtitle={vehicle ? `${vehicle.brand} ${vehicle.model}` : undefined} />
             <div className="flex-1 flex items-center justify-center py-3">
-              {health ? <DotRing value={health.overall_score} label="saúde geral" size={170} /> : <Skeleton className="w-[150px] h-[150px] rounded-full" />}
+              {health ? <DotRing value={health.overall_score} label="saúde geral" size={160} /> : <Skeleton className="w-[150px] h-[150px] rounded-full" />}
             </div>
           </Glass>
 
-          <CardLembretes lembretes={lembretes} className="lg:col-span-4" />
+          <CardLembretes lembretes={lembretes} className="lg:col-span-5" />
 
-          {/* Próxima ação (celular) */}
-          {(proximoAgendamento || lembretes[0]) && (
-            <Glass className="p-4 flex items-center gap-3 lg:hidden">
-              <span className="w-11 h-11 rounded-full nav-raised flex items-center justify-center flex-none" style={{ boxShadow: '0 6px 16px rgba(204,20,0,0.3)' }}>
-                {proximoAgendamento ? <Calendar size={18} /> : <Wrench size={18} />}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] uppercase tracking-wider" style={{ color: V.brand }}>
-                  {proximoAgendamento ? 'Próximo agendamento' : 'Próxima manutenção'}
-                </p>
-                <p className="text-[14px] font-medium truncate" style={{ color: V.text }}>
-                  {proximoAgendamento ? proximoAgendamento.service_type : lembretes[0]?.service_name}
-                </p>
-                <p className="text-[12px]" style={{ color: V.muted }}>
-                  {proximoAgendamento
-                    ? `${format(dia(proximoAgendamento.date), 'dd/MM')} às ${proximoAgendamento.time_slot?.slice(0, 5)}`
-                    : lembretes[0]?.km_remaining != null ? `Em ${lembretes[0].km_remaining.toLocaleString('pt-BR')} km` : lembretes[0]?.vehicle_label}
-                </p>
-              </div>
-              {!proximoAgendamento && (
-                <button onClick={() => navigate('/agendar')} className="chip-active h-9 px-4 rounded-full text-[12.5px] font-medium">Agendar</button>
-              )}
-            </Glass>
-          )}
-
-          <CardCusto className="lg:col-span-5" />
+          <CardCusto className="lg:col-span-7" />
 
           {/* Último / próximo serviço */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-1 lg:col-span-2">
+          <div className="grid grid-cols-2 gap-4 lg:col-span-5 lg:content-start">
             <Glass className="p-4 flex flex-col gap-1.5">
-              <span className="text-[12px]" style={{ color: V.muted }}>Último serviço</span>
-              <span className="text-[17px] font-normal" style={{ color: V.text }}>
+              <span className="text-[0.75rem]" style={{ color: V.muted }}>Último serviço</span>
+              <span className="text-[1.0625rem] font-normal" style={{ color: V.text }}>
                 {ultimo?.service_date ? format(dia(ultimo.service_date), "dd MMM yyyy", { locale: ptBR }) : '—'}
               </span>
-              <span className="text-[11.5px] truncate" style={{ color: V.subtle }}>
+              <span className="text-[0.75rem] truncate" style={{ color: V.subtle }}>
                 {ultimo ? `${ultimo.service_type} · há ${differenceInCalendarDays(new Date(), dia(ultimo.service_date))} dias` : 'Nenhum ainda'}
               </span>
             </Glass>
             <Glass className="p-4 flex flex-col gap-1.5">
-              <span className="text-[12px]" style={{ color: V.muted }}>Próximo serviço</span>
-              <span className="text-[17px] font-normal" style={{ color: V.text }}>
+              <span className="text-[0.75rem]" style={{ color: V.muted }}>Próximo serviço</span>
+              <span className="text-[1.0625rem] font-normal" style={{ color: V.text }}>
                 {proximoAgendamento ? format(dia(proximoAgendamento.date), "dd MMM yyyy", { locale: ptBR })
                   : lembretes[0]?.next_service_date ? format(dia(lembretes[0].next_service_date), "dd MMM yyyy", { locale: ptBR })
                   : lembretes[0]?.km_remaining != null
                     ? (lembretes[0].km_remaining < 0 ? 'Atrasado' : `Em ${lembretes[0].km_remaining.toLocaleString('pt-BR')} km`)
                     : '—'}
               </span>
-              <span className="text-[11.5px] truncate" style={{ color: V.subtle }}>
+              <span className="text-[0.75rem] truncate" style={{ color: V.subtle }}>
                 {proximoAgendamento ? proximoAgendamento.service_type : lembretes[0]?.service_name ?? 'Nada agendado'}
               </span>
             </Glass>
           </div>
 
           {/* Atividade recente */}
-          <Glass className="p-5 lg:col-span-5">
+          <Glass className="p-5 lg:col-span-12">
             <CardHeader title="Atividade recente" subtitle="Serviços feitos"
               right={<IconCircle label="Ver todos os serviços" onClick={() => navigate('/historico')}><ArrowUpRight size={16} color={V.brand} /></IconCircle>} />
             <div className="mt-4 flex flex-col gap-2">
               {history.length === 0 ? (
-                <p className="text-[13px] py-6 text-center" style={{ color: V.subtle }}>Nenhum serviço registrado ainda.</p>
+                <p className="text-[0.8125rem] py-6 text-center" style={{ color: V.subtle }}>Nenhum serviço registrado ainda.</p>
               ) : history.slice(0, 3).map(s => (
                 <button key={s.id} onClick={() => navigate(`/servico/${s.id}`)}
                   className="flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-left" style={{ background: V.tile }}>
-                  <span className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-none">
+                  <span className="w-9 h-9 rounded-full bg-surface flex items-center justify-center flex-none">
                     {/óleo|oleo/i.test(s.service_type) ? <Gauge size={16} color={V.muted} />
                       : /freio/i.test(s.service_type) ? <ShieldCheck size={16} color={V.muted} /> : <Activity size={16} color={V.muted} />}
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[13.5px] font-medium truncate" style={{ color: V.text }}>{s.service_type}</span>
-                    <span className="block text-[11.5px]" style={{ color: V.subtle }}>
+                    <span className="block text-[0.8125rem] font-medium truncate" style={{ color: V.text }}>{s.service_type}</span>
+                    <span className="block text-[0.75rem]" style={{ color: V.subtle }}>
                       {format(dia(s.service_date), 'dd/MM/yyyy')}{s.workshop_name ? ` · ${s.workshop_name}` : ''}
                     </span>
                   </span>
-                  {!!s.total_cost && <span className="text-[13.5px] tabular" style={{ color: V.text }}>{brl(s.total_cost)}</span>}
+                  {!!s.total_cost && <span className="text-[0.8125rem] tabular" style={{ color: V.text }}>{brl(s.total_cost)}</span>}
                 </button>
               ))}
             </div>

@@ -21,12 +21,12 @@ function FaqItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean
   return (
     <div style={{ borderBottom: `1px solid ${C.borderSoft}` }}>
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
-        <span className="flex-1 text-[13.5px] font-semibold" style={{ color: C.text }}>{q}</span>
+        <span className="flex-1 text-[0.8125rem] font-semibold" style={{ color: C.text }}>{q}</span>
         <ChevronDown size={18} color={C.subtle}
           style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
       </button>
       {open && (
-        <p className="px-4 pb-4 -mt-1 text-[12.5px] leading-relaxed" style={{ color: C.muted }}>{a}</p>
+        <p className="px-4 pb-4 -mt-1 text-[0.75rem] leading-relaxed" style={{ color: C.muted }}>{a}</p>
       )}
     </div>
   );
@@ -44,11 +44,11 @@ export function HelpCenterScreen() {
       <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
         {/* Search */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-[22px] glass">
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl glass">
           <Search size={18} color={C.subtle} />
           <input value={q} onChange={e => setQ(e.target.value)}
             placeholder="Buscar ajuda..."
-            className="flex-1 text-[13.5px] outline-none bg-transparent" style={{ color: C.text }} />
+            className="flex-1 text-[0.8125rem] outline-none bg-transparent" style={{ color: C.text }} />
         </div>
 
         {/* Contact */}
@@ -60,11 +60,11 @@ export function HelpCenterScreen() {
               act: () => { window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Ajuda — app RevisaCar')}`; } },
           ].map(c => (
             <button key={c.label} onClick={c.act}
-              className="flex flex-col items-center gap-2 py-4 rounded-[22px] glass">
+              className="flex flex-col items-center gap-2 py-4 rounded-2xl glass">
               <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: c.bg }}>
                 <c.icon size={20} color={c.ic} />
               </div>
-              <span className="text-[12px] font-semibold" style={{ color: C.text }}>{c.label}</span>
+              <span className="text-[0.75rem] font-semibold" style={{ color: C.text }}>{c.label}</span>
             </button>
           ))}
         </div>
@@ -74,7 +74,7 @@ export function HelpCenterScreen() {
           <SectionLabel>Perguntas frequentes</SectionLabel>
           <CardGroup>
             {filtered.length === 0 ? (
-              <p className="px-4 py-8 text-center text-[13px]" style={{ color: C.subtle }}>
+              <p className="px-4 py-8 text-center text-[0.8125rem]" style={{ color: C.subtle }}>
                 Nenhum resultado para "{q}".
               </p>
             ) : filtered.map((f, i) => (

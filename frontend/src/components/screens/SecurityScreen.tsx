@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { profileApi, accountApi } from '../../services/api';
 import { MainLayout, Topbar, BottomSheet } from '../layout';
-import { C, SectionLabel, PrimaryBtn, OutlineBtn } from '../ui/pro';
+import { C, SectionLabel, CardGroup, PrimaryBtn, OutlineBtn } from '../ui/pro';
 
 type Erro = AxiosError<{ detail?: string; new_password?: string[]; old_password?: string[]; non_field_errors?: string[] }>;
 
@@ -14,17 +14,18 @@ function mensagem(e: unknown, padrao: string) {
   return d?.detail || d?.new_password?.[0] || d?.old_password?.[0] || d?.non_field_errors?.[0] || padrao;
 }
 
-function CampoSenha({ id, label, value, onChange, autoComplete }: {
-  id: string; label: string; value: string; onChange: (v: string) => void; autoComplete: string;
+/** Linha de formulário agrupado (iOS): rótulo à esquerda, campo à direita. */
+function CampoSenha({ id, label, value, onChange, autoComplete, last }: {
+  id: string; label: string; value: string; onChange: (v: string) => void; autoComplete: string; last?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[11.5px] font-semibold" style={{ color: C.muted }}>{label}</label>
-      <input id={id} type="password" value={value} placeholder="••••••••" autoComplete={autoComplete}
+    <label htmlFor={id} className="flex items-center gap-3 pl-4 min-h-[44px]">
+      <span className="t-body w-[104px] flex-none" style={{ color: C.text }}>{label}</span>
+      <input id={id} type="password" value={value} placeholder="Obrigatório" autoComplete={autoComplete}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-4 py-3 rounded-2xl text-[13.5px] font-medium outline-none"
-        style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
-    </div>
+        className="flex-1 min-w-0 t-body bg-transparent outline-none py-[11px] pr-4"
+        style={{ color: C.text, boxShadow: last ? 'none' : `0 0.5px 0 ${C.border}` }} />
+    </label>
   );
 }
 
@@ -38,11 +39,11 @@ function SairDeTodosSheet({ onClose }: { onClose: () => void }) {
   return (
     <BottomSheet onClose={onClose} title="Sair dos outros aparelhos">
       <form className="flex flex-col gap-4 pt-2" onSubmit={e => { e.preventDefault(); if (senha) mutate(); }}>
-        <p className="text-[13.5px] leading-relaxed" style={{ color: C.muted }}>
+        <p className="text-[0.8125rem] leading-relaxed" style={{ color: C.muted }}>
           Todos os outros celulares e computadores conectados à sua conta vão precisar entrar de novo.
           Este aparelho continua conectado.
         </p>
-        <CampoSenha id="senha-sair" label="Confirme sua senha" value={senha} onChange={setSenha} autoComplete="current-password" />
+        <CardGroup><CampoSenha id="senha-sair" label="Senha" value={senha} onChange={setSenha} autoComplete="current-password" last /></CardGroup>
         <PrimaryBtn type="submit" disabled={!senha || isPending}>{isPending ? 'Encerrando…' : 'Encerrar outras sessões'}</PrimaryBtn>
         <OutlineBtn onClick={onClose}>Cancelar</OutlineBtn>
       </form>
@@ -72,31 +73,31 @@ export function SecurityScreen() {
 
           <form onSubmit={e => { e.preventDefault(); if (canSave) trocar(); }}>
             <SectionLabel>Alterar senha</SectionLabel>
-            <div className="rounded-[22px] p-4 flex flex-col gap-3.5 glass">
-              <CampoSenha id="senha-atual" label="Senha atual" value={pw.atual} autoComplete="current-password"
+            <CardGroup>
+              <CampoSenha id="senha-atual" label="Atual" value={pw.atual} autoComplete="current-password"
                 onChange={v => setPw(s => ({ ...s, atual: v }))} />
-              <CampoSenha id="senha-nova" label="Nova senha" value={pw.nova} autoComplete="new-password"
+              <CampoSenha id="senha-nova" label="Nova" value={pw.nova} autoComplete="new-password"
                 onChange={v => setPw(s => ({ ...s, nova: v }))} />
-              <CampoSenha id="senha-conf" label="Confirmar nova senha" value={pw.conf} autoComplete="new-password"
+              <CampoSenha id="senha-conf" label="Confirmar" value={pw.conf} autoComplete="new-password" last
                 onChange={v => setPw(s => ({ ...s, conf: v }))} />
-              {pw.nova && pw.nova.length < 8 && (
-                <p className="text-[11px]" style={{ color: C.brand }}>Mínimo de 8 caracteres</p>
-              )}
-              {pw.conf && pw.nova !== pw.conf && (
-                <p className="text-[11px]" style={{ color: C.brand }}>As senhas não coincidem</p>
-              )}
-              <PrimaryBtn type="submit" disabled={!canSave}>{isPending ? 'Salvando…' : 'Salvar nova senha'}</PrimaryBtn>
-            </div>
+            </CardGroup>
+            <p className="t-footnote px-4 mt-1.5" role="status"
+               style={{ color: (pw.nova && pw.nova.length < 8) || (pw.conf && pw.nova !== pw.conf) ? 'var(--red)' : C.subtle }}>
+              {pw.nova && pw.nova.length < 8 ? 'A nova senha precisa de pelo menos 8 caracteres.'
+                : pw.conf && pw.nova !== pw.conf ? 'As senhas não coincidem.'
+                : 'Ao trocar a senha, os outros aparelhos precisam entrar de novo.'}
+            </p>
+            <div className="mt-4"><PrimaryBtn type="submit" disabled={!canSave}>{isPending ? 'Salvando…' : 'Salvar nova senha'}</PrimaryBtn></div>
           </form>
 
           <div>
             <SectionLabel>Aparelhos conectados</SectionLabel>
-            <div className="rounded-[22px] p-4 flex flex-col gap-3 glass">
+            <div className="rounded-2xl p-4 flex flex-col gap-3 glass">
               <div className="flex items-start gap-3.5">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center flex-none" style={{ background: C.bg }}>
                   <MonitorSmartphone size={18} color={C.muted} />
                 </div>
-                <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>
+                <p className="text-[0.8125rem] leading-relaxed" style={{ color: C.muted }}>
                   Esqueceu a conta aberta em outro aparelho ou acha que alguém entrou nela?
                   Encerre todas as outras sessões. Trocar a senha também faz isso.
                 </p>

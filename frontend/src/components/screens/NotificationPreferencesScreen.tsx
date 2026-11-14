@@ -44,13 +44,13 @@ export function NotificationPreferencesScreen() {
                   <a.icon size={18} color={C.muted} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[14px] font-semibold" style={{ color: C.text }}>{a.label}</p>
-                  <p className="text-[11.5px]" style={{ color: C.muted }}>{a.desc}</p>
+                  <p className="text-[0.9375rem] font-semibold" style={{ color: C.text }}>{a.label}</p>
+                  <p className="text-[0.75rem]" style={{ color: C.muted }}>{a.desc}</p>
                 </div>
               </div>
             ))}
           </CardGroup>
-          <p className="text-[11.5px] mt-2 px-1" style={{ color: C.subtle }}>
+          <p className="text-[0.75rem] mt-2 px-1" style={{ color: C.subtle }}>
             Todos os avisos também ficam na tela Notificações.
           </p>
         </div>

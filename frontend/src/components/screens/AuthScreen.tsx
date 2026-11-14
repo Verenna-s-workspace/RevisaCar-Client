@@ -40,7 +40,7 @@ function MarcaRevisaCar() {
   return (
     <span className="flex items-center gap-2.5">
       <img src="/logo.svg" alt="" width={40} height={40} />
-      <span className="text-[30px] leading-none" style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, color: 'var(--text)' }}>
+      <span className="text-[1.75rem] leading-none" style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, color: 'var(--text)' }}>
         RevisaCar
       </span>
     </span>
@@ -53,7 +53,7 @@ function Field({
 }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[12.5px] font-medium text-text-muted px-1">{label}</label>
+      <label className="text-[0.75rem] font-medium text-text-muted px-1">{label}</label>
       {children}
       {error && (
         <p className="text-xs text-crit font-medium">{error}</p>
@@ -72,7 +72,7 @@ const TextInput = forwardRef<
     <div className="relative flex items-center">
       <input
         ref={ref}
-        className={`w-full px-4 py-3.5 rounded-2xl border text-[14px] text-text bg-white/90
+        className={`w-full px-4 py-3.5 rounded-2xl border text-[0.9375rem] text-text bg-surface
                     outline-none transition-all placeholder:text-text-ghost font-sans
                     ${error
                       ? 'border-crit focus:border-crit focus:shadow-[0_0_0_3px_rgba(204,20,0,0.1)]'
@@ -107,8 +107,8 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}
           className="text-center lg:hidden">
-          <h1 className="text-[26px] leading-tight font-normal" style={{ color: 'var(--text)' }}>Seu carro em dia,<br />sem papelada.</h1>
-          <p className="text-[14px] mt-2 leading-relaxed max-w-[280px] mx-auto" style={{ color: 'var(--muted)' }}>
+          <h1 className="text-[1.75rem] leading-tight font-normal" style={{ color: 'var(--text)' }}>Seu carro em dia,<br />sem papelada.</h1>
+          <p className="text-[0.9375rem] mt-2 leading-relaxed max-w-[280px] mx-auto" style={{ color: 'var(--muted)' }}>
             Agende com a sua oficina, receba orçamentos e acompanhe a saúde do veículo.
           </p>
         </motion.div>
@@ -123,7 +123,7 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
       >
         <button
           onClick={onLogin}
-          className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium
+          className="w-full h-[52px] bg-brand rounded-full text-white text-[0.9375rem] font-medium
                      active:scale-[0.97] transition-all shadow-[0_8px_20px_rgba(204,20,0,0.25)]
                      hover:bg-brand-dark"
         >
@@ -138,7 +138,7 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
 
         <button
           onClick={onRegister}
-          className="chip w-full h-[52px] rounded-full text-[15px] font-medium active:scale-[0.97]"
+          className="chip w-full h-[52px] rounded-full text-[0.9375rem] font-medium active:scale-[0.97]"
         >
           Criar conta
         </button>
@@ -200,13 +200,13 @@ function LoginScreen({ onBack, onSuccess, onForgot }: {
 
       <div className="flex-1 glass rounded-t-[32px] lg:rounded-[32px] lg:mx-4 lg:mb-6 px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
         <div>
-          <h2 className="text-[26px] font-normal text-text">Entrar</h2>
+          <h2 className="text-[1.75rem] font-normal text-text">Entrar</h2>
           <p className="text-sm text-text-muted mt-1">Acesse sua conta RevisaCar</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <Field label="E-mail" error={errors.email?.message}>
-            <TextInput type="email" placeholder="seu@email.com" autoComplete="email"
+            <TextInput type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" placeholder="seu@email.com" autoComplete="email"
               error={errors.email?.message} {...register('email')} />
           </Field>
 
@@ -236,7 +236,7 @@ function LoginScreen({ onBack, onSuccess, onForgot }: {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium mt-2
+            className="w-full h-[52px] bg-brand rounded-full text-white text-[0.9375rem] font-medium mt-2
                        disabled:opacity-50 active:scale-[0.97] transition-all
                        hover:bg-brand-dark shadow-md shadow-brand/20"
           >
@@ -290,7 +290,7 @@ function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: 
 
       <div className="flex-1 glass rounded-t-[32px] lg:rounded-[32px] lg:mx-4 lg:mb-6 px-6 pt-8 pb-10 flex flex-col gap-6 overflow-y-auto">
         <div>
-          <h2 className="text-[26px] font-normal text-text">Criar conta</h2>
+          <h2 className="text-[1.75rem] font-normal text-text">Criar conta</h2>
           <p className="text-sm text-text-muted mt-1">Crie sua conta gratuita</p>
         </div>
 
@@ -300,12 +300,12 @@ function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: 
               error={errors.name?.message} {...register('name')} />
           </Field>
           <Field label="E-mail" error={errors.email?.message}>
-            <TextInput type="email" placeholder="seu@email.com"
+            <TextInput type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" placeholder="seu@email.com"
               error={errors.email?.message} {...register('email')} />
           </Field>
           <Field label="Telefone" error={errors.phone?.message}>
             <TextInput type="tel" placeholder="(11) 99999-9999"
-              error={errors.phone?.message} {...register('phone')} />
+              inputMode="tel" autoComplete="tel" error={errors.phone?.message} {...register('phone')} />
           </Field>
           <Field label="Senha" error={errors.password?.message}>
             <TextInput
@@ -329,7 +329,7 @@ function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium mt-2
+            className="w-full h-[52px] bg-brand rounded-full text-white text-[0.9375rem] font-medium mt-2
                        disabled:opacity-50 active:scale-[0.97] transition-all
                        hover:bg-brand-dark shadow-md shadow-brand/20"
           >
@@ -381,7 +381,7 @@ function ForgotScreen({ onBack }: { onBack: () => void }) {
 
       <div className="flex-1 glass rounded-t-[32px] lg:rounded-[32px] lg:mx-4 lg:mb-6 px-6 pt-8 pb-10 flex flex-col gap-6">
         <div>
-          <h2 className="text-[26px] font-normal text-text">Recuperar senha</h2>
+          <h2 className="text-[1.75rem] font-normal text-text">Recuperar senha</h2>
           <p className="text-sm text-text-muted mt-1 leading-relaxed">
             Digite seu e-mail e enviaremos as instruções para redefinir sua senha.
           </p>
@@ -389,14 +389,14 @@ function ForgotScreen({ onBack }: { onBack: () => void }) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <Field label="E-mail" error={errors.email?.message}>
-            <TextInput type="email" placeholder="seu@email.com"
+            <TextInput type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" placeholder="seu@email.com"
               error={errors.email?.message} {...register('email')} />
           </Field>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-[52px] bg-brand rounded-full text-white text-[15px] font-medium mt-2
+            className="w-full h-[52px] bg-brand rounded-full text-white text-[0.9375rem] font-medium mt-2
                        disabled:opacity-50 active:scale-[0.97] transition-all hover:bg-brand-dark"
           >
             {isSubmitting ? 'Enviando...' : 'Enviar instruções'}

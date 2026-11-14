@@ -38,7 +38,7 @@ export function VerifyEmailScreen() {
     <AuthLayout>
       <div className="flex-1 flex flex-col justify-center px-6"
            style={{ background: 'linear-gradient(160deg, #1A1A1A 0%, #111111 50%, #0D0D0D 100%)' }}>
-        <div className="bg-white rounded-[28px] px-6 py-8 flex flex-col gap-5 animate-fade-up">
+        <div className="bg-surface rounded-[28px] px-6 py-8 flex flex-col gap-5 animate-fade-up">
           <div className="flex flex-col items-center text-center gap-3">
             {status === 'loading' && (
               <>
@@ -76,7 +76,7 @@ export function VerifyEmailScreen() {
                 <form onSubmit={resend} className="w-full flex flex-col gap-3 mt-2">
                   <input type="email" value={resendEmail} onChange={e => setResendEmail(e.target.value)}
                          placeholder="seu@email.com" autoComplete="email"
-                         className="w-full px-4 py-3.5 rounded-2xl text-[14px] font-medium outline-none border"
+                         className="w-full px-4 py-3.5 rounded-2xl text-[0.9375rem] font-medium outline-none border"
                          style={{ borderColor: 'var(--border)', color: 'var(--text)' }} />
                   <button type="submit" disabled={!resendEmail}
                           className="w-full py-4 bg-brand rounded-2xl text-white text-base font-medium

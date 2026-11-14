@@ -4,22 +4,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Vermelho da marca unificado com o app da oficina (#CC1400 "ferrari").
-        brand:   { DEFAULT:'#CC1400', dark:'#A01000', deep:'#740C00', light:'#E01500' },
-        bg:      { DEFAULT:'#FFFFFF', alt:'#F7F6F3' },
-        surface: { DEFAULT:'#FFFFFF', 2:'#F7F6F3', 3:'#EFEDE8' },
-        border:  { DEFAULT:'#E2DFD8', md:'#C7C3BA', hi:'#A8AEB6' },
-        text:    { DEFAULT:'#14161A', 2:'#23272F', 3:'#3a3d44', muted:'#6B7078', subtle:'#9AA0A8', ghost:'#B6BAC0' },
-        ok:      { DEFAULT:'#16803C', mid:'#22C55E', bg:'rgba(22,128,60,0.07)', border:'rgba(22,128,60,0.2)' },
-        warn:    { DEFAULT:'#92400E', mid:'#F59E0B', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.22)' },
-        crit:    { DEFAULT:'#CC1400', bg:'rgba(204,20,0,0.06)',                  border:'rgba(204,20,0,0.2)' },
-        info:    { DEFAULT:'#1D4ED8', bg:'rgba(29,78,216,0.06)',                  border:'rgba(29,78,216,0.18)' },
-        dark:    { DEFAULT:'#111111', 2:'#1A1A1A', 3:'#222222' },
+        // Tudo por token (claro/escuro em src/index.css).
+        brand:   { DEFAULT:'var(--tint)', dark:'var(--brand-dark)', deep:'var(--brand-deep)', light:'var(--brand-light)' },
+        bg:      { DEFAULT:'var(--bg)', alt:'var(--card-2)' },
+        surface: { DEFAULT:'var(--card)', 2:'var(--card-2)', 3:'var(--fill)' },
+        border:  { DEFAULT:'var(--sep)', md:'var(--sep)', hi:'var(--text-3)' },
+        text:    { DEFAULT:'var(--text)', 2:'var(--text)', 3:'var(--text-2)', muted:'var(--text-2)', subtle:'var(--text-3)', ghost:'var(--text-3)' },
+        ok:      { DEFAULT:'var(--green)', mid:'var(--green)', bg:'var(--green-soft)', border:'var(--green-soft)' },
+        warn:    { DEFAULT:'var(--orange)', mid:'var(--orange)', bg:'var(--orange-soft)', border:'var(--orange-soft)' },
+        crit:    { DEFAULT:'var(--red)', bg:'var(--red-soft)', border:'var(--red-soft)' },
+        info:    { DEFAULT:'var(--blue)', bg:'var(--blue-soft)', border:'var(--blue-soft)' },
+        fill:    { DEFAULT:'var(--fill)' },
+        sep:     { DEFAULT:'var(--sep)' },
       },
       fontFamily: {
-        sans: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['"DM Mono"', '"JetBrains Mono"', 'Menlo', 'monospace'],
-        logo: ['"Fredoka"', '"DM Sans"', 'cursive'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', 'system-ui', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['"DM Mono"', 'ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
+        logo: ['"Fredoka"', 'system-ui', 'sans-serif'],
       },
       borderRadius: { xs:'4px', sm:'8px', md:'12px', lg:'16px', xl:'22px', '2xl':'28px' },
       boxShadow: {
