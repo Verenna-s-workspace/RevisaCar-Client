@@ -128,7 +128,8 @@ def test_pedido_sem_oficina_vinculada_e_recusado():
 
 
 def test_pedido_usa_a_unica_oficina_do_cliente():
-    ana = _cliente(); _vincular(ana, OFICINA_A)
+    ana = _cliente()
+    _vincular(ana, OFICINA_A)
     r = _pedido(_api(ana), _veiculo(ana))
     assert r.status_code == 201, r.content
     ap = Appointment.objects.get()
@@ -136,7 +137,9 @@ def test_pedido_usa_a_unica_oficina_do_cliente():
 
 
 def test_com_duas_oficinas_precisa_escolher_e_so_vale_vinculada():
-    ana = _cliente(); _vincular(ana, OFICINA_A); _vincular(ana, OFICINA_B)
+    ana = _cliente()
+    _vincular(ana, OFICINA_A)
+    _vincular(ana, OFICINA_B)
     api, v = _api(ana), _veiculo(ana)
     assert _pedido(api, v).status_code == 422
     assert _pedido(api, v, oficina_doc="99999999999999").status_code == 422
@@ -145,7 +148,8 @@ def test_com_duas_oficinas_precisa_escolher_e_so_vale_vinculada():
 
 
 def test_vinculo_revogado_nao_permite_pedir():
-    ana = _cliente(); _vincular(ana, OFICINA_A, status="revogado")
+    ana = _cliente()
+    _vincular(ana, OFICINA_A, status="revogado")
     assert _pedido(_api(ana), _veiculo(ana), oficina_doc=OFICINA_A).status_code == 422
 
 
@@ -157,7 +161,9 @@ def test_horarios_da_oficina_mais_os_gerais():
     AvailabilitySlot.objects.create(date=dia, time_slot="09:00", oficina_doc=OFICINA_A)
     AvailabilitySlot.objects.create(date=dia, time_slot="10:00", oficina_doc=OFICINA_B)
     api = APIClient()
-    pega = lambda q: [t[:5] for t in api.get(f"/api/customer/availability/times?date={dia}{q}").json()["times"]]
+
+    def pega(q):
+        return [t[:5] for t in api.get(f"/api/customer/availability/times?date={dia}{q}").json()["times"]]
     assert pega("") == ["08:00", "09:00", "10:00"]                      # sem oficina: comportamento antigo
     assert pega(f"&oficina_doc={OFICINA_A}") == ["08:00", "09:00"]
     assert pega(f"&oficina_doc={OFICINA_B}") == ["08:00", "10:00"]

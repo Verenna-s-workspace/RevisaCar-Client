@@ -1,7 +1,5 @@
 """Web Push: inscrição (upsert), cancelamento, auth e envio env-gated."""
-import jwt as pyjwt
 import pytest
-from django.conf import settings
 from rest_framework.test import APIClient
 
 from customer_api import push
@@ -9,8 +7,9 @@ from customer_api.models import Customer, PushSubscription
 from customer_api.serializers import pw_hash
 
 
-def _token(cid: str) -> str:
-    return pyjwt.encode({"customer_id": cid}, settings.SECRET_KEY, algorithm="HS256")
+def _token(customer) -> str:
+    from customer_api.views import _make_tokens
+    return _make_tokens(str(customer.id), customer.name, customer.pwhash)["access"]
 
 
 @pytest.fixture
@@ -20,7 +19,7 @@ def customer(db):
 
 def _client(customer):
     c = APIClient()
-    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(str(customer.id))}")
+    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(customer)}")
     return c
 
 

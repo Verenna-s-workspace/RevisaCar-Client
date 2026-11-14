@@ -497,38 +497,162 @@ def resolve_qr_uuid(uuid_str: str) -> dict | None:
 
 
 # ── Documents ─────────────────────────────────────────────────────────────────
+# O arquivo fica no storage (disco em dev, S3/Supabase Storage em produção) numa
+# chave DERIVADA do documento: <prefixo>/<cliente>/<veículo>/<id do documento>.
+# Assim não é preciso guardar URL no banco (URLs assinadas expiram) nem coluna nova
+# (o schema é compartilhado com o app da oficina). O download passa pela API, que
+# confere o dono antes de entregar o arquivo.
+
+def _document_key(customer_id, vehicle_id, doc_id) -> str:
+    from django.conf import settings
+    return f"{settings.STORAGE_PREFIX}/{customer_id}/{vehicle_id}/{doc_id}"
+
+
+def _document_row(obj):
+    d = _row(obj)
+    if d is None:
+        return None
+    d["has_file"] = bool(obj.file_name)
+    d["file_url"] = f"/customer/documents/{obj.id}/arquivo" if obj.file_name else ""
+    return d
+
 
 def list_documents(customer_id: str, vehicle_id: str | None = None):
     qs = models.VehicleDocument.objects.filter(customer_id=customer_id).order_by("-created_at")
     if vehicle_id:
         qs = qs.filter(vehicle_id=vehicle_id)
-    return [_row(d) for d in qs]
+    return [_document_row(d) for d in qs]
+
+
+def _get_document_obj(doc_id: str, customer_id: str):
+    try:
+        return models.VehicleDocument.objects.filter(id=doc_id, customer_id=customer_id).first()
+    except Exception:  # id malformado
+        return None
 
 
 def get_document(doc_id: str, customer_id: str):
-    return _row(models.VehicleDocument.objects.filter(id=doc_id, customer_id=customer_id).first())
+    return _document_row(_get_document_obj(doc_id, customer_id))
 
 
-def create_document(data: dict):
-    obj = models.VehicleDocument.objects.create(**_clean(models.VehicleDocument, data))
-    return _row(obj)
+def create_document(data: dict, file_bytes: bytes | None = None):
+    """Cria o registro e, se houver arquivo, grava no storage. Se a gravação falhar,
+    o registro é desfeito (não fica documento apontando para arquivo inexistente)."""
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+    from django.db import transaction
+
+    with transaction.atomic():
+        obj = models.VehicleDocument.objects.create(**_clean(models.VehicleDocument, data))
+        if file_bytes is not None:
+            default_storage.save(_document_key(obj.customer_id, obj.vehicle_id, obj.id), ContentFile(file_bytes))
+    return _document_row(obj)
+
+
+def open_document_file(doc_id: str, customer_id: str):
+    """Retorna (arquivo_aberto, nome_original) ou None se não houver arquivo."""
+    from django.core.files.storage import default_storage
+    obj = _get_document_obj(doc_id, customer_id)
+    if not obj or not obj.file_name:
+        return None
+    key = _document_key(obj.customer_id, obj.vehicle_id, obj.id)
+    if not default_storage.exists(key):
+        return None
+    return default_storage.open(key, "rb"), obj.file_name
+
+
+def _delete_document_file(obj):
+    from django.core.files.storage import default_storage
+    if not obj.file_name:
+        return
+    try:
+        default_storage.delete(_document_key(obj.customer_id, obj.vehicle_id, obj.id))
+    except Exception:  # arquivo já removido / storage fora: o registro sai mesmo assim
+        pass
 
 
 def delete_document(doc_id: str, customer_id: str) -> bool:
-    n, _ = models.VehicleDocument.objects.filter(id=doc_id, customer_id=customer_id).delete()
-    return bool(n)
+    obj = _get_document_obj(doc_id, customer_id)
+    if not obj:
+        return False
+    _delete_document_file(obj)
+    obj.delete()
+    return True
 
 
-def upload_document_file(bucket: str, path: str, file_bytes: bytes, content_type: str) -> str:
-    """Salva o arquivo no storage do Django e devolve a URL.
+# ── Conta (LGPD) ──────────────────────────────────────────────────────────────
 
-    Dev: FileSystemStorage (MEDIA_ROOT). Produção: configure django-storages
-    (S3/Supabase Storage S3) via settings — nenhum código muda aqui.
-    """
-    from django.core.files.base import ContentFile
-    from django.core.files.storage import default_storage
-    saved = default_storage.save(f"{bucket}/{path}", ContentFile(file_bytes))
-    return default_storage.url(saved)
+def delete_customer_account(customer_id: str):
+    """Exclui a conta: apaga o que é só do cliente e anonimiza o cadastro.
+
+    - Apagados: documentos (e arquivos), QR codes, lembretes, notificações, inscrições
+      de push, tokens de reset/verificação.
+    - Veículos: marcados como excluídos (OS e orçamentos da oficina podem apontar para eles).
+    - Vínculos com oficinas: revogados (o cliente retira o consentimento).
+    - Cadastro: nome/e-mail/telefone/CPF/endereço/senha apagados. Sem senha, nenhum
+      token antigo vale mais (ver views._customer_ativo).
+    Pedidos de agendamento e histórico ficam (são registros da oficina), sem dados pessoais."""
+    from django.db import transaction
+    from django.utils import timezone
+
+    with transaction.atomic():
+        for doc in models.VehicleDocument.objects.filter(customer_id=customer_id):
+            _delete_document_file(doc)
+            doc.delete()
+        models.VehicleQrLink.objects.filter(customer_id=customer_id).delete()
+        models.MaintenanceReminder.objects.filter(customer_id=customer_id).delete()
+        models.Notification.objects.filter(customer_id=customer_id).delete()
+        models.PushSubscription.objects.filter(customer_id=customer_id).delete()
+        models.PasswordResetToken.objects.filter(customer_id=customer_id).delete()
+        models.EmailVerificationToken.objects.filter(customer_id=customer_id).delete()
+        models.CustomerVehicle.objects.filter(customer_id=customer_id).update(
+            deleted=True, is_active=False, vin="", renavam="", notes="")
+        models.OficinaCliente.objects.filter(customer_id=customer_id, status="ativo").update(
+            status="revogado", revogado_em=timezone.now())
+        models.Customer.objects.filter(id=customer_id).update(
+            name="Conta excluída", email=None, phone="", cpf="", address="", pwhash=None,
+            avatar_url=None, email_verified=False, updated_at=timezone.now())
+
+
+def export_customer_data(customer_id: str) -> dict:
+    """Todos os dados do cliente (portabilidade, LGPD art. 18, V). Sem segredos."""
+    from django.utils import timezone
+
+    c = models.Customer.objects.get(id=customer_id)
+    perfil = _row(c)
+    perfil.pop("pwhash", None)
+
+    def todos(model, **f):
+        return [_row(o) for o in model.objects.filter(customer_id=customer_id, **f)]
+
+    historico = []
+    for h in models.ServiceHistory.objects.filter(customer_id=customer_id).prefetch_related("items"):
+        row = _row(h)
+        row["items"] = [_row(i) for i in h.items.all()]
+        historico.append(row)
+
+    return {
+        "gerado_em": timezone.now().isoformat(),
+        "perfil": perfil,
+        "veiculos": todos(models.CustomerVehicle, deleted=False),
+        "agendamentos": todos(models.Appointment),
+        "historico_de_servicos": historico,
+        "lembretes": todos(models.MaintenanceReminder),
+        "notificacoes": todos(models.Notification),
+        "documentos": [{k: v for k, v in d.items() if k != "file_url"}
+                       for d in list_documents(customer_id)],
+        "oficinas": list_oficinas(customer_id),
+        "orcamentos": _orcamentos_ou_vazio(customer_id),
+    }
+
+
+def _orcamentos_ou_vazio(customer_id: str):
+    """As tabelas de orçamento são do app da oficina; se não existirem neste banco
+    (ex.: ambiente de testes), a exportação segue sem elas."""
+    from django.db import connection
+    if not {"ordens", "orcamentos", "orcamento_itens"} <= set(connection.introspection.table_names()):
+        return []
+    return list_orcamentos(customer_id)
 
 
 # ── Dashboard Summary ─────────────────────────────────────────────────────────

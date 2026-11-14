@@ -19,6 +19,9 @@ urlpatterns = [
     # ── Profile ───────────────────────────────────────────────────────────────
     path("customer/me",                   views.profile,         name="profile"),
     path("customer/me/change-password",   views.change_password, name="change-password"),
+    path("customer/me/logout-all",        views.logout_all,      name="logout-all"),
+    path("customer/me/delete",            views.delete_account,  name="delete-account"),
+    path("customer/me/export",            views.export_data,     name="export-data"),
 
     # ── Dashboard ─────────────────────────────────────────────────────────────
     path("customer/dashboard",            views.dashboard,       name="dashboard"),
@@ -37,6 +40,7 @@ urlpatterns = [
     # ── Documents ─────────────────────────────────────────────────────────────
     path("customer/documents",            views.documents_list,  name="documents-list"),
     path("customer/documents/<str:doc_id>", views.document_detail, name="document-detail"),
+    path("customer/documents/<str:doc_id>/arquivo", views.document_file, name="document-file"),
 
     # ── Appointments ──────────────────────────────────────────────────────────
     path("customer/appointments",                          views.appointments_list,  name="appointments-list"),
