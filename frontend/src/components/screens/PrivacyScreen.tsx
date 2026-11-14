@@ -1,36 +1,42 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, MapPin, Eye, Download, FileText, Trash2 } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { Download, FileText, Trash2, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { accountApi, baixarArquivo } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
-import { C, SectionLabel, CardGroup, MenuRow, ToggleRow } from '../ui/pro';
+import { C, SectionLabel, CardGroup, MenuRow } from '../ui/pro';
 
 export function PrivacyScreen() {
   const navigate = useNavigate();
-  const [p, setP] = useState({ uso: true, local: true, perfil: false });
-  const t = (k: keyof typeof p) => setP(s => ({ ...s, [k]: !s[k] }));
+
+  // Portabilidade (LGPD art. 18, V): baixa na hora um JSON com todos os seus dados.
+  const { mutate: exportar, isPending } = useMutation({
+    mutationFn: () => accountApi.exportData(),
+    onSuccess: (r) => {
+      baixarArquivo(r.data, `revisacar-meus-dados-${new Date().toISOString().slice(0, 10)}.json`);
+      toast.success('Seus dados foram baixados');
+    },
+    onError: () => toast.error('Não foi possível gerar o arquivo agora'),
+  });
 
   return (
     <MainLayout showNav={false} topbar={<Topbar title="Privacidade" showBack />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
 
-        <div>
-          <SectionLabel>Seus dados</SectionLabel>
-          <CardGroup>
-            <ToggleRow icon={<BarChart3 size={18} />} label="Dados de uso"
-                       desc="Ajuda a melhorar o app de forma anônima" on={p.uso} onChange={() => t('uso')} />
-            <ToggleRow icon={<MapPin size={18} />} label="Localização"
-                       desc="Sugerir oficinas próximas" on={p.local} onChange={() => t('local')} />
-            <ToggleRow icon={<Eye size={18} />} label="Perfil visível p/ oficinas"
-                       desc="Permite que oficinas vejam seu histórico" on={p.perfil} onChange={() => t('perfil')} last />
-          </CardGroup>
+        <div className="rounded-[16px] p-4" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+          <p className="text-[13px] leading-relaxed" style={{ color: C.text2 }}>
+            O RevisaCar não vende seus dados nem usa rastreamento de anúncios. As oficinas só veem
+            seus dados depois que você entra nelas pelo convite.
+          </p>
         </div>
 
         <div>
-          <SectionLabel>Gerenciar</SectionLabel>
+          <SectionLabel>Seus dados</SectionLabel>
           <CardGroup>
-            <MenuRow icon={<Download size={18} />} label="Baixar meus dados"
-                     onClick={() => toast.success('Enviaremos seus dados por e-mail')} />
+            <MenuRow icon={<Store size={18} />} label="Oficinas com acesso aos seus dados"
+                     onClick={() => navigate('/oficinas')} />
+            <MenuRow icon={<Download size={18} />} label={isPending ? 'Gerando arquivo…' : 'Baixar meus dados'}
+                     onClick={() => { if (!isPending) exportar(); }} />
             <MenuRow icon={<FileText size={18} />} label="Política de Privacidade" last
                      onClick={() => navigate('/politica')} />
           </CardGroup>

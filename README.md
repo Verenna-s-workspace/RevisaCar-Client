@@ -27,7 +27,10 @@ Complete customer-facing Progressive Web App for the RevisaCar mechanic platform
 | `/agendar` | Schedule Maintenance (4-step wizard) |
 | `/historico` | Service History (search + filter + detail modal) |
 | `/manutencoes` | Scheduled Maintenance (progress bars + urgency) |
-| `/orcamentos` | Estimates (approve/reject with comment) |
+| `/orcamentos` | Orçamentos enviados pelas oficinas (somente leitura) |
+| `/oficinas` | Minhas oficinas + entrar por convite (`/?convite=<código>` ou `/convite/<código>`) |
+| `/documentos` | Documentos do veículo (upload, download, compartilhar, apagar) |
+| `/seguranca` · `/privacidade` · `/excluir-conta` | Troca de senha, sair de todos os aparelhos, exportar dados, excluir conta (LGPD) |
 | `/notificacoes` | Notifications (mark read, mark all) |
 | `/perfil` | Profile (edit + change password + logout) |
 
@@ -44,7 +47,20 @@ POST   /api/customer/auth/forgot-password
 GET    /api/customer/dashboard
 GET    /api/customer/me
 PUT    /api/customer/me
-POST   /api/customer/me/change-password
+POST   /api/customer/me/change-password   (devolve access novo; derruba as outras sessões)
+POST   /api/customer/me/logout-all        (pede a senha)
+POST   /api/customer/me/delete            (LGPD: anonimiza; pede a senha)
+GET    /api/customer/me/export            (LGPD: JSON com todos os dados)
+
+GET    /api/customer/oficinas
+POST   /api/customer/oficinas/convite
+GET    /api/customer/orcamentos
+GET    /api/customer/orcamentos/:id
+
+GET    /api/customer/documents
+POST   /api/customer/documents            (multipart; PDF/JPG/PNG/WEBP/HEIC até 10 MB)
+GET    /api/customer/documents/:id/arquivo
+DELETE /api/customer/documents/:id
 
 GET    /api/customer/vehicles
 POST   /api/customer/vehicles

@@ -1,9 +1,14 @@
-import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/auth';
 import { SHOWCASE } from './config/features';
+import { capturarConviteDaUrl, guardarConvitePendente, lerConvitePendente } from './lib/convite';
+
+// O app da oficina compartilha `/?convite=<código>`: guardamos já no boot (antes
+// de qualquer redirecionamento para o login apagar o parâmetro).
+capturarConviteDaUrl();
 
 /* ─── Lazy screens ──────────────────────────────────────── */
 const Auth            = lazy(() => import('./components/screens/AuthScreen').then(m => ({ default: m.AuthScreen })));
@@ -39,6 +44,7 @@ const DeleteAccount   = lazy(() => import('./components/screens/DeleteAccountScr
 const ServiceDetail   = lazy(() => import('./components/screens/ServiceDetailScreen').then(m => ({ default: m.ServiceDetailScreen })));
 const InspectionReport = lazy(() => import('./components/screens/InspectionReportScreen').then(m => ({ default: m.InspectionReportScreen })));
 const Warranty        = lazy(() => import('./components/screens/WarrantyScreen').then(m => ({ default: m.WarrantyScreen })));
+const Oficinas        = lazy(() => import('./components/screens/OficinasScreen').then(m => ({ default: m.OficinasScreen })));
 
 /* ─── Query Client ──────────────────────────────────────── */
 const qc = new QueryClient({
@@ -61,6 +67,22 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function Showcase({ children }: { children: React.ReactNode }) {
   if (!SHOWCASE) return <Navigate to="/" replace />;
   return <RequireAuth>{children}</RequireAuth>;
+}
+
+/* ─── Convite pendente ──────────────────────────────────── */
+// Depois do login, quem chegou por um link de convite cai direto na confirmação.
+function ConvitePendente() {
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const logado = shouldBypassAuth || isAuthenticated;
+    if (logado && lerConvitePendente() && pathname !== '/oficinas'
+        && !['/login', '/cadastro', '/recuperar-senha', '/verificar-email'].includes(pathname)) {
+      navigate('/oficinas', { replace: true });
+    }
+  }, [isAuthenticated, pathname, navigate]);
+  return null;
 }
 
 /* ─── Loader ────────────────────────────────────────────── */
@@ -93,6 +115,7 @@ function AppLoader() {
 function AppRouter() {
   return (
     <Suspense fallback={<AppLoader />}>
+      <ConvitePendente />
       <Routes>
         {/* Auth */}
         <Route path="/login"    element={shouldBypassAuth ? <Navigate to="/" replace /> : <Auth />} />
@@ -123,6 +146,8 @@ function AppRouter() {
         <Route path="/garantia/:id"         element={<RequireAuth><Warranty /></RequireAuth>} />
 
         {/* Features */}
+        <Route path="/oficinas"         element={<RequireAuth><Oficinas /></RequireAuth>} />
+        <Route path="/convite/:codigo"  element={<ConviteRota />} />
         <Route path="/notificacoes"     element={<RequireAuth><Notifications /></RequireAuth>} />
         <Route path="/notificacoes/:id" element={<RequireAuth><NotifDetail /></RequireAuth>} />
         <Route path="/qr-code"      element={<RequireAuth><QRCode /></RequireAuth>} />
@@ -147,6 +172,14 @@ function AppRouter() {
       </Routes>
     </Suspense>
   );
+}
+
+/* Aceita também /convite/<código> (link curto). */
+function ConviteRota() {
+  const { pathname } = useLocation();
+  const codigo = decodeURIComponent(pathname.split('/').pop() || '');
+  if (codigo) guardarConvitePendente(codigo); // sobrevive ao desvio para o login
+  return <Navigate to="/oficinas" replace />;
 }
 
 /* ─── App ───────────────────────────────────────────────── */

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { SHOWCASE } from '../../config/features';
 import {
   Settings, User, CreditCard, Bell, Shield, Lock,
-  HelpCircle, FileText, LogOut, Star, ChevronRight,
+  HelpCircle, FileText, LogOut, Star, ChevronRight, Store,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { profileApi } from '../../services/api';
@@ -51,7 +51,7 @@ function EditSheet({ name, phone, onClose }: { name: string; phone?: string; onC
             className="w-full px-4 py-3 rounded-[13px] text-[13.5px] font-medium outline-none"
             style={{ border: `1px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
         </div>
-        <PrimaryBtn disabled={isPending}>{isPending ? 'Salvando...' : 'Salvar alterações'}</PrimaryBtn>
+        <PrimaryBtn type="submit" disabled={isPending}>{isPending ? 'Salvando...' : 'Salvar alterações'}</PrimaryBtn>
       </form>
     </BottomSheet>
   );
@@ -89,7 +89,7 @@ export function ProfileScreen() {
     staleTime: 120_000,
   });
 
-  const name  = profile?.name ?? session?.name ?? 'João Silva';
+  const name  = profile?.name ?? session?.name ?? '';
   const email = profile?.email ?? session?.email ?? 'joao.silva@email.com';
   const initial = name.charAt(0).toUpperCase();
 
@@ -149,6 +149,7 @@ export function ProfileScreen() {
                 <SectionLabel>Conta</SectionLabel>
                 <CardGroup>
                   <MenuRow icon={<User size={18} />} label="Meus dados" onClick={() => setShowEdit(true)} />
+                  <MenuRow icon={<Store size={18} />} label="Minhas oficinas" onClick={() => navigate('/oficinas')} />
                   {SHOWCASE && (
                     <MenuRow icon={<CreditCard size={18} />} label="Formas de pagamento" onClick={() => navigate('/pagamento')} />
                   )}

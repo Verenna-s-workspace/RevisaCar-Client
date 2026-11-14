@@ -256,6 +256,7 @@ export interface VehicleQRLink {
 export type DocumentType =
   | 'crlv'
   | 'seguro'
+  | 'ipva'
   | 'garantia'
   | 'nota_fiscal'
   | 'laudo'
@@ -267,12 +268,58 @@ export interface VehicleDocument {
   vehicle_label: string;
   type: DocumentType;
   title: string;
+  /** Caminho na API para baixar o arquivo (vazio se o documento não tem arquivo). */
   file_url: string;
+  has_file?: boolean;
   file_name: string;
   file_size_kb?: number;
   expiry_date?: string;
   notes?: string;
   created_at: string;
+}
+
+// ── Oficinas (carteira) e orçamentos enviados por elas ───────────────────────
+
+export interface OficinaVinculo {
+  oficina_doc: string;
+  nome: string;
+  desde: string | null;
+}
+
+export interface ConviteResultado {
+  ok: boolean;
+  codigo: string;
+  novo?: boolean;
+  mensagem?: string;
+  oficina?: { oficina_doc: string; nome: string };
+}
+
+export type OrcamentoStatus = 'enviado' | 'aprovado' | 'recusado';
+
+export interface OrcamentoItemOficina {
+  tipo: string;
+  descricao: string;
+  marca: string | null;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal: number;
+}
+
+export interface OrcamentoOficina {
+  id: string;
+  oficina: { oficina_doc: string; nome: string };
+  os_num: string | null;
+  vehicle_label: string;
+  versao: number;
+  status: OrcamentoStatus;
+  validade_ate: string | null;
+  observacoes: string;
+  total: number;
+  enviado_em: string | null;
+  aprovado_em: string | null;
+  recusado_em: string | null;
+  motivo_recusa: string | null;
+  itens: OrcamentoItemOficina[];
 }
 
 // ── API Response ──────────────────────────────────────────────────────────────

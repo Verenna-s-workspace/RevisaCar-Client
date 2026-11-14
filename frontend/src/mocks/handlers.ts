@@ -10,7 +10,7 @@ import type { Vehicle, VehicleFormData } from '../types';
 import {
   mockProfile, mockDashboard, mockVehicleStore, mockEstimateStore, cloneEstimate,
   makeAvailableDates, DEFAULT_TIMES, mockHistory, mockInspections, mockNotifStore,
-  mockHealth, mockDocuments, mockPlateDb,
+  mockHealth, mockDocuments, mockPlateDb, mockOficinaStore, mockOrcamentos, MOCK_CONVITE,
 } from './data';
 
 const P = '*/customer';
@@ -22,7 +22,39 @@ export const handlers = [
     Object.assign(mockProfile, await request.json() as object);
     return HttpResponse.json(mockProfile);
   }),
-  http.post(`${P}/me/change-password`, () => HttpResponse.json({})),
+  http.post(`${P}/me/change-password`, () => HttpResponse.json({ detail: 'Senha alterada com sucesso', access: 'dev-access-token' })),
+  http.post(`${P}/me/logout-all`, () => HttpResponse.json({ detail: 'Todas as outras sessões foram encerradas', access: 'dev-access-token' })),
+  http.post(`${P}/me/delete`, () => HttpResponse.json({ detail: 'Conta excluída' })),
+  http.get(`${P}/me/export`, () => HttpResponse.json({ perfil: mockProfile, veiculos: mockVehicleStore.vehicles })),
+
+  // ── Oficinas + orçamentos da oficina ────────────────────────────────────────
+  http.get(`${P}/oficinas`, () => HttpResponse.json(mockOficinaStore.oficinas)),
+  http.post(`${P}/oficinas/convite`, async ({ request }) => {
+    const { codigo } = await request.json() as { codigo: string };
+    if (codigo !== MOCK_CONVITE) {
+      return HttpResponse.json({ detail: 'Convite inválido ou cancelado.', codigo: 'convite_invalido' }, { status: 400 });
+    }
+    const oficina = { oficina_doc: '44555666000199', nome: 'Mecânica Bairro', desde: new Date().toISOString() };
+    const novo = !mockOficinaStore.oficinas.some(o => o.oficina_doc === oficina.oficina_doc);
+    if (novo) mockOficinaStore.oficinas.push(oficina);
+    return HttpResponse.json({ ok: true, codigo: 'vinculado', novo, oficina: { oficina_doc: oficina.oficina_doc, nome: oficina.nome } },
+                             { status: novo ? 201 : 200 });
+  }),
+  http.get(`${P}/orcamentos`, ({ request }) => {
+    const status = new URL(request.url).searchParams.get('status');
+    return HttpResponse.json(mockOrcamentos.filter(o => !status || o.status === status));
+  }),
+  http.get(`${P}/orcamentos/:id`, ({ params }) => {
+    const o = mockOrcamentos.find(x => x.id === params.id);
+    return o ? HttpResponse.json(o) : HttpResponse.json({ detail: 'Orçamento não encontrado' }, { status: 404 });
+  }),
+
+  // ── Agendamentos ─────────────────────────────────────────────────────────────
+  http.post(`${P}/appointments`, async ({ request }) => {
+    const data = await request.json() as Record<string, string>;
+    if (!data.oficina_doc) return HttpResponse.json({ oficina_doc: 'Escolha a oficina do agendamento.' }, { status: 422 });
+    return HttpResponse.json({ id: 'a-' + Date.now(), status: 'pendente', ...data }, { status: 201 });
+  }),
 
   // ── Dashboard ────────────────────────────────────────────────────────────────
   http.get(`${P}/dashboard`, () => HttpResponse.json(mockDashboard)),
@@ -81,7 +113,8 @@ export const handlers = [
   }),
   http.get(`${P}/availability/times`, ({ request }) => {
     const date = new URL(request.url).searchParams.get('date') ?? '';
-    return HttpResponse.json({ date, times: DEFAULT_TIMES });
+    // Igual ao backend: "HH:MM:SS".
+    return HttpResponse.json({ date, times: DEFAULT_TIMES.map(t => `${t}:00`) });
   }),
 
   // ── Estimates ────────────────────────────────────────────────────────────────
@@ -145,5 +178,28 @@ export const handlers = [
   http.get(`${P}/documents`, ({ request }) => {
     const vehicleId = new URL(request.url).searchParams.get('vehicle_id');
     return HttpResponse.json(vehicleId ? mockDocuments.filter(d => d.vehicle_id === vehicleId) : mockDocuments);
+  }),
+  http.post(`${P}/documents`, async ({ request }) => {
+    const fd = await request.formData();
+    const file = fd.get('file') as File | null;
+    const v = mockVehicleStore.vehicles.find(x => x.id === fd.get('vehicle_id')) ?? mockVehicleStore.vehicles[0];
+    const id = 'd' + Date.now();
+    const doc = {
+      id, vehicle_id: v.id, vehicle_label: `${v.brand} ${v.model}`, type: String(fd.get('type')) as 'crlv',
+      title: String(fd.get('title')), file_name: file?.name ?? '', has_file: !!file,
+      file_url: file ? `/customer/documents/${id}/arquivo` : '',
+      expiry_date: (fd.get('expiry_date') as string) || undefined, created_at: new Date().toISOString(),
+    };
+    mockDocuments.unshift(doc);
+    return HttpResponse.json(doc, { status: 201 });
+  }),
+  http.get(`${P}/documents/:id/arquivo`, () =>
+    new HttpResponse(new Blob(['%PDF-1.4 documento de exemplo'], { type: 'application/pdf' }), {
+      headers: { 'Content-Type': 'application/pdf' },
+    })),
+  http.delete(`${P}/documents/:id`, ({ params }) => {
+    const i = mockDocuments.findIndex(d => d.id === params.id);
+    if (i >= 0) mockDocuments.splice(i, 1);
+    return HttpResponse.json({ detail: 'Documento removido' });
   }),
 ];

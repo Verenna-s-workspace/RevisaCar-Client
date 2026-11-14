@@ -1,23 +1,39 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AxiosError } from 'axios';
 import { useAuthStore } from '../../store/auth';
+import { accountApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { C, FONT_HEAD } from '../ui/pro';
 
+// O que acontece de verdade (ver services.delete_customer_account no backend).
 const LOSES = [
-  'Todo o histórico de manutenções dos seus veículos',
-  'Documentos digitais e garantias guardadas',
-  'Seus 1.250 pontos do RevisaCar Clube',
-  'Orçamentos e agendamentos em aberto',
+  'Seus dados pessoais (nome, e-mail, telefone, CPF e endereço) são apagados',
+  'Documentos, lembretes, notificações e QR codes dos seus veículos são apagados',
+  'Você sai de todas as oficinas e elas deixam de ver seus dados',
+  'Você é desconectado de todos os aparelhos',
 ];
 
 export function DeleteAccountScreen() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { clearSession } = useAuthStore();
   const [confirm, setConfirm] = useState('');
-  const canDelete = confirm.trim().toUpperCase() === 'EXCLUIR';
+  const [senha, setSenha] = useState('');
+  const { mutate: excluir, isPending } = useMutation({
+    mutationFn: () => accountApi.delete(senha),
+    onSuccess: () => {
+      clearSession();
+      qc.clear();
+      toast.success('Sua conta foi excluída');
+      navigate('/login', { replace: true });
+    },
+    onError: (e) => toast.error((e as AxiosError<{ detail?: string }>)?.response?.data?.detail || 'Não foi possível excluir agora'),
+  });
+  const canDelete = confirm.trim().toUpperCase() === 'EXCLUIR' && senha.length > 0 && !isPending;
 
   return (
     <MainLayout showNav={false} topbar={<Topbar title="Excluir conta" showBack />}>
@@ -36,7 +52,7 @@ export function DeleteAccountScreen() {
         </div>
 
         <div className="rounded-[16px] p-4" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-          <p className="text-[12px] font-bold uppercase tracking-wide mb-3" style={{ color: C.subtle }}>Você vai perder</p>
+          <p className="text-[12px] font-bold uppercase tracking-wide mb-3" style={{ color: C.subtle }}>O que acontece</p>
           <div className="flex flex-col gap-2.5">
             {LOSES.map(l => (
               <div key={l} className="flex items-start gap-2.5">
@@ -57,15 +73,26 @@ export function DeleteAccountScreen() {
           <input value={confirm} onChange={e => setConfirm(e.target.value)}
             placeholder="EXCLUIR"
             className="w-full px-4 py-3 rounded-[13px] text-[14px] font-semibold outline-none text-center tracking-widest"
-            style={{ border: `1.5px solid ${canDelete ? C.brand : C.borderSoft}`, color: C.text, background: C.card }} />
+            style={{ border: `1.5px solid ${confirm.trim().toUpperCase() === 'EXCLUIR' ? C.brand : C.borderSoft}`, color: C.text, background: C.card }} />
+        </div>
+
+        <div>
+          <label htmlFor="senha-excluir" className="text-[12.5px] mb-2 block" style={{ color: C.muted }}>Sua senha</label>
+          <input id="senha-excluir" type="password" value={senha} onChange={e => setSenha(e.target.value)}
+            autoComplete="current-password" placeholder="••••••••"
+            className="w-full px-4 py-3 rounded-[13px] text-[14px] font-medium outline-none"
+            style={{ border: `1.5px solid ${C.borderSoft}`, color: C.text, background: C.card }} />
+          <p className="text-[11.5px] mt-2" style={{ color: C.subtle }}>
+            Pedidos de agendamento e serviços já feitos continuam no registro da oficina, sem seus dados pessoais.
+          </p>
         </div>
 
         <div className="flex flex-col gap-2.5">
           <button disabled={!canDelete}
-            onClick={() => { clearSession(); toast.success('Conta excluída'); navigate('/login'); }}
+            onClick={() => excluir()}
             className="w-full py-[15px] rounded-[14px] font-bold text-[15px] text-white transition-all active:scale-[0.98] disabled:opacity-40"
             style={{ background: C.brand, fontFamily: FONT_HEAD }}>
-            Excluir permanentemente
+            {isPending ? 'Excluindo…' : 'Excluir permanentemente'}
           </button>
           <button onClick={() => navigate(-1)}
             className="w-full py-[15px] rounded-[14px] font-bold text-[15px]"
