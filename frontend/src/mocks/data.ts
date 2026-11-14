@@ -105,7 +105,7 @@ export const mockDashboard: DashboardSummary = {
     { id: 'r2', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', service_name: 'Filtro de Ar', interval_km: 10000, last_service_km: 38000, next_service_km: 48000, current_mileage: 45230, km_remaining: 2770, urgency: 'atencao', progress_pct: 72 },
     { id: 'r3', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234', service_name: 'Revisão Preventiva', interval_km: 10000, last_service_km: 40000, next_service_km: 50000, current_mileage: 45230, km_remaining: 4770, urgency: 'ok', progress_pct: 52 },
   ],
-  all_reminders: [],
+  get all_reminders() { return this.urgent_reminders; },
   recent_services: [
     {
       id: 'svc-1', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234',
@@ -163,10 +163,15 @@ export function makeAvailableDates(year: number, month: number) {
 export const DEFAULT_TIMES = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
 // ── History + Inspections ────────────────────────────────────────────────────────
+/** Data AAAA-MM-DD de n dias atrás (negativo = no futuro). Mantém o demo sempre atual. */
+function diasAtras(n: number) {
+  return new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+}
+
 export const mockHistory: ServiceHistory[] = [
   {
     id: 'svc-1', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234',
-    service_date: '2026-05-10', scheduled_date: '2026-05-10T10:00:00Z', mileage_at_service: 44000,
+    service_date: diasAtras(25), scheduled_date: diasAtras(25), mileage_at_service: 44000,
     service_type: 'Troca de óleo e filtros', workshop_name: 'RevisaCar · Centro',
     items: [
       { description: 'Óleo 5W30 (4L)', part_replaced: true, part_name: 'Óleo sintético' },
@@ -175,11 +180,11 @@ export const mockHistory: ServiceHistory[] = [
       { description: 'Mão de obra', part_replaced: false },
     ],
     total_cost: 310, mechanic_notes: 'Troca realizada sem intercorrências. Próxima troca em 5.000 km.',
-    inspection_id: 'insp-1', warranty_until: '2026-08-08', created_at: '2026-05-10T10:00:00Z',
+    inspection_id: 'insp-1', warranty_until: diasAtras(-65), created_at: '2026-05-10T10:00:00Z',
   },
   {
     id: 'svc-2', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234',
-    service_date: '2026-02-10', scheduled_date: '2026-02-10T14:30:00Z', mileage_at_service: 42000,
+    service_date: diasAtras(80), scheduled_date: diasAtras(80), mileage_at_service: 42000,
     service_type: 'Alinhamento e balanceamento', workshop_name: 'RevisaCar · Centro',
     items: [
       { description: 'Alinhamento 4 rodas', part_replaced: false },
@@ -190,7 +195,7 @@ export const mockHistory: ServiceHistory[] = [
   },
   {
     id: 'svc-3', vehicle_id: 'v1', vehicle_label: 'Fiat Uno 2018 · ABC-1234',
-    service_date: '2025-12-15', scheduled_date: '2025-12-15T09:00:00Z', mileage_at_service: 40000,
+    service_date: diasAtras(150), scheduled_date: diasAtras(150), mileage_at_service: 40000,
     service_type: 'Revisão preventiva', workshop_name: 'RevisaCar · Centro',
     items: [
       { description: 'Inspeção de 50 itens', part_replaced: false },

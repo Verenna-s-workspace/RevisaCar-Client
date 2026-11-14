@@ -1,208 +1,190 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import {
-  CalendarPlus, Gauge, RotateCcw, Wind, Wrench,
-  Zap, Activity, Thermometer, Settings, ChevronRight
-} from 'lucide-react';
-import { remindersApi } from '../../services/api';
-import { UrgencyBadge, ProgressBar, Button, EmptyState, FilterChips } from '../ui';
-import { MainLayout, Topbar } from '../layout';
+import { CalendarPlus, AlertTriangle, Clock, CheckCircle2, Wrench, FolderOpen } from 'lucide-react';
+import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { remindersApi, vehiclesApi, appointmentsApi } from '../../services/api';
+import { MainLayout, Topbar, Avatar } from '../layout';
+import { Skeleton } from '../ui';
+import { Glass, Chip, PriorityBadge, DotProgress, CardHeader, CarIllustration, V } from '../visual';
 import type { MaintenanceReminder, Urgency } from '../../types';
-import { clsx } from 'clsx';
-import { motion } from 'framer-motion';
 
-/* ─── Icon map ──────────────────────────────────────────── */
-const ICONS: { key: string; icon: typeof Wrench }[] = [
-  { key: 'oleo',        icon: Gauge      },
-  { key: 'freio',       icon: RotateCcw  },
-  { key: 'ar',          icon: Wind       },
-  { key: 'correia',     icon: Zap        },
-  { key: 'alinhamento', icon: Activity   },
-  { key: 'vela',        icon: Thermometer},
-  { key: 'revisao',     icon: Settings   },
+const dia = (iso: string) => new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
+const ORDEM: Record<string, number> = { urgente: 0, atencao: 1, ok: 2 };
+
+const FILTROS: { v: 'all' | Urgency; t: string }[] = [
+  { v: 'all', t: 'Todas' }, { v: 'urgente', t: 'Urgentes' }, { v: 'atencao', t: 'Atenção' }, { v: 'ok', t: 'Em dia' },
 ];
 
-function getIcon(name: string) {
-  const n = name.toLowerCase();
-  return ICONS.find(i => n.includes(i.key))?.icon ?? Wrench;
+function prazo(r: MaintenanceReminder) {
+  if (r.km_remaining != null) {
+    return r.km_remaining < 0
+      ? { valor: 'Atrasado', extra: `passou ${Math.abs(r.km_remaining).toLocaleString('pt-BR')} km`, alerta: true }
+      : { valor: `${r.km_remaining.toLocaleString('pt-BR')} km`, extra: 'restantes', alerta: r.urgency === 'urgente' };
+  }
+  if (r.next_service_date) return { valor: format(dia(r.next_service_date), 'dd MMM yyyy', { locale: ptBR }), extra: '', alerta: r.urgency === 'urgente' };
+  return { valor: '—', extra: '', alerta: false };
 }
 
-const URGENCY_STYLE: Record<Urgency, { iconBg: string; iconColor: string; bar: string; glow: string }> = {
-  urgente: { iconBg: 'bg-crit-bg',  iconColor: 'text-crit',  bar: 'var(--brand)',    glow: 'shadow-[0_0_0_1px_var(--crit-border)]' },
-  atencao: { iconBg: 'bg-warn-bg',  iconColor: 'text-warn',  bar: 'var(--warn-mid)', glow: 'shadow-[0_0_0_1px_var(--warn-border)]' },
-  ok:      { iconBg: 'bg-ok-bg',    iconColor: 'text-ok',    bar: 'var(--ok-mid)',   glow: '' },
-};
-
-const FILTER_OPTIONS = [
-  { label: 'Todos',    value: 'all'      },
-  { label: 'Urgente',  value: 'urgente'  },
-  { label: 'Atenção',  value: 'atencao'  },
-  { label: 'Em dia',   value: 'ok'       },
-] as const;
-type FilterValue = typeof FILTER_OPTIONS[number]['value'];
-
-/* ─── Reminder Item ─────────────────────────────────────── */
-function ReminderItem({ item, index }: { item: MaintenanceReminder; index: number }) {
+/* Card de lembrete (estilo "cartão" da referência). */
+function CardLembrete({ r, cor }: { r: MaintenanceReminder; cor?: string }) {
   const navigate = useNavigate();
-  const Icon = getIcon(item.service_name);
-  const style = URGENCY_STYLE[item.urgency];
-
+  const p = prazo(r);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className={clsx(
-        'bg-white rounded-2xl border border-border p-4 flex items-start gap-3.5 shadow-xs',
-        style.glow
-      )}
-    >
-      <div className={clsx(
-        'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5',
-        style.iconBg, style.iconColor
-      )}>
-        <Icon size={21} />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <p className="font-bold text-sm text-text leading-tight">{item.service_name}</p>
-          <UrgencyBadge urgency={item.urgency} />
+    <Glass className="p-4 lg:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <PriorityBadge urgency={r.urgency} />
+          <p className="text-[19px] font-normal mt-3 truncate" style={{ color: V.text }}>{r.vehicle_label?.split('·')[0]?.trim() || 'Seu veículo'}</p>
         </div>
-
-        <p className="text-xs text-text-muted mt-1">
-          {item.km_remaining != null
-            ? <>Faltam <span className="font-semibold tabular text-text-2">{item.km_remaining.toLocaleString('pt-BR')} km</span></>
-            : item.next_service_date
-              ? <>Próximo em <span className="font-semibold text-text-2">{item.next_service_date}</span></>
-              : '—'
-          }
-          {item.interval_km && (
-            <span className="text-text-subtle"> · A cada {item.interval_km.toLocaleString('pt-BR')} km</span>
-          )}
-        </p>
-
-        <ProgressBar pct={item.progress_pct} color={style.bar} />
-
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-2xs text-text-ghost tabular">
-            {Math.round(item.progress_pct)}% do intervalo
+        <CarIllustration color={cor} className="w-[150px] lg:w-[190px] flex-none -mr-1 -mt-1" />
+      </div>
+      <div className="grid grid-cols-3 gap-3 mt-3">
+        <div className="min-w-0">
+          <p className="text-[11.5px]" style={{ color: V.subtle }}>Serviço</p>
+          <p className="text-[13.5px] mt-1 truncate" style={{ color: V.text }}>{r.service_name}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11.5px]" style={{ color: V.subtle }}>
+            Prazo {p.extra && <span style={{ color: p.alerta ? V.brand : V.subtle }}>({p.extra})</span>}
           </p>
-          {item.urgency !== 'ok' && (
-            <button
-              onClick={() => navigate('/agendar')}
-              className="flex items-center gap-1 text-2xs font-bold text-brand hover:underline"
-            >
-              Agendar <ChevronRight size={11} />
-            </button>
-          )}
+          <p className="text-[13.5px] mt-1 truncate" style={{ color: p.alerta ? V.brand : V.text }}>{p.valor}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11.5px]" style={{ color: V.subtle }}>Intervalo</p>
+          <div className="mt-2"><DotProgress pct={r.progress_pct} dots={14}
+            color={r.urgency === 'urgente' ? V.brand : r.urgency === 'atencao' ? V.warn : V.ok} /></div>
+          <p className="text-[11.5px] mt-1" style={{ color: V.muted }}>{Math.round(r.progress_pct)}% usado</p>
         </div>
       </div>
-    </motion.div>
+      {r.urgency !== 'ok' && (
+        <button onClick={() => navigate('/agendar')} className="chip-active mt-4 h-9 px-4 rounded-full text-[12.5px] font-medium inline-flex items-center gap-1.5">
+          <CalendarPlus size={14} /> Agendar
+        </button>
+      )}
+    </Glass>
   );
 }
 
-/* ─── Scheduled Maintenance Screen ─────────────────────── */
 export function ScheduledMaintenanceScreen() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<FilterValue>('all');
+  const [filtro, setFiltro] = useState<'all' | Urgency>('all');
 
-  const { data: reminders = [], isLoading } = useQuery({
-    queryKey: ['reminders'],
-    queryFn: () => remindersApi.list().then(r => r.data),
-  });
+  const { data: reminders = [], isLoading } = useQuery({ queryKey: ['reminders'], queryFn: () => remindersApi.list().then(r => r.data) });
+  const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => vehiclesApi.list().then(r => r.data) });
+  const { data: agendamentos = [] } = useQuery({ queryKey: ['appointments'], queryFn: () => appointmentsApi.list().then(r => r.data), staleTime: 60_000 });
 
-  const urgent  = reminders.filter(r => r.urgency === 'urgente');
-  const filtered = filter === 'all' ? reminders : reminders.filter(r => r.urgency === filter);
+  const corDo = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.color;
+  const ordenados = [...reminders].sort((a, b) => (ORDEM[a.urgency] ?? 3) - (ORDEM[b.urgency] ?? 3));
+  const lista = filtro === 'all' ? ordenados : ordenados.filter(r => r.urgency === filtro);
+  const contar = (u: Urgency) => reminders.filter(r => r.urgency === u).length;
+
+  // Semana atual: agendamentos e lembretes com data caem no dia certo.
+  const semana = useMemo(() => {
+    const ini = startOfWeek(new Date(), { weekStartsOn: 1 });
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = addDays(ini, i);
+      const itens = [
+        ...agendamentos.filter(a => a.status !== 'cancelado' && a.date && isSameDay(dia(a.date), d))
+          .map(a => ({ t: a.service_type, h: a.time_slot?.slice(0, 5), tipo: 'agendamento' as const })),
+        ...reminders.filter(r => r.next_service_date && isSameDay(dia(r.next_service_date), d))
+          .map(r => ({ t: r.service_name, h: '', tipo: 'lembrete' as const })),
+      ];
+      return { d, itens };
+    });
+  }, [agendamentos, reminders]);
 
   return (
-    <MainLayout width="wide" topbar={<Topbar title="Manutenções Programadas" showBack />}>
-      <div className="px-4 pt-4 flex flex-col gap-4">
+    <MainLayout width="wide" topbar={<Topbar title="Manutenções" right={<span className="lg:hidden"><Avatar /></span>} />}>
+      <div className="px-4 pb-8">
+        <p className="text-[13.5px] -mt-1" style={{ color: V.muted }}>Acompanhe os prazos e agende o serviço em poucos minutos.</p>
 
-        {/* Hero CTA */}
-        {!isLoading && urgent.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-gradient-to-br from-brand via-brand-dark to-brand-deep
-                       rounded-2xl p-5 text-white overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.08)_0%,_transparent_60%)]" />
-            <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/5" />
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 py-4">
+          <Chip icon={<CalendarPlus size={15} />} onClick={() => navigate('/agendar')} active>Agendar serviço</Chip>
+          {FILTROS.map(f => (
+            <Chip key={f.v} onClick={() => setFiltro(f.v)} active={false}>
+              <span style={{ color: filtro === f.v ? V.brand : undefined, fontWeight: filtro === f.v ? 600 : undefined }}>{f.t}</span>
+            </Chip>
+          ))}
+          <Chip icon={<FolderOpen size={15} />} onClick={() => navigate('/documentos')}>Documentos</Chip>
+        </div>
 
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-red-300 animate-pulse" />
-                <p className="text-xs font-bold text-white/80 uppercase tracking-widest">Ação necessária</p>
-              </div>
-              <p className="font-bold text-lg leading-tight mb-0.5">{urgent[0]?.service_name}</p>
-              <p className="text-sm text-white/75 mb-4">
-                {urgent[0]?.km_remaining != null
-                  ? `Vence em ${urgent[0].km_remaining.toLocaleString('pt-BR')} km`
-                  : `Vence em ${urgent[0]?.next_service_date || 'breve'}`
-                }
-                {urgent.length > 1 && ` · mais ${urgent.length - 1} urgente${urgent.length > 2 ? 's' : ''}`}
-              </p>
-              <Button
-                size="sm"
-                onClick={() => navigate('/agendar')}
-                className="bg-white text-brand hover:bg-white/90 shadow-none"
-                icon={<CalendarPlus size={15} />}
-              >
-                Agendar agora
-              </Button>
-            </div>
-          </motion.div>
-        )}
+        {/* Números */}
+        <div className="grid grid-cols-3 gap-2 lg:gap-4">
+          {[
+            { icon: AlertTriangle, n: contar('urgente'), t: 'Urgentes', c: V.brand },
+            { icon: Clock, n: contar('atencao'), t: 'Perto do prazo', c: V.warn },
+            { icon: CheckCircle2, n: contar('ok'), t: 'Em dia', c: V.ok },
+          ].map(m => (
+            <Glass key={m.t} className="p-3.5 lg:p-5 flex flex-col gap-2">
+              <span className="w-7 h-7 rounded-full bg-white flex items-center justify-center"><m.icon size={14} color={m.c} /></span>
+              <span className="text-[24px] lg:text-[30px] leading-none font-normal tabular" style={{ color: V.text }}>{m.n}</span>
+              <span className="text-[12px]" style={{ color: V.muted }}>{m.t}</span>
+            </Glass>
+          ))}
+        </div>
 
-        {/* Filters */}
-        <FilterChips options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
-
-        {/* Summary row */}
-        {!isLoading && reminders.length > 0 && (
-          <div className="flex gap-2">
-            {[
-              { label: 'Total',   count: reminders.length,                         color: 'text-text-muted' },
-              { label: 'Urgente', count: reminders.filter(r => r.urgency === 'urgente').length, color: 'text-crit'      },
-              { label: 'Atenção', count: reminders.filter(r => r.urgency === 'atencao').length, color: 'text-warn'      },
-              { label: 'Em dia',  count: reminders.filter(r => r.urgency === 'ok').length,      color: 'text-ok'        },
-            ].map(({ label, count, color }) => (
-              <div key={label} className="flex-1 bg-white border border-border rounded-xl py-2.5 text-center shadow-xs">
-                <p className={clsx('text-base font-bold tabular', color)}>{count}</p>
-                <p className="text-2xs text-text-subtle font-medium mt-0.5">{label}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* List */}
-        {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[0,1,2,3].map(i => (
-              <div key={i} className="bg-white rounded-2xl border border-border p-4 flex gap-3 shadow-xs">
-                <div className="skeleton w-11 h-11 rounded-xl flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="skeleton h-4 w-2/3 mb-2 rounded" />
-                  <div className="skeleton h-3 w-1/2 mb-3 rounded" />
-                  <div className="skeleton h-1.5 w-full rounded-full" />
+        <div className="mt-4 grid gap-4 lg:grid-cols-12">
+          {/* Pilha de lembretes: o mais urgente na frente */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            {isLoading ? (
+              [0, 1].map(i => <Skeleton key={i} className="h-[190px] rounded-[24px]" />)
+            ) : lista.length === 0 ? (
+              <Glass className="p-8 flex flex-col items-center text-center gap-2">
+                <Wrench size={30} color={V.subtle} />
+                <p className="text-[15px] font-medium" style={{ color: V.text }}>Nenhum lembrete aqui</p>
+                <p className="text-[13px]" style={{ color: V.muted }}>Os lembretes de manutenção aparecem conforme os serviços feitos na oficina.</p>
+              </Glass>
+            ) : (
+              <>
+                <div className="relative">
+                  {lista.length > 1 && (
+                    <>
+                      <div aria-hidden className="glass absolute inset-x-6 -top-3 h-10 rounded-[24px] opacity-60" />
+                      <div aria-hidden className="glass absolute inset-x-3 -top-1.5 h-10 rounded-[24px] opacity-80" />
+                    </>
+                  )}
+                  <div className="relative"><CardLembrete r={lista[0]} cor={corDo(lista[0].vehicle_id)} /></div>
                 </div>
-              </div>
-            ))}
+                {lista.slice(1).map(r => <CardLembrete key={r.id} r={r} cor={corDo(r.vehicle_id)} />)}
+              </>
+            )}
           </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={<Wrench size={34} />}
-            title="Nenhum lembrete"
-            description="Seus lembretes de manutenção preventiva aparecerão aqui automaticamente."
-          />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((r, i) => (
-              <ReminderItem key={r.id} item={r} index={i} />
-            ))}
-          </div>
-        )}
+
+          {/* Calendário da semana */}
+          <Glass className="p-5 lg:col-span-5 self-start">
+            <CardHeader title="Calendário de manutenção" subtitle="Esta semana" />
+            <div className="mt-4 grid grid-cols-7 gap-1.5">
+              {semana.map(({ d, itens }) => {
+                const hoje = isSameDay(d, new Date());
+                return (
+                  <div key={d.toISOString()} className="rounded-[14px] py-2.5 flex flex-col items-center gap-1"
+                       style={{ background: hoje ? V.brand : V.tile, color: hoje ? '#fff' : V.text }}>
+                    <span className="text-[10.5px] capitalize" style={{ opacity: 0.75 }}>{format(d, 'EEEEEE', { locale: ptBR })}</span>
+                    <span className="text-[15px] tabular">{format(d, 'd')}</span>
+                    <span className="h-1.5 flex gap-0.5">
+                      {itens.slice(0, 3).map((_, i) => <span key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: hoje ? '#fff' : V.brand }} />)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex flex-col gap-2">
+              {semana.every(s => s.itens.length === 0) ? (
+                <p className="text-[13px] text-center py-3" style={{ color: V.subtle }}>Nada marcado para esta semana.</p>
+              ) : semana.flatMap(s => s.itens.map((it, i) => (
+                <div key={`${s.d.toISOString()}-${i}`} className="flex items-center gap-3 rounded-[14px] px-3 py-2.5" style={{ background: V.tile }}>
+                  <span className="text-[12px] w-12 capitalize" style={{ color: V.muted }}>{format(s.d, 'EEE d', { locale: ptBR })}</span>
+                  <span className="flex-1 text-[13px] truncate" style={{ color: V.text }}>{it.t}</span>
+                  <span className="text-[11.5px]" style={{ color: it.tipo === 'agendamento' ? V.brand : V.muted }}>
+                    {it.tipo === 'agendamento' ? (it.h || 'agendado') : 'prazo'}
+                  </span>
+                </div>
+              )))}
+            </div>
+          </Glass>
+        </div>
       </div>
     </MainLayout>
   );

@@ -1,40 +1,35 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Car, ChevronRight } from 'lucide-react';
+import { Plus, Car } from 'lucide-react';
 import { vehiclesApi } from '../../services/api';
 import { MainLayout, Topbar } from '../layout';
 import { Skeleton } from '../ui';
-import { C, FONT_HEAD, HealthRing } from '../ui/pro';
+import { C, FONT_HEAD } from '../ui/pro';
+import { Glass, StatTile, CarIllustration, V } from '../visual';
 import { useVehicleHealth } from '../../hooks/useVehicleHealth';
 import type { Vehicle } from '../../types';
 
-/* ─── Vehicle row ───────────────────────────────── */
+/* ─── Card do veículo ──────────────────────────── */
 function VehicleRow({ v, onClick }: { v: Vehicle; onClick: () => void }) {
   const { data: health } = useVehicleHealth(v.id);
   return (
-    <button onClick={onClick}
-      className="w-full flex items-center gap-3.5 p-4 rounded-[16px] active:scale-[0.99] transition-transform"
-      style={{ background: C.card, border: `1px solid ${C.border}` }}>
-      <div className="w-[52px] h-[40px] rounded-[10px] flex items-center justify-center flex-none" style={{ background: C.bg }}>
-        <Car size={22} color={C.subtle} />
-      </div>
-      <div className="flex-1 min-w-0 text-left">
-        <div className="flex items-center gap-2">
-          <p className="font-bold text-[15px] truncate" style={{ color: C.text, fontFamily: FONT_HEAD }}>
-            {v.brand} {v.model}
-          </p>
-          {v.is_active && (
-            <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full flex-none"
-                  style={{ background: C.greenBg, color: C.greenDk }}>Principal</span>
-          )}
+    <Glass as="button" onClick={onClick} className="w-full p-4 flex flex-col">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 text-left">
+          <p className="text-[17px] font-normal truncate" style={{ color: V.text }}>{v.brand} {v.model}</p>
+          <p className="text-[12px] mt-0.5 data-mono" style={{ color: V.subtle }}>{v.plate} · {v.year}</p>
         </div>
-        <p className="text-[12px] mt-0.5 data-mono" style={{ color: C.muted }}>
-          {v.plate} · {v.fuel_type} · {v.mileage?.toLocaleString('pt-BR')} km
-        </p>
+        {v.is_active && (
+          <span className="text-[11px] px-2.5 py-1 rounded-full flex-none" style={{ background: V.okSoft, color: '#13804B' }}>Principal</span>
+        )}
       </div>
-      {health && <HealthRing score={health.overall_score} />}
-      <ChevronRight size={18} color={C.subtle} className="flex-none" />
-    </button>
+      <CarIllustration color={v.color} className="w-full max-w-[320px] mx-auto my-2" />
+      <div className="grid grid-cols-3 gap-2">
+        <StatTile label="Saúde" value={health ? `${health.overall_score}%` : '—'} />
+        <StatTile label="Km" value={(v.mileage ?? 0).toLocaleString('pt-BR')} />
+        <StatTile label="Cor" value={<span className="text-[15px]">{v.color || '—'}</span>} />
+      </div>
+    </Glass>
   );
 }
 
@@ -65,14 +60,16 @@ export function VehiclesScreen() {
             </p>
           </div>
         ) : (
-          vehicles.map(v => (
-            <VehicleRow key={v.id} v={v} onClick={() => navigate(`/veiculo/${v.id}`)} />
-          ))
+          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3 lg:gap-4">
+            {vehicles.map(v => (
+              <VehicleRow key={v.id} v={v} onClick={() => navigate(`/veiculo/${v.id}`)} />
+            ))}
+          </div>
         )}
 
         <button onClick={() => navigate('/veiculos/novo')}
-          className="w-full flex items-center justify-center gap-2 py-[15px] rounded-[14px] font-bold text-[14px] mt-1"
-          style={{ border: `1.5px dashed ${C.border}`, color: C.brand }}>
+          className="chip w-full lg:w-auto lg:self-start lg:px-6 flex items-center justify-center gap-2 h-12 rounded-full font-medium text-[14px] mt-1"
+          style={{ color: C.brand }}>
           <Plus size={18} /> Adicionar veículo
         </button>
       </div>

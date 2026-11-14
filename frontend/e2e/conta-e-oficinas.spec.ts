@@ -86,3 +86,14 @@ test.describe('Conta', () => {
     expect((await download).suggestedFilename()).toMatch(/^revisacar-meus-dados-.*\.json$/);
   });
 });
+
+test.describe('Veículo', () => {
+  test('detalhe tem abas com dados reais', async ({ page }) => {
+    await page.goto('/veiculo/v1');
+    await expect(page.getByText('ABC-1234')).toBeVisible();
+    await page.getByRole('tab', { name: 'Manutenção' }).click();
+    await expect(page.getByText('Troca de Óleo')).toBeVisible();
+    await page.getByRole('tab', { name: 'Documentos' }).click();
+    await expect(page.getByText('CRLV 2026')).toBeVisible();
+  });
+});
