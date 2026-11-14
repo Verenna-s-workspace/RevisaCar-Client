@@ -44,6 +44,7 @@ const DeleteAccount   = lazy(() => import('./components/screens/DeleteAccountScr
 const ServiceDetail   = lazy(() => import('./components/screens/ServiceDetailScreen').then(m => ({ default: m.ServiceDetailScreen })));
 const InspectionReport = lazy(() => import('./components/screens/InspectionReportScreen').then(m => ({ default: m.InspectionReportScreen })));
 const Warranty        = lazy(() => import('./components/screens/WarrantyScreen').then(m => ({ default: m.WarrantyScreen })));
+const Creditos        = lazy(() => import('./components/screens/CreditsScreen').then(m => ({ default: m.CreditsScreen })));
 const Oficinas        = lazy(() => import('./components/screens/OficinasScreen').then(m => ({ default: m.OficinasScreen })));
 
 /* ─── Query Client ──────────────────────────────────────── */
@@ -166,6 +167,7 @@ function AppRouter() {
         <Route path="/ajuda"        element={<RequireAuth><HelpCenter /></RequireAuth>} />
         <Route path="/termos"       element={<RequireAuth><Legal /></RequireAuth>} />
         <Route path="/politica"     element={<RequireAuth><Legal /></RequireAuth>} />
+        <Route path="/creditos"     element={<RequireAuth><Creditos /></RequireAuth>} />
         <Route path="/excluir-conta" element={<RequireAuth><DeleteAccount /></RequireAuth>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

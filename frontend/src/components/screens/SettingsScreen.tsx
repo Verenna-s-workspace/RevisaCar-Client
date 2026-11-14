@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, Shield, Lock, FileText, Info, Trash2 } from 'lucide-react';
+import { Bell, Shield, Lock, FileText, Info, Trash2, Image as ImageIcon } from 'lucide-react';
 import { MainLayout, Topbar } from '../layout';
 import { C, SectionLabel, CardGroup, MenuRow } from '../ui/pro';
 
@@ -23,6 +23,7 @@ export function SettingsScreen() {
           <SectionLabel>Sobre</SectionLabel>
           <CardGroup>
             <MenuRow icon={<FileText size={18} />} label="Termos e políticas" onClick={() => navigate('/termos')} />
+            <MenuRow icon={<ImageIcon size={18} />} label="Créditos de imagens" onClick={() => navigate('/creditos')} />
             <MenuRow icon={<Info size={18} />} label="Versão do app" value="1.0.0" last />
           </CardGroup>
         </div>

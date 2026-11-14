@@ -41,6 +41,12 @@ export default defineConfig({
         importScripts: ['/push-sw.js'],
         runtimeCaching: [
           {
+            // Fotos dos veículos: baixadas só quando aparecem e guardadas (offline depois).
+            urlPattern: /\/veiculos\/[a-z0-9-]+\.webp$/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'fotos-veiculos', expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 180 } },
+          },
+          {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } },

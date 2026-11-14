@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate, useNavigationType } from 'react-rout
 import { motion, useAnimationControls, useDragControls, useMotionValue, animate, type PanInfo } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Car, ChevronLeft, FileText, User, WifiOff, Bell, Store, Receipt, FolderOpen, QrCode, Wrench,
+  Car, ArrowLeft, FileText, Home, User, WifiOff, Bell, Store, Receipt, FolderOpen, QrCode, Wrench,
   Settings, LogOut, CalendarPlus, Loader2,
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -133,60 +133,54 @@ interface TopbarProps {
 const RAIZES = new Set(['/', '/veiculo', '/historico', '/manutencoes', '/orcamentos', '/oficinas',
   '/documentos', '/qr', '/qr-code', '/notificacoes', '/ajustes', '/perfil', '/agendar']);
 
-export function Topbar({ title, showBack, onBack, right, backLabel = 'Voltar', subtitle }: TopbarProps) {
+export function Topbar({ title, showBack, onBack, right, subtitle }: TopbarProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const raiz = RAIZES.has(pathname);
   const sentinela = useRef<HTMLDivElement>(null);
-  const [compacto, setCompacto] = useState(false);
+  const [rolou, setRolou] = useState(false);
 
-  // Quando o título grande sai de vista, ele aparece pequeno no cabeçalho.
+  // Linha sob o cabeçalho só quando há conteúdo rolando por baixo.
   useEffect(() => {
     const el = sentinela.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([e]) => setCompacto(!e.isIntersecting), { threshold: 0 });
+    const io = new IntersectionObserver(([e]) => setRolou(!e.isIntersecting), { threshold: 0 });
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
   return (
     <>
+      <div ref={sentinela} className="h-px -mb-px" aria-hidden />
       <header
-        className={clsx('sticky top-0 z-40 flex items-center h-[var(--topbar-h)] px-2 lg:px-4 transition-shadow',
-          compacto ? 'material scroll-edge' : 'bg-transparent')}
+        className={clsx('sticky top-0 z-40 flex items-center gap-1 h-14 px-2 lg:px-4 material', rolou && 'scroll-edge')}
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', boxSizing: 'content-box' }}
       >
-        <div className="flex-1 min-w-0 flex">
-          {showBack && (
-            <button aria-label="Voltar" onClick={onBack || (() => navigate(-1))}
-              className={clsx('flex items-center h-11 pr-2 -ml-0.5 text-[1.0625rem] rounded-lg active:opacity-50', raiz && 'lg:hidden')}
-              style={{ color: 'var(--tint)' }}>
-              <ChevronLeft size={26} strokeWidth={2.2} className="-mr-0.5" />
-              <span className="truncate max-w-[110px]">{backLabel}</span>
-            </button>
-          )}
-        </div>
-        <span aria-hidden className={clsx('t-headline truncate max-w-[50%] text-center transition-opacity duration-200', compacto ? 'opacity-100' : 'opacity-0')}
-              style={{ color: 'var(--text)' }}>{title}</span>
-        <div className="flex-1 min-w-0 flex justify-end items-center gap-1">{right}</div>
+        {showBack && (
+          <button aria-label="Voltar" onClick={onBack || (() => navigate(-1))}
+            className={clsx('w-11 h-11 flex items-center justify-center rounded-full active:opacity-50 flex-none', raiz && 'lg:hidden')}
+            style={{ color: 'var(--text)' }}>
+            <ArrowLeft size={22} strokeWidth={2} />
+          </button>
+        )}
+        <h1 className={clsx('flex-1 min-w-0 truncate t-headline lg:text-[1.375rem]', !showBack && 'pl-2', raiz && 'lg:pl-0')}
+            style={{ color: 'var(--text)', fontWeight: 700 }}>{title}</h1>
+        {right && <div className="flex-none flex items-center gap-1">{right}</div>}
       </header>
-      <div className="px-4 pt-1 pb-3">
-        <h1 className="t-large" style={{ color: 'var(--text)' }}>{title}</h1>
-        {subtitle && <div className="t-subhead mt-1" style={{ color: 'var(--text-2)' }}>{subtitle}</div>}
-        <div ref={sentinela} className="h-px" />
-      </div>
+      {subtitle && <div className="t-subhead px-4 pt-1 pb-3" style={{ color: 'var(--text-2)' }}>{subtitle}</div>}
+      {!subtitle && <div className="h-2" />}
     </>
   );
 }
 
 /* ─── Barra de abas (celular) ───────────────────────────── */
 const ABAS = [
-  { to: '/',            icon: Car,          label: 'Meu carro',  ativoEm: ['/', '/veiculo', '/veiculos', '/saude', '/qr'] },
-  { to: '/manutencoes', icon: Wrench,       label: 'Manutenção', ativoEm: ['/manutencoes'] },
-  { to: '/agendar',     icon: CalendarPlus, label: 'Agendar',    ativoEm: ['/agendar'] },
-  { to: '/historico',   icon: FileText,     label: 'Serviços',   ativoEm: ['/historico', '/servico', '/garantia', '/orcamentos'] },
-  { to: '/perfil',      icon: User,         label: 'Conta',      ativoEm: ['/perfil', '/ajustes', '/seguranca', '/privacidade', '/preferencias',
-    '/oficinas', '/documentos', '/notificacoes', '/ajuda', '/termos', '/politica', '/excluir-conta'] },
+  { to: '/',          icon: Home,         label: 'Início',   ativoEm: ['/', '/saude', '/manutencoes', '/notificacoes'] },
+  { to: '/historico', icon: FileText,     label: 'Serviços', ativoEm: ['/historico', '/servico', '/garantia', '/orcamentos'] },
+  { to: '/agendar',   icon: CalendarPlus, label: 'Agendar',  ativoEm: ['/agendar'] },
+  { to: '/veiculo',   icon: Car,          label: 'Veículo',  ativoEm: ['/veiculo', '/veiculos', '/qr', '/documentos'] },
+  { to: '/perfil',    icon: User,         label: 'Perfil',   ativoEm: ['/perfil', '/ajustes', '/seguranca', '/privacidade', '/preferencias',
+    '/oficinas', '/ajuda', '/termos', '/politica', '/excluir-conta', '/creditos'] },
 ];
 
 const casa = (pathname: string, prefixos: string[]) =>
@@ -196,17 +190,17 @@ export function BottomNav() {
   const { pathname } = useLocation();
   const naoLidas = useNaoLidas();
   return (
-    <nav aria-label="Menu principal" className="material fixed bottom-0 inset-x-0 z-50 lg:hidden"
-         style={{ boxShadow: '0 -0.5px 0 var(--sep)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="max-w-[430px] mx-auto grid grid-cols-5 h-[50px]">
+    <nav aria-label="Menu principal" className="fixed bottom-0 inset-x-0 z-50 lg:hidden"
+         style={{ background: 'var(--card)', borderTop: '1px solid var(--line)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="max-w-[430px] mx-auto grid grid-cols-5 h-[56px]">
         {ABAS.map(({ to, icon: Icon, label, ativoEm }) => {
           const ativo = casa(pathname, ativoEm);
           return (
             <NavLink key={to} to={to} aria-current={ativo ? 'page' : undefined}
               className="relative flex flex-col items-center justify-center gap-[2px] active:opacity-60"
-              style={{ color: ativo ? 'var(--tint)' : 'var(--text-3)' }}>
-              <Icon size={23} strokeWidth={ativo ? 2.2 : 1.8} />
-              <span className="text-[0.625rem] font-medium leading-none">{label}</span>
+              style={{ color: ativo ? 'var(--tint)' : 'var(--text-2)' }}>
+              <Icon size={22} strokeWidth={ativo ? 2.3 : 1.7} fill={ativo ? 'currentColor' : 'none'} fillOpacity={ativo ? 0.14 : 0} />
+              <span className={clsx('text-[0.6875rem] leading-none', ativo ? 'font-semibold' : 'font-medium')}>{label}</span>
               {to === '/perfil' && naoLidas > 0 && (
                 <span className="absolute top-1.5 left-1/2 ml-2 w-2 h-2 rounded-full" style={{ background: 'var(--red)' }} />
               )}
@@ -221,10 +215,10 @@ export function BottomNav() {
 /* ─── Barra lateral (computador/iPad) ───────────────────── */
 const GRUPOS: { titulo: string; itens: { to: string; icon: typeof Car; label: string }[] }[] = [
   { titulo: '', itens: [
-    { to: '/',            icon: Car,          label: 'Meu carro' },
-    { to: '/manutencoes', icon: Wrench,       label: 'Manutenção' },
-    { to: '/agendar',     icon: CalendarPlus, label: 'Agendar' },
+    { to: '/',            icon: Home,         label: 'Início' },
     { to: '/historico',   icon: FileText,     label: 'Serviços' },
+    { to: '/agendar',     icon: CalendarPlus, label: 'Agendar' },
+    { to: '/manutencoes', icon: Wrench,       label: 'Manutenções' },
   ] },
   { titulo: 'Oficina', itens: [
     { to: '/orcamentos', icon: Receipt, label: 'Orçamentos' },
@@ -256,8 +250,8 @@ export function Sidebar() {
   const { session, clearSession } = useAuthStore();
   const naoLidas = useNaoLidas();
   return (
-    <aside className="material hidden lg:flex w-[260px] flex-none h-[100dvh] sticky top-0 flex-col overflow-y-auto"
-           style={{ boxShadow: '0.5px 0 0 var(--sep)' }}>
+    <aside className="hidden lg:flex w-[260px] flex-none h-[100dvh] sticky top-0 flex-col overflow-y-auto"
+           style={{ background: 'var(--card-2)', borderRight: '1px solid var(--line)' }}>
       <div className="px-5 pt-6 pb-4"><Logo /></div>
       <nav aria-label="Menu principal" className="flex-1 px-3 flex flex-col gap-5">
         {GRUPOS.map(g => (
@@ -371,7 +365,7 @@ export function MainLayout({ children, topbar, showNav = true, width = 'narrow' 
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           className={clsx('flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full max-w-[430px] mx-auto lg:max-w-none',
-            showNav ? 'pb-[calc(var(--nav-h)+24px)] lg:pb-12' : 'pb-10')}
+            showNav ? 'pb-[calc(56px+env(safe-area-inset-bottom,0px)+24px)] lg:pb-12' : 'pb-10')}
         >
           {(puxar > 0 || atualizando) && (
             <div className="flex justify-center items-end overflow-hidden" style={{ height: puxar }} aria-live="polite">

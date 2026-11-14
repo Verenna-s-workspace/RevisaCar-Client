@@ -104,7 +104,7 @@ export function ProfileScreen() {
   return (
     <>
       <MainLayout topbar={
-        <Topbar title="Conta" right={
+        <Topbar title="Perfil" right={
           <IconCircle label="Ajustes" onClick={() => navigate('/ajustes')}><Settings size={18} strokeWidth={1.8} /></IconCircle>
         } />
       }>
@@ -116,32 +116,21 @@ export function ProfileScreen() {
             </>
           ) : (
             <>
-              {/* Cartão do perfil */}
-              <Glass className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-[64px] h-[64px] rounded-full flex items-center justify-center flex-none"
-                       style={{ background: 'linear-gradient(160deg, #8E8E93, #636366)' }}>
-                    <span className="text-[1.375rem] font-medium text-white" style={{ fontFamily: FONT_HEAD }}>{initial}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="t-title3 truncate" style={{ color: V.text }}>{name}</p>
-                    <p className="text-[0.8125rem] mt-0.5 truncate" style={{ color: V.muted }}>{email}</p>
-                  </div>
-                  <button onClick={() => setShowEdit(true)} className="chip h-9 px-4 rounded-full text-[0.8125rem] font-medium flex-none">Editar</button>
+              {/* Cabeçalho do perfil (referência: avatar, nome e e-mail) */}
+              <button onClick={() => setShowEdit(true)} className="flex items-center gap-4 text-left press-row rounded-2xl -mx-1 px-1 py-1">
+                <div className="w-[60px] h-[60px] rounded-full flex items-center justify-center flex-none"
+                     style={{ background: 'var(--card-2)', border: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                  <span className="t-title2" style={{ color: V.muted }}>{initial || <User size={28} />}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  {[
-                    { n: vehicles.length, t: 'Veículos', to: '/veiculo' },
-                    { n: oficinas.length, t: 'Oficinas', to: '/oficinas' },
-                    { n: docs.length, t: 'Documentos', to: '/documentos' },
-                  ].map(c => (
-                    <button key={c.t} onClick={() => navigate(c.to)} className="rounded-2xl p-3 text-left" style={{ background: V.tile }}>
-                      <span className="block text-[1.375rem] leading-none font-normal tabular" style={{ color: V.text }}>{String(c.n).padStart(2, '0')}</span>
-                      <span className="block text-[0.75rem] mt-1.5" style={{ color: V.muted }}>{c.t}</span>
-                    </button>
-                  ))}
+                <div className="min-w-0 flex-1">
+                  <p className="t-title3 truncate" style={{ color: V.text }}>{name}</p>
+                  <p className="t-subhead truncate" style={{ color: V.muted }}>{email}</p>
+                  <p className="t-footnote mt-0.5" style={{ color: V.subtle }}>
+                    {vehicles.length} veículo(s) · {oficinas.length} oficina(s) · {docs.length} documento(s)
+                  </p>
                 </div>
-              </Glass>
+                <ChevronRight size={18} color="var(--text-3)" />
+              </button>
 
               {/* Clube badge (showcase) */}
               {SHOWCASE && (
@@ -184,11 +173,8 @@ export function ProfileScreen() {
                 </CardGroup>
               </div>
 
-              {/* Logout */}
-              <CardGroup>
-                <MenuRow icon={<LogOut size={18} color={C.brand} />} iconBg={C.redBg}
-                         label="Sair da conta" danger last onClick={() => setShowLogout(true)} />
-              </CardGroup>
+              {/* Sair (referência: botão de contorno vermelho) */}
+              <OutlineBtn danger onClick={() => setShowLogout(true)}>Sair da conta</OutlineBtn>
 
               <p className="text-center text-[0.6875rem]" style={{ color: C.subtle }}>RevisaCar · versão 1.0.0</p>
             </>

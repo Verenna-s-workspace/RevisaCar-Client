@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/auth';
-import { CarIllustration } from '../visual';
 import { BrandPanel } from '../layout';
 
 /* ─── Schemas ───────────────────────────────────────────── */
@@ -40,7 +39,7 @@ function MarcaRevisaCar() {
   return (
     <span className="flex items-center gap-2.5">
       <img src="/logo.svg" alt="" width={40} height={40} />
-      <span className="text-[1.75rem] leading-none" style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, color: 'var(--text)' }}>
+      <span className="text-[1.75rem] leading-none" style={{ fontFamily: 'var(--font-logo)', fontWeight: 600, color: '#fff' }}>
         RevisaCar
       </span>
     </span>
@@ -98,18 +97,18 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
     >
       {/* Marca + carro */}
       <div className="flex flex-col items-center gap-6 w-full">
-        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }} className="lg:hidden">
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
           <MarcaRevisaCar />
         </motion.div>
         <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="w-full">
-          <CarIllustration color="Branco" className="w-full max-w-[360px] mx-auto" />
+          <img src="/veiculos/toyota-corolla.webp" alt="" className="w-full max-w-[380px] mx-auto drop-shadow-[0_30px_40px_rgba(0,0,0,0.6)]" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}
-          className="text-center lg:hidden">
-          <h1 className="text-[1.75rem] leading-tight font-normal" style={{ color: 'var(--text)' }}>Seu carro em dia,<br />sem papelada.</h1>
-          <p className="text-[0.9375rem] mt-2 leading-relaxed max-w-[280px] mx-auto" style={{ color: 'var(--muted)' }}>
-            Agende com a sua oficina, receba orçamentos e acompanhe a saúde do veículo.
+          className="text-center">
+          <h1 className="t-title1" style={{ color: '#fff' }}>Bem-vindo!</h1>
+          <p className="t-subhead mt-2 max-w-[280px] mx-auto" style={{ color: 'rgba(255,255,255,0.75)' }}>
+            Faça login para acessar as informações do seu veículo.
           </p>
         </motion.div>
       </div>
@@ -123,29 +122,29 @@ function HomeScreen({ onLogin, onRegister, onForgot }: { onLogin: () => void; on
       >
         <button
           onClick={onLogin}
-          className="w-full h-[52px] bg-brand rounded-full text-white text-[0.9375rem] font-medium
-                     active:scale-[0.97] transition-all shadow-[0_8px_20px_rgba(204,20,0,0.25)]
-                     hover:bg-brand-dark"
+          className="w-full h-12 rounded-[10px] text-white t-headline active:scale-[0.98] transition-all"
+          style={{ background: '#CC1400' }}
         >
           Entrar
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-black/10" />
-          <span className="text-xs text-text-subtle font-medium">ou</span>
-          <div className="flex-1 h-px bg-black/10" />
+          <div className="flex-1 h-px bg-white/20" />
+          <span className="t-caption" style={{ color: 'rgba(255,255,255,0.6)' }}>ou</span>
+          <div className="flex-1 h-px bg-white/20" />
         </div>
 
         <button
           onClick={onRegister}
-          className="chip w-full h-[52px] rounded-full text-[0.9375rem] font-medium active:scale-[0.97]"
+          className="w-full h-12 rounded-[10px] t-headline active:scale-[0.98] text-white"
+          style={{ border: '1.5px solid rgba(255,255,255,0.85)' }}
         >
           Criar conta
         </button>
 
         <button
           onClick={onForgot}
-          className="text-center text-sm text-text-muted font-medium hover:text-text
+          className="text-center t-subhead font-medium text-white/80 hover:text-white
                      transition-colors mt-2"
         >
           Esqueci minha senha
@@ -417,7 +416,7 @@ export function AuthScreen() {
     {/* Desktop: painel da marca à esquerda, acesso à direita */}
     <BrandPanel />
     <div className="min-h-screen w-full max-w-[430px] mx-auto flex flex-col relative overflow-hidden lg:mx-0 lg:max-w-none lg:w-[480px] lg:flex-none"
->
+         style={{ background: 'radial-gradient(120% 60% at 50% 38%, #3A0A06 0%, #120807 45%, #050505 100%)' }}>
 
       {/* Content */}
       <div className="relative z-10 flex flex-col h-screen">

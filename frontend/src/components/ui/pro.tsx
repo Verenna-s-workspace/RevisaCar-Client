@@ -74,8 +74,8 @@ export function CardGroup({ children }: { children: ReactNode }) {
 /* ─── Ícone em quadrado colorido (como nos Ajustes do iPhone) ── */
 function IconeAjustes({ children, bg }: { children: ReactNode; bg?: string }) {
   return (
-    <div className="w-[29px] h-[29px] rounded-[7px] flex items-center justify-center flex-none text-white [&>svg]:w-[17px] [&>svg]:h-[17px]"
-         style={{ background: bg ?? 'var(--tint-fill)' }}>
+    <div className="w-[26px] h-[26px] flex items-center justify-center flex-none [&>svg]:w-[19px] [&>svg]:h-[19px]"
+         style={{ color: bg ? 'var(--red)' : 'var(--text)' }}>
       {children}
     </div>
   );
@@ -148,7 +148,7 @@ export function PrimaryBtn({ children, onClick, disabled, type = 'button' }: {
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="w-full h-[50px] rounded-[14px] t-headline text-white transition active:brightness-90 disabled:opacity-40"
+      className="w-full h-12 rounded-[10px] t-headline text-white transition active:brightness-90 disabled:opacity-40"
       style={{ background: 'var(--tint-fill)' }}
     >
       {children}
@@ -164,8 +164,8 @@ export function OutlineBtn({ children, onClick, danger, disabled }: {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="chip w-full h-[50px] rounded-[14px] t-headline disabled:opacity-40"
-      style={{ color: danger ? 'var(--red)' : 'var(--tint)' }}
+      className="w-full h-12 rounded-[10px] t-headline disabled:opacity-40 transition active:scale-[0.99]"
+      style={{ color: danger ? 'var(--red)' : 'var(--tint)', border: `1.5px solid ${danger ? 'var(--red)' : 'var(--tint)'}`, background: 'var(--card)' }}
     >
       {children}
     </button>
