@@ -17,9 +17,9 @@
   --brand-glow:  rgba(204, 20, 0, 0.14);
   --brand-tint:  rgba(204, 20, 0, 0.06);
 
-  /* Backgrounds */
-  --bg:          #F7F6F3;
-  --bg-alt:      #EFEDE8;
+  /* Backgrounds — creme quente (visual "vidro") */
+  --bg:          #F3F1EE;
+  --bg-alt:      #ECE8E2;
   --surface:     #FFFFFF;
   --surface-2:   #F7F6F3;
   --surface-3:   #EFEDE8;
@@ -80,7 +80,7 @@
   --font-logo:    'Fredoka', 'DM Sans', cursive;
 
   /* Layout */
-  --nav-h:     72px;
+  --nav-h:     88px; /* menu flutuante + margem */
   --topbar-h:  60px;
   --max-w:     430px;
 }
@@ -96,7 +96,12 @@ html {
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  /* Fundo creme com um calor suave embaixo (como a referência). */
+  background:
+    radial-gradient(120% 55% at 50% 110%, rgba(250, 214, 196, 0.55) 0%, rgba(250, 214, 196, 0) 60%),
+    radial-gradient(80% 40% at 100% 0%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -192,3 +197,35 @@ html { overflow-x: hidden; }
 
 /* ─── Pressed state ─────────────────────────────────────── */
 .press:active { transform: scale(0.975); transition: transform 0.08s; }
+
+
+/* ─── Visual "vidro" ────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 2px rgba(40, 28, 16, 0.04), 0 10px 30px rgba(120, 80, 40, 0.06);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.chip {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 1);
+  box-shadow: 0 1px 2px rgba(40, 28, 16, 0.05), 0 4px 12px rgba(120, 80, 40, 0.05);
+  color: var(--text);
+  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.chip:hover { background: #fff; }
+.chip:active { transform: scale(0.96); }
+.chip-active { background: var(--brand); color: #fff; border-color: var(--brand); }
+.chip-active:hover { background: var(--brand-dark); }
+
+/* Botão central elevado do menu flutuante */
+.nav-raised {
+  background: radial-gradient(circle at 35% 30%, #F0442F 0%, #CC1400 55%, #A31000 100%);
+  box-shadow: 0 10px 24px rgba(204, 20, 0, 0.35), 0 0 0 6px rgba(255, 255, 255, 0.85);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

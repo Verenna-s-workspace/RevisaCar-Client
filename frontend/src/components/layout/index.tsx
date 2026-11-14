@@ -3,8 +3,8 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Home, Car, ChevronLeft, FileText, Clock, User, WifiOff, Bell, Store,
-  Receipt, FolderOpen, QrCode, Wrench, Settings, LogOut, CalendarPlus,
+  Home, Car, ChevronLeft, FileText, User, WifiOff, Bell, Store,
+  Receipt, FolderOpen, QrCode, Wrench, Settings, LogOut,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../store/auth';
@@ -49,11 +49,47 @@ function OfflineBanner() {
 }
 
 /* ─── Design tokens ─────────────────────────────────────── */
-const BRAND  = '#CC1400';
-const ACTIVE = BRAND;
-const IDLE   = '#9AA0A8';
+const BRAND = '#CC1400';
 
-/* ─── Topbar ────────────────────────────────────────────── */
+/* ─── Notificações não lidas (mesmo cache do Início) ────── */
+function useNaoLidas() {
+  const { data } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => dashboardApi.get().then(r => r.data),
+    staleTime: 30_000,
+  });
+  return data?.unread_notifications_count ?? 0;
+}
+
+const iniciais = (nome?: string) =>
+  (nome ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]!.toUpperCase()).join('') || '?';
+
+export function Logo({ compact }: { compact?: boolean }) {
+  return (
+    <span className="flex items-center gap-2">
+      <img src="/logo.svg" alt="" width={28} height={28} className="flex-none" />
+      {!compact && (
+        <span className="text-[20px] leading-none font-semibold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text)' }}>
+          RevisaCar
+        </span>
+      )}
+    </span>
+  );
+}
+
+export function Avatar() {
+  const navigate = useNavigate();
+  const { session } = useAuthStore();
+  return (
+    <button onClick={() => navigate('/perfil')} aria-label="Meu perfil" title="Meu perfil"
+      className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-semibold text-white flex-none"
+      style={{ background: 'linear-gradient(140deg, #E2483B, #A31000)', boxShadow: '0 0 0 3px rgba(255,255,255,0.9)' }}>
+      {iniciais(session?.name)}
+    </button>
+  );
+}
+
+/* ─── Topbar (cabeçalho das páginas) ────────────────────── */
 interface TopbarProps {
   title?: string;
   showBack?: boolean;
@@ -61,7 +97,7 @@ interface TopbarProps {
   right?: ReactNode;
 }
 
-// Páginas que já estão na sidebar: no desktop não precisam de "voltar".
+// Páginas que já estão no menu do topo: no desktop não precisam de "voltar".
 const RAIZES_DESKTOP = new Set(['/', '/veiculo', '/historico', '/manutencoes', '/orcamentos', '/oficinas',
   '/documentos', '/qr', '/qr-code', '/notificacoes', '/ajustes', '/perfil', '/agendar']);
 
@@ -72,41 +108,38 @@ export function Topbar({ title, showBack, onBack, right }: TopbarProps) {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b flex items-center px-2 h-[var(--topbar-h)] bg-[var(--bg)]
-                 lg:px-8 lg:h-[72px] lg:bg-white"
-      style={{ borderColor: 'var(--border)', fontFamily: 'var(--font)' }}
+      className="sticky top-0 z-40 flex items-center gap-3 px-4 h-[var(--topbar-h)]
+                 bg-[rgba(243,241,238,0.82)] backdrop-blur-xl
+                 lg:static lg:bg-transparent lg:backdrop-blur-0 lg:h-auto lg:px-4 lg:pt-6 lg:pb-3"
+      style={{ fontFamily: 'var(--font)' }}
     >
-      <button
-        aria-label="Voltar"
-        onClick={onBack || (() => navigate(-1))}
-        className={clsx(
-          'w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-black/[0.04]',
-          !showBack && 'invisible pointer-events-none lg:hidden',
-          showBack && (raiz ? 'lg:hidden' : 'lg:mr-2'),
-        )}
-        style={{ color: 'var(--text)' }}
-      >
-        <ChevronLeft size={22} strokeWidth={2} />
-      </button>
-      <h1
-        className="font-semibold text-[15px] absolute left-1/2 -translate-x-1/2 max-w-[56%] truncate
-                   lg:static lg:translate-x-0 lg:max-w-none lg:text-[22px] lg:font-bold"
-        style={{ color: 'var(--text)', fontFamily: 'var(--font-heading)' }}
-      >
+      {showBack && (
+        <button
+          aria-label="Voltar"
+          onClick={onBack || (() => navigate(-1))}
+          className={clsx('chip w-10 h-10 rounded-full flex items-center justify-center flex-none', raiz && 'lg:hidden')}
+          style={{ color: BRAND }}
+        >
+          <ChevronLeft size={20} strokeWidth={2.2} />
+        </button>
+      )}
+      <h1 className="flex-1 min-w-0 truncate text-[18px] font-medium lg:text-[28px] lg:font-normal"
+          style={{ color: 'var(--text)' }}>
         {title}
       </h1>
-      <div className="ml-auto min-w-10 h-10 flex items-center justify-center">{right}</div>
+      {right && <div className="flex-none flex items-center gap-2">{right}</div>}
     </header>
   );
 }
 
-/* ─── Bottom Nav (celular) ──────────────────────────────── */
+/* ─── Menu flutuante (celular) ──────────────────────────── */
+// Cinco botões redondos numa pílula de vidro; o da página atual sobe e fica vermelho.
 const NAV = [
-  { to: '/',          icon: Home,     label: 'Início'  },
-  { to: '/historico', icon: FileText, label: 'Serviços'},
-  { to: '/agendar',   icon: Clock,    label: 'Agendar' },
-  { to: '/veiculo',   icon: Car,      label: 'Veículo' },
-  { to: '/perfil',    icon: User,     label: 'Perfil'  },
+  { to: '/veiculo',      icon: Car,      label: 'Veículos' },
+  { to: '/manutencoes',  icon: Wrench,   label: 'Manutenções' },
+  { to: '/',             icon: Home,     label: 'Início' },
+  { to: '/notificacoes', icon: Bell,     label: 'Notificações' },
+  { to: '/historico',    icon: FileText, label: 'Serviços' },
 ];
 
 const ativo = (pathname: string, to: string) =>
@@ -114,150 +147,121 @@ const ativo = (pathname: string, to: string) =>
 
 export function BottomNav() {
   const location = useLocation();
+  const naoLidas = useNaoLidas();
 
   return (
     <nav
       aria-label="Menu principal"
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] flex items-center justify-around px-1 z-50 lg:hidden"
-      style={{
-        background: '#FFFFFF',
-        borderTop: '1px solid var(--border)',
-        height: 'var(--nav-h)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
+      className="fixed left-1/2 -translate-x-1/2 z-50 lg:hidden"
+      style={{ bottom: 'calc(14px + env(safe-area-inset-bottom, 0px))' }}
     >
-      {NAV.map(({ to, icon: Icon, label }) => {
-        const active = ativo(location.pathname, to);
-        return (
-          <NavLink
-            key={to}
-            to={to}
-            aria-current={active ? 'page' : undefined}
-            className="flex flex-col items-center gap-[3px] py-2 flex-1 min-w-0"
-          >
-            <Icon size={21} strokeWidth={active ? 2.2 : 1.7} color={active ? ACTIVE : IDLE} />
-            <span className="text-[10px] font-semibold" style={{ color: active ? ACTIVE : IDLE, fontFamily: 'var(--font)' }}>
-              {label}
-            </span>
-          </NavLink>
-        );
-      })}
+      <div className="glass rounded-full flex items-center gap-2 px-2.5 py-2">
+        {NAV.map(({ to, icon: Icon, label }) => {
+          const active = ativo(location.pathname, to);
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              aria-label={label}
+              title={label}
+              aria-current={active ? 'page' : undefined}
+              className={clsx(
+                'relative rounded-full flex items-center justify-center transition-all duration-200',
+                active ? 'nav-raised w-[58px] h-[58px] -translate-y-4' : 'chip w-12 h-12',
+              )}
+            >
+              <Icon size={active ? 22 : 19} strokeWidth={active ? 2.1 : 1.7} color={active ? '#fff' : '#3A3D44'} />
+              {to === '/notificacoes' && naoLidas > 0 && !active && (
+                <span className="absolute top-2.5 right-3 w-2 h-2 rounded-full" style={{ background: BRAND, boxShadow: '0 0 0 2px #fff' }} />
+              )}
+            </NavLink>
+          );
+        })}
+      </div>
     </nav>
   );
 }
 
-/* ─── Sidebar (desktop) ─────────────────────────────────── */
-// Mesma estrutura do app da oficina: marca, ação principal, grupos nomeados e,
-// no rodapé, quem está logado + Sair.
-const NAV_GRUPOS: { titulo: string; itens: { to: string; icon: typeof Home; label: string }[] }[] = [
-  { titulo: 'Principal', itens: [
-    { to: '/',            icon: Home,      label: 'Início' },
-    { to: '/veiculo',     icon: Car,       label: 'Meus veículos' },
-    { to: '/historico',   icon: FileText,  label: 'Serviços' },
-    { to: '/manutencoes', icon: Wrench,    label: 'Manutenções' },
-  ] },
-  { titulo: 'Oficina', itens: [
-    { to: '/orcamentos',  icon: Receipt,   label: 'Orçamentos' },
-    { to: '/oficinas',    icon: Store,     label: 'Minhas oficinas' },
-  ] },
-  { titulo: 'Carteira', itens: [
-    { to: '/documentos',  icon: FolderOpen, label: 'Documentos' },
-    { to: '/qr',          icon: QrCode,     label: 'QR do veículo' },
-  ] },
+/* ─── Menu no topo (desktop) ────────────────────────────── */
+const NAV_TOPO = [
+  { to: '/',            icon: Home,       label: 'Início' },
+  { to: '/veiculo',     icon: Car,        label: 'Veículos' },
+  { to: '/manutencoes', icon: Wrench,     label: 'Manutenções' },
+  { to: '/historico',   icon: FileText,   label: 'Serviços' },
+  { to: '/orcamentos',  icon: Receipt,    label: 'Orçamentos' },
+  { to: '/documentos',  icon: FolderOpen, label: 'Documentos' },
+  { to: '/oficinas',    icon: Store,      label: 'Oficinas' },
 ];
 
-const iniciais = (nome?: string) =>
-  (nome ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]!.toUpperCase()).join('') || '?';
-
-function SidebarLink({ to, icon: Icon, label, badge }: { to: string; icon: typeof Home; label: string; badge?: number }) {
+export function TopNav() {
+  const navigate = useNavigate();
   const { pathname } = useLocation();
-  const active = ativo(pathname, to);
+  const naoLidas = useNaoLidas();
+  const { clearSession } = useAuthStore();
+  const [menu, setMenu] = useState(false);
+
   return (
-    <NavLink
-      to={to}
-      aria-current={active ? 'page' : undefined}
-      className={clsx(
-        'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-semibold transition-colors',
-        active ? 'bg-[var(--crit-bg)] text-[var(--brand)]' : 'text-[var(--text-2)] hover:bg-black/[0.04]',
-      )}
-    >
-      <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-      <span className="flex-1 min-w-0 truncate">{label}</span>
-      {!!badge && (
-        <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold text-white flex items-center justify-center"
-              style={{ background: BRAND }}>{badge > 99 ? '99+' : badge}</span>
-      )}
-    </NavLink>
+    <header className="hidden lg:flex items-center gap-6 h-[76px] px-8 flex-none">
+      <button onClick={() => navigate('/')} aria-label="Início" className="flex-none"><Logo /></button>
+
+      <nav aria-label="Menu principal" className="flex-1 flex justify-center">
+        <div className="glass rounded-full flex items-center gap-1 p-1.5">
+          {NAV_TOPO.map(({ to, icon: Icon, label }) => {
+            const active = ativo(pathname, to);
+            return (
+              <NavLink key={to} to={to} title={label} aria-current={active ? 'page' : undefined}
+                className={clsx('group flex items-center gap-2 h-10 rounded-full transition-all',
+                  active ? 'px-4 text-white' : 'w-10 justify-center hover:bg-white')}
+                style={active ? { background: BRAND } : { color: '#3A3D44' }}>
+                <Icon size={18} strokeWidth={active ? 2.1 : 1.8} />
+                <span className={clsx('text-[13px] font-medium', !active && 'sr-only')}>{label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div className="flex items-center gap-2.5 flex-none relative">
+        <button onClick={() => navigate('/notificacoes')} aria-label={naoLidas ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
+          className="chip relative w-10 h-10 rounded-full flex items-center justify-center">
+          <Bell size={18} strokeWidth={1.8} />
+          {naoLidas > 0 && <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full" style={{ background: BRAND, boxShadow: '0 0 0 2px #fff' }} />}
+        </button>
+        <button onClick={() => setMenu(m => !m)} aria-label="Conta" aria-expanded={menu}
+          className="w-10 h-10 rounded-full"><span className="pointer-events-none"><AvatarEstatico /></span></button>
+        {menu && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} />
+            <div className="glass absolute right-0 top-12 z-50 w-52 rounded-2xl p-1.5 flex flex-col">
+              {[
+                { icon: User, label: 'Meu perfil', to: '/perfil' },
+                { icon: Settings, label: 'Ajustes', to: '/ajustes' },
+                { icon: QrCode, label: 'QR do veículo', to: '/qr' },
+              ].map(i => (
+                <button key={i.to} onClick={() => { setMenu(false); navigate(i.to); }}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] text-left hover:bg-white">
+                  <i.icon size={16} color="#7A7F87" /> {i.label}
+                </button>
+              ))}
+              <button onClick={() => { setMenu(false); clearSession(); navigate('/login', { replace: true }); }}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] text-left hover:bg-white" style={{ color: BRAND }}>
+                <LogOut size={16} /> Sair
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </header>
   );
 }
 
-export function Sidebar() {
-  const navigate = useNavigate();
-  const { session, clearSession } = useAuthStore();
-  // Mesmo cache do Início: o contador de não lidas não gera request extra.
-  const { data: dash } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => dashboardApi.get().then(r => r.data),
-    staleTime: 30_000,
-  });
-  const naoLidas = dash?.unread_notifications_count ?? 0;
-
-  const sair = () => { clearSession(); navigate('/login', { replace: true }); };
-
+function AvatarEstatico() {
+  const { session } = useAuthStore();
   return (
-    <aside
-      className="hidden lg:flex w-[248px] flex-none h-[100dvh] sticky top-0 flex-col border-r overflow-y-auto"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-    >
-      <div className="flex items-center gap-3 px-5 pt-5 pb-6">
-        <img src="/logo.svg" alt="" width={40} height={40} className="flex-none" />
-        <div className="min-w-0">
-          <p className="text-[19px] leading-none font-semibold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text)' }}>RevisaCar</p>
-          <p className="text-[11.5px] mt-1" style={{ color: 'var(--muted)' }}>Área do cliente</p>
-        </div>
-      </div>
-
-      <div className="px-4">
-        <button
-          onClick={() => navigate('/agendar')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[14px] font-bold text-white transition-transform active:scale-[0.98]"
-          style={{ background: BRAND, boxShadow: '0 1px 2px rgba(204,20,0,0.25)' }}
-        >
-          <CalendarPlus size={17} /> Agendar serviço
-        </button>
-      </div>
-
-      <nav aria-label="Menu principal" className="flex-1 px-3 pt-5 flex flex-col gap-5">
-        {NAV_GRUPOS.map(g => (
-          <div key={g.titulo}>
-            <p className="px-3 mb-1.5 text-[10.5px] font-bold uppercase tracking-widest" style={{ color: 'var(--subtle)' }}>{g.titulo}</p>
-            <div className="flex flex-col gap-0.5">
-              {g.itens.map(it => <SidebarLink key={it.to} {...it} />)}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      <div className="px-3 pb-4 pt-4 flex flex-col gap-0.5 border-t mt-4" style={{ borderColor: 'var(--border)' }}>
-        <SidebarLink to="/notificacoes" icon={Bell} label="Notificações" badge={naoLidas} />
-        <SidebarLink to="/ajustes" icon={Settings} label="Ajustes" />
-        <div className="flex items-center gap-3 px-3 pt-3 mt-2">
-          <button onClick={() => navigate('/perfil')} aria-label="Meu perfil"
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white flex-none"
-            style={{ background: BRAND }}>
-            {iniciais(session?.name)}
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--text)' }}>{session?.name || 'Minha conta'}</p>
-            <p className="text-[11px] truncate" style={{ color: 'var(--muted)' }}>{session?.email}</p>
-          </div>
-          <button onClick={sair} aria-label="Sair da conta" title="Sair"
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/[0.05]">
-            <LogOut size={16} color="var(--muted)" />
-          </button>
-        </div>
-      </div>
-    </aside>
+    <span className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-semibold text-white"
+          style={{ background: 'linear-gradient(140deg, #E2483B, #A31000)', boxShadow: '0 0 0 3px rgba(255,255,255,0.9)' }}>
+      {iniciais(session?.name)}
+    </span>
   );
 }
 
@@ -271,34 +275,35 @@ const pageVariants = {
 /**
  * `width` só vale no desktop: "narrow" (formulários, configurações) ou "wide"
  * (listas em grade, painel). No celular o conteúdo ocupa a tela toda.
+ * No desktop o cabeçalho da página fica dentro da coluna de conteúdo.
  */
 export function MainLayout({ children, topbar, showNav = true, width = 'narrow' }: {
   children: ReactNode; topbar?: ReactNode; showNav?: boolean; width?: 'narrow' | 'wide';
 }) {
   const location = useLocation();
+  const desktop = useIsDesktop();
+  const largura = width === 'wide' ? 'lg:max-w-[1200px]' : 'lg:max-w-[780px]';
 
   return (
-    <div className="h-[100dvh] flex w-full max-w-[430px] mx-auto relative overflow-hidden lg:max-w-none lg:mx-0"
-         style={{ background: 'var(--bg)' }}>
-      <Sidebar />
-      <div className="flex-1 min-w-0 flex flex-col h-full">
-        <OfflineBanner />
-        {topbar}
-        <AnimatePresence mode="wait">
-          <motion.main
-            key={location.pathname}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className={clsx('flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:pb-10', showNav ? 'pb-safe' : 'pb-8')}
-          >
-            <div className={clsx('w-full lg:mx-auto lg:px-4 lg:pt-4', width === 'wide' ? 'lg:max-w-[1120px]' : 'lg:max-w-[760px]')}>
-              {children}
-            </div>
-          </motion.main>
-        </AnimatePresence>
-      </div>
+    <div className="h-[100dvh] flex flex-col w-full max-w-[430px] mx-auto relative overflow-hidden lg:max-w-none lg:mx-0">
+      <TopNav />
+      <OfflineBanner />
+      {!desktop && topbar}
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={location.pathname}
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className={clsx('flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:pb-12', showNav ? 'pb-safe' : 'pb-8')}
+        >
+          <div className={clsx('w-full lg:mx-auto lg:px-4', largura)}>
+            {desktop && topbar}
+            {children}
+          </div>
+        </motion.main>
+      </AnimatePresence>
       {showNav && <BottomNav />}
     </div>
   );

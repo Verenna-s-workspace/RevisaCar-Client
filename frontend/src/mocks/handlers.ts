@@ -50,6 +50,7 @@ export const handlers = [
   }),
 
   // ── Agendamentos ─────────────────────────────────────────────────────────────
+  http.get(`${P}/appointments`, () => HttpResponse.json([])),
   http.post(`${P}/appointments`, async ({ request }) => {
     const data = await request.json() as Record<string, string>;
     if (!data.oficina_doc) return HttpResponse.json({ oficina_doc: 'Escolha a oficina do agendamento.' }, { status: 422 });
@@ -116,6 +117,9 @@ export const handlers = [
     // Igual ao backend: "HH:MM:SS".
     return HttpResponse.json({ date, times: DEFAULT_TIMES.map(t => `${t}:00`) });
   }),
+
+  // ── Lembretes ─────────────────────────────────────────────────────────────
+  http.get(`${P}/reminders`, () => HttpResponse.json(mockDashboard.urgent_reminders)),
 
   // ── Estimates ────────────────────────────────────────────────────────────────
   http.get(`${P}/estimates`, ({ request }) => {

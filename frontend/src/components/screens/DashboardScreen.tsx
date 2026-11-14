@@ -1,298 +1,337 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, ChevronRight, Calendar, FileText, QrCode, Store, ArrowRight, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardApi, healthApi, oficinasApi } from '../../services/api';
-import { MainLayout } from '../layout';
+import {
+  ArrowUpRight, ChevronDown, CalendarPlus, Plus, FolderOpen, QrCode, Store, Wrench,
+  Calendar, ChevronRight, Gauge, ShieldCheck, Activity,
+} from 'lucide-react';
+import { format, subMonths, startOfMonth, differenceInCalendarDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import {
+  dashboardApi, oficinasApi, vehiclesApi, historyApi, remindersApi, orcamentosApi,
+} from '../../services/api';
+import { useVehicleHealth } from '../../hooks/useVehicleHealth';
+import { MainLayout, Logo, Avatar } from '../layout';
 import { Skeleton } from '../ui';
 import { useAuthStore } from '../../store/auth';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {
+  Glass, StatTile, Chip, IconCircle, PriorityBadge, DotProgress, DotBars, DotRing, CardHeader, CarIllustration, V,
+} from '../visual';
+import type { MaintenanceReminder, Vehicle } from '../../types';
 
-/* ─── Tokens ────────────────────────────────────────────── */
-const BRAND  = '#CC1400';
-const TEXT   = '#14161A';
-const MUTED  = '#6B7078';
-const SUBTLE = '#9AA0A8';
-const BG     = '#F7F6F3';
-const CARD   = '#FFFFFF';
-const BORDER = '#E2DFD8';
+const dia = (iso: string) => new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
+const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const ORDEM: Record<string, number> = { urgente: 0, atencao: 1, ok: 2 };
 
-/* ─── Health Score Arc ──────────────────────────────────── */
-function HealthArc({ score }: { score: number }) {
-  const r = 54;
-  const cx = 70, cy = 72;
-  const total = Math.PI * r;
-  const dash  = (score / 100) * total;
-  const color = score >= 80 ? '#18B26B' : score >= 60 ? '#F4A724' : BRAND;
-  const label = score >= 80 ? 'Bom estado' : score >= 60 ? 'Atenção' : 'Crítico';
-
+/* ─── Seletor de veículo (pílula com lista) ─────────────── */
+function SeletorVeiculo({ vehicles, atual, onChange }: { vehicles: Vehicle[]; atual?: Vehicle; onChange: (id: string) => void }) {
+  const [aberto, setAberto] = useState(false);
+  if (!atual) return null;
   return (
-    <div className="flex flex-col items-center">
-      <svg width="140" height="88" viewBox="0 0 140 88">
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`}
-              fill="none" stroke={BORDER} strokeWidth="9" strokeLinecap="round" />
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`}
-              fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"
-              strokeDasharray={`${dash} ${total}`} />
-        <text x={cx} y={cy-10} textAnchor="middle" fontSize="30" fontWeight="800"
-              fill={TEXT} fontFamily="var(--font-heading)">{score}</text>
-        <text x={cx} y={cy+10} textAnchor="middle" fontSize="11" fontWeight="600"
-              fill={color} fontFamily="'DM Sans',sans-serif">{label}</text>
-      </svg>
-      <p className="text-[10px] font-bold tracking-widest mt-0.5" style={{ color: SUBTLE }}>SAÚDE</p>
+    <div className="relative">
+      <button onClick={() => vehicles.length > 1 && setAberto(a => !a)} aria-expanded={aberto}
+        className="chip h-9 pl-4 pr-3 rounded-full flex items-center gap-2 text-[13.5px] font-medium">
+        {atual.brand} {atual.model}
+        {vehicles.length > 1 && <ChevronDown size={15} color={V.brand} />}
+      </button>
+      {aberto && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setAberto(false)} />
+          <div className="glass absolute left-0 top-11 z-30 min-w-[200px] rounded-2xl p-1.5">
+            {vehicles.map(v => (
+              <button key={v.id} onClick={() => { onChange(v.id); setAberto(false); }}
+                className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white">
+                <p className="text-[13.5px] font-medium" style={{ color: V.text }}>{v.brand} {v.model}</p>
+                <p className="text-[11.5px]" style={{ color: V.subtle }}>{v.plate}</p>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-/* ─── System Pill ───────────────────────────────────────── */
-function SystemPill({ label, score }: { label: string; score: number }) {
-  const color = score >= 80 ? '#18B26B' : score >= 60 ? '#F4A724' : BRAND;
-  const status = score >= 80 ? 'Ótimo' : score >= 60 ? 'Atenção' : 'Crítico';
+/* ─── Card principal do veículo ─────────────────────────── */
+function CardVeiculo({ vehicles, vehicle, onChange }: { vehicles: Vehicle[]; vehicle?: Vehicle; onChange: (id: string) => void }) {
+  const navigate = useNavigate();
+  const { data: health } = useVehicleHealth(vehicle?.id);
+  if (!vehicle) {
+    return (
+      <Glass className="p-6 flex flex-col items-center text-center gap-3 lg:col-span-5 lg:row-span-2">
+        <CarIllustration className="w-full max-w-[320px] opacity-60" />
+        <p className="text-[15px] font-medium" style={{ color: V.text }}>Cadastre seu primeiro veículo</p>
+        <button onClick={() => navigate('/veiculos/novo')} className="chip-active h-10 px-5 rounded-full text-[13px] font-medium">
+          Adicionar veículo
+        </button>
+      </Glass>
+    );
+  }
+  // Saúde geral + as duas áreas que mais precisam de atenção (dados reais do backend).
+  const areas = [...(health?.categories ?? [])].sort((a, b) => a.score - b.score).slice(0, 2);
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-[10px]" style={{ background: BG }}>
-      <div className="w-2 h-2 rounded-full flex-none" style={{ background: color }} />
-      <span className="text-[12px] font-semibold flex-1" style={{ color: TEXT }}>{label}</span>
-      <span className="text-[11px] font-semibold" style={{ color }}>{status}</span>
-    </div>
+    <Glass className="p-4 lg:p-5 flex flex-col lg:col-span-5 lg:row-span-2">
+      <div className="flex items-center justify-between">
+        <SeletorVeiculo vehicles={vehicles} atual={vehicle} onChange={onChange} />
+        <IconCircle label="Ver detalhes do veículo" onClick={() => navigate(`/veiculo/${vehicle.id}`)}>
+          <ArrowUpRight size={17} color={V.brand} />
+        </IconCircle>
+      </div>
+      <p className="text-[12px] mt-2 px-1" style={{ color: V.subtle }}>
+        {vehicle.year} · <span className="data-mono">{vehicle.plate}</span> · {vehicle.mileage?.toLocaleString('pt-BR')} km
+      </p>
+      <div className="flex-1 flex items-center justify-center py-2">
+        <CarIllustration color={vehicle.color} title={`${vehicle.brand} ${vehicle.model}`} className="w-full max-w-[420px]" />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <button onClick={() => navigate(`/saude?veiculo=${vehicle.id}`)} className="text-left">
+          <StatTile label="Saúde geral" value={health ? `${health.overall_score}%` : '—'} />
+        </button>
+        {areas.map(a => <StatTile key={a.name} label={a.name} value={`${a.score}%`} />)}
+        {areas.length < 2 && Array.from({ length: 2 - areas.length }, (_, i) => <StatTile key={i} label="—" value="—" />)}
+      </div>
+    </Glass>
   );
 }
 
-/* ─── Quick Actions ─────────────────────────────────────── */
-const ACTIONS = [
-  { icon: Calendar, label: 'Agendar',    to: '/agendar'    },
-  { icon: FileText, label: 'Orçamentos', to: '/orcamentos' },
-  { icon: QrCode,   label: 'QR Code',    to: '/qr'         },
-  { icon: Store,    label: 'Oficinas',   to: '/oficinas'   },
-];
+/* ─── Custo de manutenção (histórico real, últimos 6 meses) ── */
+function CardCusto({ className }: { className?: string }) {
+  const { data: history = [] } = useQuery({ queryKey: ['history'], queryFn: () => historyApi.list().then(r => r.data), staleTime: 60_000 });
+  const meses = useMemo(() => {
+    const inicio = startOfMonth(subMonths(new Date(), 5));
+    return Array.from({ length: 6 }, (_, i) => {
+      const m = startOfMonth(subMonths(new Date(), 5 - i));
+      const chave = format(m, 'yyyy-MM');
+      const value = history
+        .filter(h => h.service_date && dia(h.service_date) >= inicio && format(dia(h.service_date), 'yyyy-MM') === chave)
+        .reduce((s, h) => s + (h.total_cost || 0), 0);
+      return { label: format(m, 'MMM', { locale: ptBR }).replace('.', ''), value };
+    });
+  }, [history]);
+  const total = meses.reduce((s, m) => s + m.value, 0);
+  return (
+    <Glass className={`p-5 ${className ?? ''}`}>
+      <CardHeader title="Custo de manutenção" subtitle="Últimos 6 meses"
+        right={<span className="text-[15px] font-medium tabular" style={{ color: V.text }}>{brl(total)}</span>} />
+      <div className="mt-5">
+        {total === 0
+          ? <p className="text-[13px] py-10 text-center" style={{ color: V.subtle }}>Nenhum serviço pago nos últimos 6 meses.</p>
+          : <DotBars data={meses} format={brl} height={140} />}
+      </div>
+    </Glass>
+  );
+}
+
+/* ─── Próximos lembretes ────────────────────────────────── */
+function CardLembretes({ lembretes, className }: { lembretes: MaintenanceReminder[]; className?: string }) {
+  const navigate = useNavigate();
+  return (
+    <Glass className={`p-5 ${className ?? ''}`}>
+      <CardHeader title={`Próximas manutenções${lembretes.length ? ` (${lembretes.length})` : ''}`} subtitle="Pelos lembretes do veículo"
+        right={<IconCircle label="Ver manutenções" onClick={() => navigate('/manutencoes')}><ArrowUpRight size={16} color={V.brand} /></IconCircle>} />
+      <div className="mt-4 flex flex-col gap-2">
+        {lembretes.length === 0 ? (
+          <p className="text-[13px] py-6 text-center" style={{ color: V.subtle }}>Tudo em dia por aqui.</p>
+        ) : lembretes.slice(0, 4).map(r => (
+          <div key={r.id} className="flex items-center gap-3 rounded-[16px] px-3 py-2.5" style={{ background: V.tile }}>
+            <span className="w-2 h-2 rounded-full flex-none"
+                  style={{ background: r.urgency === 'urgente' ? V.brand : r.urgency === 'atencao' ? V.warn : V.ok }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13.5px] font-medium truncate" style={{ color: V.text }}>{r.service_name}</p>
+              <p className="text-[11.5px] truncate" style={{ color: V.subtle }}>
+                {r.km_remaining != null
+                  ? (r.km_remaining < 0 ? `Passou ${Math.abs(r.km_remaining).toLocaleString('pt-BR')} km` : `Em ${r.km_remaining.toLocaleString('pt-BR')} km`)
+                  : r.next_service_date ? `Até ${format(dia(r.next_service_date), 'dd/MM')}` : r.vehicle_label}
+              </p>
+            </div>
+            <PriorityBadge urgency={r.urgency} />
+          </div>
+        ))}
+      </div>
+    </Glass>
+  );
+}
 
 /* ─── Dashboard ─────────────────────────────────────────── */
 export function DashboardScreen() {
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const { session } = useAuthStore();
-  const firstName = session?.name?.split(' ')[0] ?? '';
+  const primeiroNome = session?.name?.split(' ')[0] ?? '';
+  const [escolhido, setEscolhido] = useState<string>();
 
-  const { data: dash, isLoading } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => dashboardApi.get().then(r => r.data),
-    staleTime: 30_000,
-  });
+  const { data: dash, isLoading } = useQuery({ queryKey: ['dashboard'], queryFn: () => dashboardApi.get().then(r => r.data), staleTime: 30_000 });
+  const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => vehiclesApi.list().then(r => r.data) });
+  const { data: oficinas } = useQuery({ queryKey: ['oficinas'], queryFn: () => oficinasApi.list().then(r => r.data), staleTime: 60_000 });
+  const { data: lembretesTodos = [] } = useQuery({ queryKey: ['reminders'], queryFn: () => remindersApi.list().then(r => r.data), staleTime: 60_000 });
+  const { data: orcAguardando = [] } = useQuery({ queryKey: ['orcamentos', 'enviado'], queryFn: () => orcamentosApi.list('enviado').then(r => r.data), staleTime: 30_000 });
+  const { data: history = [] } = useQuery({ queryKey: ['history'], queryFn: () => historyApi.list().then(r => r.data), staleTime: 60_000 });
 
-  const vehicle = dash?.active_vehicle;
-
-  // Saúde real do veículo ativo (endpoint /vehicles/:id/health, calculado a
-  // partir dos lembretes de manutenção). Antes era um número fixo (86) com
-  // pills chumbados — dados fictícios para o dono do veículo.
-  const { data: healthData } = useQuery({
-    queryKey: ['vehicle-health', vehicle?.id],
-    queryFn: () => healthApi.get(vehicle!.id).then(r => r.data),
-    enabled: !!vehicle?.id,
-    staleTime: 30_000,
-  });
-
-  const health = healthData?.overall_score ?? dash?.health_score ?? null;
-
-  const { data: oficinas } = useQuery({
-    queryKey: ['oficinas'],
-    queryFn: () => oficinasApi.list().then(r => r.data),
-    staleTime: 60_000,
-  });
-
-  // Próxima ação REAL: o próximo agendamento; senão, o lembrete mais urgente.
+  const vehicle = vehicles.find(v => v.id === escolhido) ?? dash?.active_vehicle ?? vehicles.find(v => v.is_active) ?? vehicles[0];
+  const { data: health } = useVehicleHealth(vehicle?.id);
+  const lembretes = [...lembretesTodos].sort((a, b) => (ORDEM[a.urgency] ?? 3) - (ORDEM[b.urgency] ?? 3));
+  const urgentes = lembretes.filter(r => r.urgency === 'urgente').length;
   const proximoAgendamento = dash?.upcoming_appointments?.[0];
-  const ORDEM_URGENCIA: Record<string, number> = { urgente: 0, atencao: 1, ok: 2 };
-  const lembrete = [...(dash?.all_reminders ?? [])]
-    .sort((a, b) => (ORDEM_URGENCIA[a.urgency] ?? 3) - (ORDEM_URGENCIA[b.urgency] ?? 3))[0];
-  const dataCurta = (iso?: string) => (iso ? format(new Date(iso.length === 10 ? `${iso}T00:00:00` : iso), 'dd/MM', { locale: ptBR }) : null);
-  const systems = (healthData?.categories ?? []).slice(0, 3).map(c => ({ label: c.name, score: c.score }));
+  const ultimo = history[0];
 
   return (
     <MainLayout width="wide" topbar={
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-[56px] bg-[#F7F6F3] lg:bg-white lg:h-[72px] lg:px-8"
-              style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <div>
-          <p className="text-[11px] font-medium lg:text-[12.5px]" style={{ color: SUBTLE }}>Bem-vindo de volta</p>
-          <p className="text-[16px] font-bold lg:text-[22px]" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
-            Olá{firstName ? `, ${firstName}` : ''}
-          </p>
-        </div>
-        <button aria-label="Notificações" onClick={() => navigate('/notificacoes')}
-                className="relative w-10 h-10 flex items-center justify-center rounded-xl"
-                style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-          <Bell size={19} color={TEXT} strokeWidth={1.8} />
-          {(dash?.unread_notifications_count ?? 0) > 0 && (
-            <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full" style={{ background: BRAND }} />
-          )}
-        </button>
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-[64px] bg-[rgba(243,241,238,0.82)] backdrop-blur-xl lg:hidden">
+        <Logo />
+        <Avatar />
       </header>
     }>
-      <div className="px-4 pt-4 pb-6 flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:gap-5 lg:items-start">
-
-        {/* Vehicle card + Health Score */}
-        {isLoading ? (
-          <Skeleton className="h-[192px] rounded-[18px] lg:col-span-2" />
-        ) : vehicle ? (
-          <div className="rounded-[18px] p-5 lg:col-span-2" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-bold text-[17px]" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
-                  {vehicle.brand} {vehicle.model}
-                </p>
-                <p className="text-[12px] mt-0.5 font-medium data-mono" style={{ color: MUTED }}>
-                  {vehicle.plate} · {vehicle.fuel_type} · {vehicle.mileage?.toLocaleString('pt-BR')} km
-                </p>
-              </div>
-              <button onClick={() => navigate(`/veiculo/${vehicle.id}`)}>
-                <ChevronRight size={18} color={SUBTLE} />
-              </button>
-            </div>
-            {health !== null && <button onClick={() => navigate(`/saude?veiculo=${vehicle.id}`)} className="flex items-center gap-3 w-full text-left">
-              <HealthArc score={health} />
-              <div className="flex-1 flex flex-col gap-2">
-                {systems.map(s => <SystemPill key={s.label} {...s} />)}
-              </div>
-            </button>}
+      <div className="px-4 pt-2 pb-6 lg:pt-6">
+        {/* Saudação + ações */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-[28px] leading-tight font-normal lg:text-[34px]" style={{ color: V.text }}>
+              Olá{primeiroNome ? `, ${primeiroNome}` : ''} <span aria-hidden>👋</span>
+            </h1>
+            <p className="text-[13.5px] mt-1" style={{ color: V.muted }}>Aqui está o resumo do seu carro.</p>
           </div>
-        ) : (
-          <button onClick={() => navigate('/veiculos/novo')}
-                  className="rounded-[18px] p-5 flex flex-col items-center gap-3 border-2 border-dashed lg:col-span-2"
-                  style={{ borderColor: BORDER }}>
-            <p className="text-[14px] font-semibold" style={{ color: MUTED }}>+ Adicionar veículo</p>
-          </button>
-        )}
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 pb-1">
+            <Chip icon={<CalendarPlus size={15} />} onClick={() => navigate('/agendar')} active>Agendar</Chip>
+            <Chip icon={<Plus size={15} />} onClick={() => navigate('/veiculos/novo')}>Adicionar veículo</Chip>
+            <Chip icon={<FolderOpen size={15} />} onClick={() => navigate('/documentos')}>Documentos</Chip>
+            <Chip icon={<QrCode size={15} />} onClick={() => navigate('/qr')}>QR do veículo</Chip>
+          </div>
+        </div>
 
-        <div className="flex flex-col gap-4">
-        {/* Sem oficina: sem ela não dá para agendar nem receber orçamentos */}
+        {/* Sem oficina */}
         {oficinas && oficinas.length === 0 && (
-          <button onClick={() => navigate('/oficinas')}
-            className="rounded-[14px] p-4 flex items-center gap-3 text-left"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none" style={{ background: '#FDEAEC' }}>
-              <Store size={17} color={BRAND} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold" style={{ color: TEXT }}>Entre na sua oficina</p>
-              <p className="text-[11.5px] mt-0.5" style={{ color: MUTED }}>Use o convite dela para agendar e receber orçamentos.</p>
-            </div>
-            <ChevronRight size={18} color={SUBTLE} />
-          </button>
+          <Glass as="button" onClick={() => navigate('/oficinas')} className="w-full mt-5 p-4 flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full flex items-center justify-center flex-none" style={{ background: V.brandSoft }}>
+              <Store size={18} color={V.brand} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[14px] font-medium" style={{ color: V.text }}>Entre na sua oficina</span>
+              <span className="block text-[12px] mt-0.5" style={{ color: V.muted }}>Use o convite dela para agendar e receber orçamentos.</span>
+            </span>
+            <ChevronRight size={18} color={V.subtle} />
+          </Glass>
         )}
 
-        {/* Próxima ação (dados reais) */}
-        {(proximoAgendamento || lembrete) && (
-        <div className="rounded-[14px] p-4 flex items-center gap-3"
-             style={{ background: '#FDEAEC', border: `1px solid rgba(204,20,0,.12)` }}>
-          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
-               style={{ background: BRAND }}>
-            {proximoAgendamento ? <Calendar size={17} color="#fff" /> : <Wrench size={17} color="#fff" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: BRAND }}>
-              {proximoAgendamento ? 'Próximo agendamento' : 'Próxima manutenção'}
-            </p>
-            {proximoAgendamento ? (
-              <>
-                <p className="text-[13px] font-bold mt-0.5 truncate" style={{ color: TEXT }}>{proximoAgendamento.service_type}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
-                  {dataCurta(proximoAgendamento.date)} às {proximoAgendamento.time_slot?.slice(0, 5)}
-                  {' · '}{proximoAgendamento.status === 'confirmado' ? 'confirmado' : 'aguardando a oficina'}
-                </p>
-              </>
-            ) : lembrete && (
-              <>
-                <p className="text-[13px] font-bold mt-0.5 truncate" style={{ color: TEXT }}>{lembrete.service_name}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
-                  {[lembrete.km_remaining != null ? `Em ${lembrete.km_remaining.toLocaleString('pt-BR')} km` : null,
-                    lembrete.next_service_date ? `vence ${dataCurta(lembrete.next_service_date)}` : null]
-                    .filter(Boolean).join(' · ') || lembrete.vehicle_label}
-                </p>
-              </>
-            )}
-          </div>
-          {!proximoAgendamento && (
-            <button onClick={() => navigate('/agendar')}
-                    className="text-[12px] font-bold px-3 py-1.5 rounded-[8px] whitespace-nowrap"
-                    style={{ background: BRAND, color: '#fff' }}>
-              Agendar
-            </button>
+        {/* Grade: no celular uma coluna; no desktop, blocos (12 colunas) */}
+        <div className="mt-5 flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:gap-4 lg:auto-rows-min">
+          {isLoading ? (
+            <Skeleton className="h-[340px] rounded-[24px] lg:col-span-5 lg:row-span-2" />
+          ) : (
+            <CardVeiculo vehicles={vehicles} vehicle={vehicle} onChange={setEscolhido} />
           )}
-        </div>
-        )}
 
-        {/* Quick actions — paleta restrita, um único acento (marca) */}
-        <div className="grid grid-cols-4 gap-2.5 lg:hidden">
-          {ACTIONS.map(({ icon: Icon, label, to }) => (
-            <button key={label} onClick={() => navigate(to)}
-                    className="flex flex-col items-center gap-2 press">
-              <div className="w-full aspect-square rounded-[18px] flex items-center justify-center"
-                   style={{ background: CARD, border: `1px solid ${BORDER}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-                <Icon size={21} color={BRAND} strokeWidth={1.9} />
-              </div>
-              <span className="text-[11px] font-semibold" style={{ color: TEXT }}>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Atalhos no desktop: compactos (a sidebar já tem a navegação completa) */}
-        <div className="hidden lg:grid grid-cols-2 gap-2.5">
-          {ACTIONS.map(({ icon: Icon, label, to }) => (
-            <button key={label} onClick={() => navigate(to)}
-                    className="flex items-center gap-3 px-3.5 h-14 rounded-[14px] text-left hover:border-[#C7C3BA] transition-colors"
-                    style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-              <Icon size={19} color={BRAND} strokeWidth={1.9} />
-              <span className="text-[13px] font-semibold" style={{ color: TEXT }}>{label}</span>
-            </button>
-          ))}
-        </div>
-        </div>
-
-        {/* Atividade recente */}
-        <div className="lg:col-span-3">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[14px] font-bold" style={{ color: TEXT, fontFamily: "var(--font-heading)" }}>
-              Atividade recente
-            </p>
-            <button onClick={() => navigate('/historico')} className="flex items-center gap-1">
-              <span className="text-[12px] font-semibold" style={{ color: BRAND }}>Ver tudo</span>
-              <ArrowRight size={13} color={BRAND} />
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {isLoading ? (
-              [0,1].map(i => <Skeleton key={i} className="h-[64px] rounded-[14px]" />)
-            ) : (dash?.recent_services ?? []).length === 0 ? (
-              <p className="text-center py-8 text-[13px]" style={{ color: SUBTLE }}>
-                Nenhum serviço registrado ainda.
-              </p>
-            ) : (
-              (dash?.recent_services ?? []).slice(0, 3).map((s: any, i: number) => (
-                <div key={i} className="flex items-center gap-3 p-3.5 rounded-[14px]"
-                     style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-none"
-                       style={{ background: BG }}>
-                    <Calendar size={16} color={SUBTLE} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold truncate" style={{ color: TEXT }}>
-                      {s.service_type}
-                    </p>
-                    <p className="text-[11px] mt-0.5" style={{ color: SUBTLE }}>
-                      {(s.service_date || s.scheduled_date)
-                        ? format(new Date(s.service_date || s.scheduled_date), 'dd/MM', { locale: ptBR })
-                        : '—'} · {s.mileage?.toLocaleString('pt-BR') ?? '—'} km
-                    </p>
-                  </div>
-                  {s.total_cost && (
-                    <span className="text-[13px] font-bold data-mono" style={{ color: TEXT }}>
-                      R$ {s.total_cost.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
-                    </span>
+          {/* Métricas */}
+          <div className="grid grid-cols-3 gap-2 lg:col-span-7 lg:gap-4">
+            {[
+              { label: 'Veículos', valor: vehicles.length, extra: null, pct: Math.min(100, vehicles.length * 25), to: '/veiculo' },
+              { label: 'Lembretes', valor: lembretes.length, extra: urgentes ? `${urgentes} urgente${urgentes > 1 ? 's' : ''}` : null,
+                pct: lembretes.length ? 100 - (urgentes / lembretes.length) * 100 : 100, to: '/manutencoes' },
+              { label: 'Orçamentos', valor: orcAguardando.length, extra: orcAguardando.length ? 'aguardando' : null,
+                pct: orcAguardando.length ? 60 : 100, to: '/orcamentos' },
+            ].map(m => (
+              <Glass as="button" key={m.label} onClick={() => navigate(m.to)} className="p-3.5 lg:p-5 flex flex-col gap-2 min-w-0">
+                <span className="text-[12px] lg:text-[13px]" style={{ color: V.muted }}>{m.label}</span>
+                <span className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-[24px] lg:text-[30px] leading-none font-normal tabular" style={{ color: V.text }}>
+                    {String(m.valor).padStart(2, '0')}
+                  </span>
+                  {m.extra && (
+                    <span className="text-[10.5px] px-2 py-0.5 rounded-full" style={{ background: V.brandSoft, color: V.brand }}>{m.extra}</span>
                   )}
-                </div>
-              ))
-            )}
+                </span>
+                <span className="hidden sm:block"><DotProgress pct={m.pct} color={m.extra ? V.brand : V.ok} /></span>
+              </Glass>
+            ))}
           </div>
-        </div>
 
+          {/* Saúde (anel) — no celular a saúde já aparece no card do carro */}
+          <Glass className="hidden lg:flex lg:col-span-3 p-5 flex-col">
+            <CardHeader title="Saúde" subtitle={vehicle ? `${vehicle.brand} ${vehicle.model}` : undefined} />
+            <div className="flex-1 flex items-center justify-center py-3">
+              {health ? <DotRing value={health.overall_score} label="saúde geral" size={170} /> : <Skeleton className="w-[150px] h-[150px] rounded-full" />}
+            </div>
+          </Glass>
+
+          <CardLembretes lembretes={lembretes} className="lg:col-span-4" />
+
+          {/* Próxima ação (celular) */}
+          {(proximoAgendamento || lembretes[0]) && (
+            <Glass className="p-4 flex items-center gap-3 lg:hidden">
+              <span className="w-11 h-11 rounded-full nav-raised flex items-center justify-center flex-none" style={{ boxShadow: '0 6px 16px rgba(204,20,0,0.3)' }}>
+                {proximoAgendamento ? <Calendar size={18} /> : <Wrench size={18} />}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] uppercase tracking-wider" style={{ color: V.brand }}>
+                  {proximoAgendamento ? 'Próximo agendamento' : 'Próxima manutenção'}
+                </p>
+                <p className="text-[14px] font-medium truncate" style={{ color: V.text }}>
+                  {proximoAgendamento ? proximoAgendamento.service_type : lembretes[0]?.service_name}
+                </p>
+                <p className="text-[12px]" style={{ color: V.muted }}>
+                  {proximoAgendamento
+                    ? `${format(dia(proximoAgendamento.date), 'dd/MM')} às ${proximoAgendamento.time_slot?.slice(0, 5)}`
+                    : lembretes[0]?.km_remaining != null ? `Em ${lembretes[0].km_remaining.toLocaleString('pt-BR')} km` : lembretes[0]?.vehicle_label}
+                </p>
+              </div>
+              {!proximoAgendamento && (
+                <button onClick={() => navigate('/agendar')} className="chip-active h-9 px-4 rounded-full text-[12.5px] font-medium">Agendar</button>
+              )}
+            </Glass>
+          )}
+
+          <CardCusto className="lg:col-span-5" />
+
+          {/* Último / próximo serviço */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-1 lg:col-span-2">
+            <Glass className="p-4 flex flex-col gap-1.5">
+              <span className="text-[12px]" style={{ color: V.muted }}>Último serviço</span>
+              <span className="text-[17px] font-normal" style={{ color: V.text }}>
+                {ultimo?.service_date ? format(dia(ultimo.service_date), "dd MMM yyyy", { locale: ptBR }) : '—'}
+              </span>
+              <span className="text-[11.5px] truncate" style={{ color: V.subtle }}>
+                {ultimo ? `${ultimo.service_type} · há ${differenceInCalendarDays(new Date(), dia(ultimo.service_date))} dias` : 'Nenhum ainda'}
+              </span>
+            </Glass>
+            <Glass className="p-4 flex flex-col gap-1.5">
+              <span className="text-[12px]" style={{ color: V.muted }}>Próximo serviço</span>
+              <span className="text-[17px] font-normal" style={{ color: V.text }}>
+                {proximoAgendamento ? format(dia(proximoAgendamento.date), "dd MMM yyyy", { locale: ptBR })
+                  : lembretes[0]?.next_service_date ? format(dia(lembretes[0].next_service_date), "dd MMM yyyy", { locale: ptBR })
+                  : lembretes[0]?.km_remaining != null
+                    ? (lembretes[0].km_remaining < 0 ? 'Atrasado' : `Em ${lembretes[0].km_remaining.toLocaleString('pt-BR')} km`)
+                    : '—'}
+              </span>
+              <span className="text-[11.5px] truncate" style={{ color: V.subtle }}>
+                {proximoAgendamento ? proximoAgendamento.service_type : lembretes[0]?.service_name ?? 'Nada agendado'}
+              </span>
+            </Glass>
+          </div>
+
+          {/* Atividade recente */}
+          <Glass className="p-5 lg:col-span-5">
+            <CardHeader title="Atividade recente" subtitle="Serviços feitos"
+              right={<IconCircle label="Ver todos os serviços" onClick={() => navigate('/historico')}><ArrowUpRight size={16} color={V.brand} /></IconCircle>} />
+            <div className="mt-4 flex flex-col gap-2">
+              {history.length === 0 ? (
+                <p className="text-[13px] py-6 text-center" style={{ color: V.subtle }}>Nenhum serviço registrado ainda.</p>
+              ) : history.slice(0, 3).map(s => (
+                <button key={s.id} onClick={() => navigate(`/servico/${s.id}`)}
+                  className="flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-left" style={{ background: V.tile }}>
+                  <span className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-none">
+                    {/óleo|oleo/i.test(s.service_type) ? <Gauge size={16} color={V.muted} />
+                      : /freio/i.test(s.service_type) ? <ShieldCheck size={16} color={V.muted} /> : <Activity size={16} color={V.muted} />}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[13.5px] font-medium truncate" style={{ color: V.text }}>{s.service_type}</span>
+                    <span className="block text-[11.5px]" style={{ color: V.subtle }}>
+                      {format(dia(s.service_date), 'dd/MM/yyyy')}{s.workshop_name ? ` · ${s.workshop_name}` : ''}
+                    </span>
+                  </span>
+                  {!!s.total_cost && <span className="text-[13.5px] tabular" style={{ color: V.text }}>{brl(s.total_cost)}</span>}
+                </button>
+              ))}
+            </div>
+          </Glass>
+        </div>
       </div>
     </MainLayout>
   );
