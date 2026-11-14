@@ -14,7 +14,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo.svg'],
+      includeAssets: ['favicon-32.png', 'apple-touch-icon.png', 'logo.svg'],
       manifest: {
         name: 'RevisaCar — App do Cliente',
         short_name: 'RevisaCar',
@@ -22,11 +22,13 @@ export default defineConfig({
         theme_color: '#CC1400',
         background_color: '#F7F6F3',
         display: 'standalone',
-        orientation: 'portrait',
+        // Celular e computador (versão desktop): sem travar a orientação.
+        orientation: 'any',
         start_url: '/',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
         shortcuts: [
           { name: 'Agendar', short_name: 'Agendar', url: '/agendar', icons: [{ src: '/icons/icon-96.png', sizes: '96x96' }] },

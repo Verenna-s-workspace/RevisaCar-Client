@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/auth';
+import { BrandPanel } from '../layout';
 
 /* ─── Schemas ───────────────────────────────────────────── */
 const loginSchema = z.object({
@@ -426,7 +427,10 @@ export function AuthScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen max-w-[430px] mx-auto flex flex-col relative overflow-hidden"
+    <div className="min-h-screen flex w-full" style={{ background: '#0D0D0D' }}>
+    {/* Desktop: painel da marca à esquerda, acesso à direita */}
+    <BrandPanel />
+    <div className="min-h-screen w-full max-w-[430px] mx-auto flex flex-col relative overflow-hidden lg:mx-0 lg:max-w-none lg:w-[480px] lg:flex-none"
          style={{ background: 'linear-gradient(160deg, #1A1A1A 0%, #111111 50%, #0D0D0D 100%)' }}>
 
       {/* Background car silhouette — decorative */}
@@ -482,6 +486,7 @@ export function AuthScreen() {
           )}
         </AnimatePresence>
       </div>
+    </div>
     </div>
   );
 }

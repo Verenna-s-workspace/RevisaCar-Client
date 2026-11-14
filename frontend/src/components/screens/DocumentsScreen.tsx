@@ -239,7 +239,7 @@ export function DocumentsScreen() {
 
   return (
     <>
-      <MainLayout showNav={false} topbar={
+      <MainLayout width="wide" showNav={false} topbar={
         <Topbar title="Documentos" showBack right={
           <button aria-label="Adicionar documento" onClick={() => setShowAdd(true)}
             className="w-9 h-9 flex items-center justify-center rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}` }}>

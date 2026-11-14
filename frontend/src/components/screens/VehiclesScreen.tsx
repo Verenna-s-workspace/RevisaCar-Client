@@ -48,7 +48,7 @@ export function VehiclesScreen() {
   });
 
   return (
-    <MainLayout topbar={<Topbar title="Meus veículos" />}>
+    <MainLayout width="wide" topbar={<Topbar title="Meus veículos" />}>
       <div className="px-4 pt-4 pb-8 flex flex-col gap-3">
         {isLoading ? (
           [0,1,2].map(i => <Skeleton key={i} className="h-[76px] rounded-[16px]" />)
