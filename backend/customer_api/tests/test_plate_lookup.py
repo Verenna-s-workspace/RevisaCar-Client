@@ -1,7 +1,5 @@
 """Consulta de placa: mapeamento normalizado + feature-flag + endpoint."""
-import jwt as pyjwt
 import pytest
-from django.conf import settings
 from rest_framework.test import APIClient
 
 from customer_api import plate_lookup as pl
@@ -9,8 +7,9 @@ from customer_api.models import Customer
 from customer_api.serializers import pw_hash
 
 
-def _token(cid: str) -> str:
-    return pyjwt.encode({"customer_id": cid}, settings.SECRET_KEY, algorithm="HS256")
+def _token(customer) -> str:
+    from customer_api.views import _make_tokens
+    return _make_tokens(str(customer.id), customer.name, customer.pwhash)["access"]
 
 
 @pytest.fixture
@@ -69,7 +68,7 @@ def test_falha_do_provedor_nao_propaga(settings, monkeypatch):
 def test_endpoint_available_false_quando_desligado(customer, settings):
     settings.PLATE_LOOKUP_URL = ""
     c = APIClient()
-    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(str(customer.id))}")
+    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(customer)}")
     r = c.get("/api/customer/plate-lookup?plate=ABC1D23")
     assert r.status_code == 200
     assert r.data == {"available": False, "found": False, "vehicle": None}
@@ -85,7 +84,7 @@ def test_endpoint_found_com_dados(customer, settings, monkeypatch):
     settings.PLATE_LOOKUP_MAP = None
     monkeypatch.setattr(pl, "_fetch", lambda *a, **k: {"marca": "Honda", "modelo": "Civic", "ano": 2020})
     c = APIClient()
-    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(str(customer.id))}")
+    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(customer)}")
     r = c.get("/api/customer/plate-lookup?plate=DEF5678")
     assert r.status_code == 200
     assert r.data["available"] is True and r.data["found"] is True
@@ -97,7 +96,7 @@ def test_endpoint_found_false_quando_provedor_nao_acha(customer, settings, monke
     settings.PLATE_LOOKUP_MAP = None
     monkeypatch.setattr(pl, "_fetch", lambda *a, **k: {"cor": "Preto"})  # sem marca/modelo
     c = APIClient()
-    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(str(customer.id))}")
+    c.credentials(HTTP_AUTHORIZATION=f"Bearer {_token(customer)}")
     r = c.get("/api/customer/plate-lookup?plate=DEF5678")
     assert r.status_code == 200
     assert r.data == {"available": True, "found": False, "vehicle": None}

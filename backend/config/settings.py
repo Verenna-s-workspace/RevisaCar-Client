@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-#DEBUG = os.getenv("DEBUG", "False") == "True"
-DEBUG=True
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
 # Em produção a chave TEM que vir do ambiente — nunca um default embutido no
 # repositório. Em dev (DEBUG=True) cai num placeholder para não travar o setup.
 _secret = os.environ.get("DJANGO_SECRET_KEY")
@@ -40,8 +40,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "customer_api.middleware.RLSMiddleware",
 ]
 
@@ -70,7 +72,7 @@ else:
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
-    "ROTATE_REFRESH_TOKENS": True,
+    "ROTATE_REFRESH_TOKENS": False,  # /auth/refresh só emite access novo (ver views.token_refresh)
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
@@ -115,8 +117,52 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",
     "http://127.0.0.1:5174",
 ]
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+
+# Produção: adiciona as origens do front via env (CORS_ALLOWED_ORIGINS, separadas
+# por vírgula) e o FRONTEND_URL. Com CORS_ALLOW_CREDENTIALS=True não dá pra usar
+# wildcard, então a origem exata do front precisa estar aqui. Aceita valores sem
+# scheme (o Render injeta só o host via fromService) — prefixamos https://.
+def _normalize_origin(raw):
+    raw = raw.strip().rstrip("/")
+    if raw and "://" not in raw:
+        raw = "https://" + raw
+    return raw
+
+
+for _origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") + [os.getenv("FRONTEND_URL", "")]:
+    _origin = _normalize_origin(_origin)
+    if _origin and _origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_origin)
+
+# Nunca liberar todas as origens: com cookies (CORS_ALLOW_CREDENTIALS) isso deixaria
+# qualquer site chamar /auth/refresh com o cookie do cliente e ler o token de acesso.
+# Em dev o front roda nas origens localhost listadas acima.
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+
+# ── Cabeçalhos de segurança (SecurityMiddleware) ──────────────────────────────
+# HSTS só em produção (HTTPS). O Render termina o TLS no proxy e repassa
+# X-Forwarded-Proto — por isso o SECURE_PROXY_SSL_HEADER.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+# Sem CsrfViewMiddleware de propósito: a API autentica por header Bearer (que um
+# site de terceiros não consegue mandar). O único endpoint que lê cookie é
+# /auth/refresh, que não muda estado e cuja resposta o CORS impede outro site de ler.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "2592000"))  # 30 dias
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+    # Health check do Render bate em http interno: não redirecionar /api/.
+    SECURE_REDIRECT_EXEMPT = [r"^api/$"]
+
+# Limite de upload (documentos). Acima disso o Django recusa antes de ler tudo.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+DOCUMENT_MAX_BYTES = int(os.getenv("DOCUMENT_MAX_BYTES", str(10 * 1024 * 1024)))
 
 # ── Storage de arquivos (documentos) ──────────────────────────────────────────
 # Dev: disco local (MEDIA_ROOT). Produção: ligue USE_S3=True e o storage passa a
@@ -161,8 +207,9 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "RevisaCar <nao-responder@revisacar.com>")
 
-# URL do app do cliente (usada no link de redefinição de senha).
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5174")
+# URL do app do cliente (usada no link de redefinição de senha). Aceita valor sem
+# scheme (Render injeta só o host via fromService) — prefixamos https://.
+FRONTEND_URL = _normalize_origin(os.getenv("FRONTEND_URL", "http://localhost:5174"))
 
 # Tempo de vida do token de reset (15 min).
 RESET_TOKEN_LIFETIME_SECONDS = int(os.getenv("RESET_TOKEN_LIFETIME_SECONDS", "900"))
@@ -191,3 +238,15 @@ VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
 VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:contato@revisacar.com")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Datas sempre com fuso (UTC no banco); a interface converte para o horário local.
+USE_TZ = True
+TIME_ZONE = "UTC"
+
+# Logs no stdout (o Render coleta). CRITICAL do rate limit = anti brute-force desligado.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "INFO")},
+}

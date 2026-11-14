@@ -8,6 +8,7 @@ liberam (fail-open — o login já depende do banco) e escritas apenas logam.
 """
 import hashlib
 import logging
+import random
 import time
 
 from . import models
@@ -29,9 +30,27 @@ def is_allowed(bucket: str, kind: str, *, max_attempts: int, window_seconds: int
             bucket=bucket, kind=kind, created_at__gt=cutoff
         ).count()
     except Exception as exc:
-        logger.error("[rate_limit] leitura falhou (%s/%s): %s", kind, bucket, exc)
+        # CRITICAL de propósito: é o sinal para alerta/monitor — enquanto isso durar,
+        # o anti brute-force está desligado (fail-open).
+        logger.critical("[rate_limit] FAIL-OPEN: leitura falhou (%s/%s): %s", kind, bucket, exc)
         return True  # fail-open sob indisponibilidade do banco
     return count < max_attempts
+
+
+# Linhas mais velhas que a maior janela usada (1h) não servem para nada.
+PURGE_OLDER_THAN_SECONDS = 24 * 60 * 60
+PURGE_PROBABILITY = 0.01
+
+
+def purge_old_attempts(older_than_seconds: int = PURGE_OLDER_THAN_SECONDS) -> int:
+    """Apaga tentativas antigas. Roda de vez em quando a partir de record_attempt
+    (sem precisar de cron) e pode ser chamada manualmente."""
+    try:
+        n, _ = models.AuthRateLimit.objects.filter(created_at__lt=time.time() - older_than_seconds).delete()
+        return n
+    except Exception as exc:
+        logger.error("[rate_limit] limpeza de antigas falhou: %s", exc)
+        return 0
 
 
 def record_attempt(bucket: str, kind: str):
@@ -39,6 +58,8 @@ def record_attempt(bucket: str, kind: str):
         models.AuthRateLimit.objects.create(bucket=bucket, kind=kind, created_at=time.time())
     except Exception as exc:
         logger.error("[rate_limit] registro falhou (%s/%s): %s", kind, bucket, exc)
+    if random.random() < PURGE_PROBABILITY:
+        purge_old_attempts()
 
 
 def clear_attempts(bucket: str, kind: str):

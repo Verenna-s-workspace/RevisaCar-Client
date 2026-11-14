@@ -1,6 +1,6 @@
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password, check_password
 
@@ -251,9 +251,8 @@ class MaintenanceReminderSerializer(serializers.Serializer):
 class DocumentCreateSerializer(serializers.Serializer):
     vehicle_id = serializers.CharField()
     vehicle_label = serializers.CharField(required=False, allow_blank=True)
-    type = serializers.ChoiceField(choices=["crlv", "seguro", "garantia", "nota_fiscal", "laudo", "outro"])
+    type = serializers.ChoiceField(choices=["crlv", "seguro", "ipva", "garantia", "nota_fiscal", "laudo", "outro"])
     title = serializers.CharField(max_length=150)
-    file_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     expiry_date = serializers.DateField(required=False, allow_null=True)
     notes = serializers.CharField(required=False, allow_blank=True)
 
@@ -273,7 +272,7 @@ def new_id() -> str:
 
 
 def now_iso() -> str:
-    return datetime.utcnow().isoformat() + "Z"
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class ConviteUsarSerializer(serializers.Serializer):

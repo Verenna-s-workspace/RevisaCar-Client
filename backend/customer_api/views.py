@@ -3,12 +3,14 @@ Customer API views — all endpoints under /api/customer/
 JWT required for all except auth + public QR resolve.
 """
 from __future__ import annotations
+import hashlib
 import logging
 import secrets
 import time
 import jwt as pyjwt
 from datetime import datetime
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -41,11 +43,21 @@ PLATE_WINDOW_SECONDS = 60 * 60
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
 
-def _make_tokens(customer_id: str, name: str) -> dict:
+def _pw_fingerprint(pwhash: str | None) -> str:
+    """Impressão digital curta do hash de senha, gravada no token (claim `pwv`).
+
+    Quando a senha muda (troca, reset, "sair de todos os aparelhos") ou a conta é
+    excluída, o hash muda/some e TODOS os tokens antigos deixam de valer — sem
+    precisar de coluna nova no banco (o schema é compartilhado com o app da oficina)."""
+    return hashlib.sha256((pwhash or "").encode("utf-8")).hexdigest()[:16]
+
+
+def _make_tokens(customer_id: str, name: str, pwhash: str | None) -> dict:
     from rest_framework_simplejwt.tokens import RefreshToken as RT
     refresh = RT()
     refresh["customer_id"] = customer_id
     refresh["name"] = name
+    refresh["pwv"] = _pw_fingerprint(pwhash)
     refresh.payload["sub"] = customer_id
     return {
         "access": str(refresh.access_token),
@@ -75,17 +87,53 @@ def _auth_response(body: dict, tokens: dict, status_code: int = status.HTTP_200_
     return resp
 
 
-def _decode_bearer(request):
-    auth = request.META.get("HTTP_AUTHORIZATION", "")
-    if not auth.startswith("Bearer "):
-        return None
-    token = auth.split(" ", 1)[1]
+_SEM_VALOR = object()
+
+
+def _customer_ativo(customer_id: str, pwv: str | None):
+    """Confere no banco se o token ainda vale: conta do app existe, tem senha e a
+    impressão digital da senha bate. Retorna o dict do cliente ou None.
+    Se o banco falhar, aceita o token (fail-open): toda view consulta o banco logo
+    em seguida e responde 503 de qualquer jeito."""
     try:
-        payload = pyjwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        cid = payload.get("customer_id") or payload.get("sub")
-        return {"id": cid, "name": payload.get("name", "")}
-    except Exception:
+        customer = services.get_customer_by_id(customer_id)
+    except Exception as exc:  # inclui id malformado (ValidationError)
+        if isinstance(exc, (ValueError, DjangoValidationError)):
+            return None
+        logger.error("[auth] não foi possível validar a sessão: %s", exc)
+        return {"id": customer_id}
+    if not customer or customer.get("origem", "app") != "app" or not customer.get("pwhash"):
         return None
+    if pwv != _pw_fingerprint(customer["pwhash"]):
+        return None
+    return customer
+
+
+def _decode_bearer(request):
+    """Valida o access token do header Authorization. Resultado fica em cache na
+    request (o RLSMiddleware e a view chamam esta função na mesma requisição)."""
+    raw = getattr(request, "_request", request)  # DRF Request → HttpRequest
+    cached = getattr(raw, "_revisacar_auth", _SEM_VALOR)
+    if cached is not _SEM_VALOR:
+        return cached
+    result = None
+    auth = request.META.get("HTTP_AUTHORIZATION", "")
+    if auth.startswith("Bearer "):
+        token = auth.split(" ", 1)[1]
+        try:
+            payload = pyjwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        except Exception:
+            payload = None
+        # Só access token: o refresh (30 dias) não pode ser usado como access.
+        if payload and payload.get("token_type") == "access":
+            cid = payload.get("customer_id") or payload.get("sub")
+            if cid and _customer_ativo(str(cid), payload.get("pwv")):
+                result = {"id": str(cid), "name": payload.get("name", "")}
+    try:
+        raw._revisacar_auth = result
+    except AttributeError:
+        pass
+    return result
 
 
 def _require_auth(request):
@@ -126,12 +174,13 @@ def register(request):
             return Response({"detail": "E-mail já cadastrado"}, status=status.HTTP_409_CONFLICT)
 
         cid = new_id()
+        pwhash = pw_hash(d["password"])
         services.create_customer({
             "id": cid,
             "name": d["name"],
             "email": d["email"],
             "phone": d["phone"],
-            "pwhash": pw_hash(d["password"]),
+            "pwhash": pwhash,
             "created_at": now_iso(),
             "updated_at": now_iso(),
         })
@@ -139,7 +188,7 @@ def register(request):
         return _supabase_err(exc)
 
     _issue_email_verification(cid, d["email"])
-    tokens = _make_tokens(cid, d["name"])
+    tokens = _make_tokens(cid, d["name"], pwhash)
     return _auth_response(
         {"customer": {"id": cid, "name": d["name"], "email": d["email"], "email_verified": False}},
         tokens, status.HTTP_201_CREATED,
@@ -173,7 +222,7 @@ def login(request):
         return Response({"detail": "E-mail ou senha incorretos"}, status=status.HTTP_401_UNAUTHORIZED)
 
     auth_store.clear_attempts(email, "login")  # sucesso zera o contador
-    tokens = _make_tokens(customer["id"], customer["name"])
+    tokens = _make_tokens(customer["id"], customer["name"], customer.get("pwhash"))
     return _auth_response({
         "customer": {
             "id": customer["id"], "name": customer["name"], "email": customer["email"],
@@ -189,12 +238,19 @@ def token_refresh(request):
     refresh_token = request.COOKIES.get(settings.REFRESH_COOKIE_NAME) or request.data.get("refresh")
     if not refresh_token:
         return Response({"detail": "refresh token obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+    expirada = Response({"detail": "Sessão expirada. Faça login novamente."}, status=status.HTTP_401_UNAUTHORIZED)
     try:
         from rest_framework_simplejwt.tokens import RefreshToken as RT
         token = RT(refresh_token)
-        return Response({"access": str(token.access_token)})
     except Exception:
-        return Response({"detail": "Sessão expirada. Faça login novamente."}, status=status.HTTP_401_UNAUTHORIZED)
+        return expirada
+    # Senha trocada / conta excluída depois do login → refresh não vale mais.
+    cid = token.payload.get("customer_id") or token.payload.get("sub")
+    if not cid or not _customer_ativo(str(cid), token.payload.get("pwv")):
+        resp = expirada
+        resp.delete_cookie(settings.REFRESH_COOKIE_NAME, path=settings.REFRESH_COOKIE_PATH)
+        return resp
+    return Response({"access": str(token.access_token)})
 
 
 @api_view(["POST"])
@@ -503,6 +559,8 @@ def profile(request):
 
 @api_view(["POST"])
 def change_password(request):
+    """Troca a senha. Como o token carrega a impressão digital da senha, todas as
+    OUTRAS sessões caem; este aparelho recebe tokens novos e continua logado."""
     c, err = _require_auth(request)
     if err:
         return err
@@ -516,18 +574,79 @@ def change_password(request):
     except Exception as exc:
         return _supabase_err(exc)
 
-    if not pw_check(s.validated_data["old_password"], customer.get("pwhash", "")):
+    if not customer or not pw_check(s.validated_data["old_password"], customer.get("pwhash") or ""):
         return Response({"detail": "Senha atual incorreta"}, status=status.HTTP_400_BAD_REQUEST)
 
+    novo = pw_hash(s.validated_data["new_password"])
     try:
-        services.update_customer(c["id"], {
-            "pwhash": pw_hash(s.validated_data["new_password"]),
-            "updated_at": now_iso(),
-        })
+        services.update_customer(c["id"], {"pwhash": novo, "updated_at": now_iso()})
     except Exception as exc:
         return _supabase_err(exc)
 
-    return Response({"detail": "Senha alterada com sucesso"})
+    return _auth_response({"detail": "Senha alterada com sucesso"}, _make_tokens(c["id"], customer["name"], novo))
+
+
+@api_view(["POST"])
+def logout_all(request):
+    """Sai de todos os aparelhos: regrava o hash da mesma senha (sal novo), o que
+    invalida todos os tokens emitidos. Pede a senha atual — quem só tem um token
+    roubado não consegue manter a sessão nem trancar o dono fora."""
+    c, err = _require_auth(request)
+    if err:
+        return err
+    senha = request.data.get("password") or ""
+    try:
+        customer = services.get_customer_by_id(c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    if not customer or not pw_check(senha, customer.get("pwhash") or ""):
+        return Response({"detail": "Senha incorreta"}, status=status.HTTP_400_BAD_REQUEST)
+    novo = pw_hash(senha)
+    try:
+        services.update_customer(c["id"], {"pwhash": novo, "updated_at": now_iso()})
+    except Exception as exc:
+        return _supabase_err(exc)
+    return _auth_response({"detail": "Todas as outras sessões foram encerradas"},
+                          _make_tokens(c["id"], customer["name"], novo))
+
+
+@api_view(["POST"])
+def delete_account(request):
+    """Exclusão da conta (LGPD, art. 18). Confirma com a senha, apaga os dados
+    pessoais e anonimiza o cadastro. Registros que a oficina precisa manter (OS,
+    orçamentos, pedidos de agendamento) ficam sem os dados pessoais do cliente."""
+    c, err = _require_auth(request)
+    if err:
+        return err
+    senha = request.data.get("password") or ""
+    try:
+        customer = services.get_customer_by_id(c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    if not customer or not pw_check(senha, customer.get("pwhash") or ""):
+        return Response({"detail": "Senha incorreta"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        services.delete_customer_account(c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    resp = Response({"detail": "Conta excluída"})
+    resp.delete_cookie(settings.REFRESH_COOKIE_NAME, path=settings.REFRESH_COOKIE_PATH)
+    return resp
+
+
+@api_view(["GET"])
+def export_data(request):
+    """Portabilidade (LGPD, art. 18, V): todos os dados do cliente em JSON."""
+    c, err = _require_auth(request)
+    if err:
+        return err
+    try:
+        data = services.export_customer_data(c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    resp = Response(data)
+    resp["Content-Disposition"] = 'attachment; filename="revisacar-meus-dados.json"'
+    return resp
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -702,6 +821,30 @@ def qr_resolve(request, uuid_str: str):
 # DOCUMENTS
 # ══════════════════════════════════════════════════════════════════════════════
 
+# Tipos aceitos no upload: conferimos a ASSINATURA do arquivo (primeiros bytes),
+# não só a extensão ou o content-type que o navegador manda.
+_DOC_ASSINATURAS = (
+    (b"%PDF-", "pdf"),
+    (b"\xff\xd8\xff", "jpg"),
+    (b"\x89PNG\r\n\x1a\n", "png"),
+)
+
+
+def _tipo_do_arquivo(cabeca: bytes) -> str | None:
+    for assinatura, tipo in _DOC_ASSINATURAS:
+        if cabeca.startswith(assinatura):
+            return tipo
+    if cabeca[:4] == b"RIFF" and cabeca[8:12] == b"WEBP":
+        return "webp"
+    if cabeca[4:8] == b"ftyp" and cabeca[8:12] in (b"heic", b"heix", b"mif1", b"msf1"):
+        return "heic"
+    return None
+
+
+_CONTENT_TYPES = {"pdf": "application/pdf", "jpg": "image/jpeg", "png": "image/png",
+                  "webp": "image/webp", "heic": "image/heic"}
+
+
 @api_view(["GET", "POST"])
 def documents_list(request):
     """GET/POST /api/customer/documents"""
@@ -721,44 +864,48 @@ def documents_list(request):
     s = DocumentCreateSerializer(data=request.data)
     if not s.is_valid():
         return Response(s.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
     d = s.validated_data
+
+    try:
+        vehicle = services.get_vehicle(d["vehicle_id"], c["id"])
+    except Exception:
+        vehicle = None
+    if not vehicle:
+        return Response({"vehicle_id": "Veículo não encontrado"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
     file_obj = request.FILES.get("file")
-
-    file_url = ""
-    file_name = d.get("file_name", "")
-    file_size_kb = None
-
+    file_bytes = None
+    file_name = ""
     if file_obj:
+        if file_obj.size > settings.DOCUMENT_MAX_BYTES:
+            limite = settings.DOCUMENT_MAX_BYTES // (1024 * 1024)
+            return Response({"file": f"Arquivo maior que {limite} MB"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         file_bytes = file_obj.read()
-        file_size_kb = len(file_bytes) // 1024
-        file_name = file_obj.name
-        bucket = settings.STORAGE_PREFIX
-        path = f"{c['id']}/{d['vehicle_id']}/{new_id()}_{file_name}"
-        try:
-            file_url = services.upload_document_file(bucket, path, file_bytes, file_obj.content_type)
-        except Exception as exc:
-            return Response({"detail": f"Erro no upload: {exc}"}, status=status.HTTP_502_BAD_GATEWAY)
+        if not _tipo_do_arquivo(file_bytes[:16]):
+            return Response({"file": "Envie um PDF ou uma imagem (JPG, PNG, WEBP ou HEIC)"},
+                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        # Só o nome-base, sem caminho, e com tamanho limitado (vai para o Content-Disposition).
+        file_name = (file_obj.name or "documento").replace("\\", "/").rsplit("/", 1)[-1][:200] or "documento"
 
     doc_data = {
         "id": new_id(),
         "customer_id": c["id"],
-        "vehicle_id": d["vehicle_id"],
-        "vehicle_label": d.get("vehicle_label", ""),
+        "vehicle_id": vehicle["id"],
+        "vehicle_label": f"{vehicle.get('brand', '')} {vehicle.get('model', '')}".strip(),
         "type": d["type"],
         "title": d["title"],
-        "file_url": file_url,
         "file_name": file_name,
-        "file_size_kb": file_size_kb,
         "expiry_date": str(d["expiry_date"]) if d.get("expiry_date") else None,
         "notes": d.get("notes", ""),
         "created_at": now_iso(),
     }
 
     try:
-        doc = services.create_document(doc_data)
+        doc = services.create_document(doc_data, file_bytes)
     except Exception as exc:
-        return _supabase_err(exc)
+        logger.error("[documentos] falha ao salvar: %s", exc, exc_info=True)
+        return Response({"detail": "Não foi possível salvar o documento agora. Tente novamente."},
+                        status=status.HTTP_502_BAD_GATEWAY)
 
     return Response(doc, status=status.HTTP_201_CREATED)
 
@@ -782,6 +929,29 @@ def document_detail(request, doc_id: str):
         return Response({"detail": "Documento removido"})
     except Exception as exc:
         return _supabase_err(exc)
+
+
+@api_view(["GET"])
+def document_file(request, doc_id: str):
+    """GET /api/customer/documents/<id>/arquivo — entrega o arquivo ao dono."""
+    from django.http import FileResponse
+    c, err = _require_auth(request)
+    if err:
+        return err
+    try:
+        aberto = services.open_document_file(doc_id, c["id"])
+    except Exception as exc:
+        return _supabase_err(exc)
+    if not aberto:
+        return Response({"detail": "Arquivo não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+    arquivo, nome = aberto
+    cabeca = arquivo.read(16)
+    arquivo.seek(0)
+    tipo = _tipo_do_arquivo(cabeca)
+    resp = FileResponse(arquivo, as_attachment=True, filename=nome,
+                        content_type=_CONTENT_TYPES.get(tipo, "application/octet-stream"))
+    resp["Cache-Control"] = "private, no-store"
+    return resp
 
 
 # ══════════════════════════════════════════════════════════════════════════════
