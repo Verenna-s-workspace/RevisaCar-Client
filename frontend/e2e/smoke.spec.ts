@@ -5,7 +5,7 @@ test.describe('Smoke — app sobe e navega', () => {
     await page.goto('/');
     // dados vêm do MSW (mockDashboard)
     await expect(page.getByRole('button', { name: /Fiat Uno/ })).toBeVisible();
-    await expect(page.getByText('Saúde geral')).toBeVisible();
+    await expect(page.getByText('Saúde geral', { exact: true })).toBeVisible();
     // menu flutuante presente
     await expect(page.getByRole('link', { name: 'Início' })).toBeVisible();
   });
